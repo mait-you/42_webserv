@@ -1,0 +1,9 @@
+*.o
+*.a
+obj/
+webserv
+www/uploads/*
+!www/uploads/.gitkeep
+.vscode/
+.DS_Store
+*.dSYM/
