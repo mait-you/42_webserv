@@ -57,22 +57,21 @@ Based on the Webserv project requirements, here's the best way to split work bet
 
 ```
 Person 1 Focus:          Person 2 Focus:
-┌─────────────┐         ┌──────────────┐
-│ Event Loop  │←────────┤ Config       │
-│ (poll/select)│        │ Parser       │
-└──────┬──────┘         └──────────────┘
+┌──────────────┐         ┌──────────────┐
+│ Event Loop   │<────────┤ Config       │
+│ (poll/select)│         │ Parser       │
+└──────┬───────┘         └──────────────┘
        │
        ↓
-┌─────────────┐         ┌──────────────┐
-│ Request     │────────→│ Response     │
-│ Parser      │         │ Builder      │
-└─────────────┘         └──────────────┘
+┌──────────────┐         ┌──────────────┐
+│ Request      │────────>│ Response     │
+│ Parser       │         │ Builder      │
+└──────────────┘         └──────────────┘
        │                        │
        ↓                        ↓
-┌──────────────────────────────────┐
-│        CGI Handler               │
-│    (Both work together)          │
-└──────────────────────────────────┘
+┌───────────────────────────────────────┐
+│             CGI Handler               │
+│         (Both work together)          │
+└───────────────────────────────────────┘
 ```
 
-This split ensures both people have substantial, independent work while maintaining clear integration points. Good luck with your project!
