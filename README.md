@@ -1,13 +1,12 @@
 # 42_webserv
 HTTP server in C++98
-Based on the Webserv project requirements, here's the best way to split work between 2 people:
 
 ## Split Strategy
 
 ### **Person 1: Core Server & I/O**
 - **Socket Management & Event Loop**
   - Setup listening sockets (`socket()`, `bind()`, `listen()`)
-  - Implement `poll()`/`select()`/`epoll()`/`kqueue()` event loop
+  - Implement `epoll()` event loop
   - Handle accept new connections
   - Non-blocking I/O operations
   - Client connection management (timeouts, disconnections)
