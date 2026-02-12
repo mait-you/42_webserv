@@ -1,100 +1,166 @@
 #include "../../includes/Socket.hpp"
 
-Socket::Socket() : _fd(-1), _result(NULL) {
-	std::memset(&_hints, 0, sizeof(_hints));
-	_hints.ai_family   = AF_INET;	  // IPv4 or IPv6
-	_hints.ai_socktype = SOCK_STREAM; // TCP socket
-	LOG_DEBUGG("Socket", "Default constructor called");
+Socket::Socket() : _fd(-1), _host(""), _port(0) {
+	memset(&_address, 0, sizeof(_address));
 }
+Socket::Socket(int fd) : _fd(fd), _host(""), _port("") {
+	memset(&_address, 0, sizeof(_address));
 
-Socket::Socket(const Socket &other) {
-	LOG_DEBUGG("Socket", "Copy constructor called");
-	*this = other;
+	// Get socket address info using getsockname
+	struct sockaddr_in addr;
+	socklen_t		   len = sizeof(addr);
+
+	if (getsockname(_fd, (struct sockaddr *) &addr, &len) == 0) {
+		memcpy(&_address, &addr, sizeof(_address));
+
+		// Get port using ntohs
+		std::stringstream ss;
+		ss << ntohs(addr.sin_port);
+		_port = ss.str();
+
+		// Convert IP manually using ntohl
+		unsigned long	  ip = ntohl(addr.sin_addr.s_addr);
+		std::stringstream ip_ss;
+		ip_ss << ((ip >> 24) & 0xFF) << "." << ((ip >> 16) & 0xFF) << "."
+			  << ((ip >> 8) & 0xFF) << "." << (ip & 0xFF);
+		_host = ip_ss.str();
+	}
 }
 
 Socket &Socket::operator=(const Socket &other) {
 	if (this != &other) {
-		_fd		= other._fd;
-		_port	= other._port;
-		_host	= other._host;
-		_hints	= other._hints;
-		_result = NULL;
-	}
-	LOG_DEBUGG("Socket", "Copy assignment constructor called");
+		if (_fd != -1) {
+			::close(_fd);
+			_fd = -1;
+		}
 
+		// Copy data members
+		_host = other._host;
+		_port = other._port;
+		_fd	  = dup(other._fd);
+		memcpy(&_address, &other._address, sizeof(_address));
+	}
 	return *this;
 }
 
+Socket::Socket(const std::string &host, const std::string &port)
+	: _fd(-1), _host(host), _port(port) {
+	memset(&_address, 0, sizeof(_address));
+}
+
+Socket::Socket(const Socket &other)
+	: _fd(dup(other._fd)), _host(other._host), _port(other._port) {
+	memcpy(&_address, &other._address, sizeof(_address));
+}
+
 Socket::~Socket() {
-	if (_result)
-		freeaddrinfo(_result);
-	LOG_DEBUGG("Socket", "Destructor called");
-}
-
-void Socket::_create() {
-	if (_fd != -1)
-		throw std::runtime_error("Socket already has fd");
-
-	int state = getaddrinfo(_host.c_str(), _port.c_str(), &_hints, &_result);
-	if (state != 0)
-		throw std::runtime_error("getaddrinfo() failed");
-
-	_fd =
-		socket(_result->ai_family, _result->ai_socktype, _result->ai_protocol);
-	if (_fd < 0)
-		throw std::runtime_error("socket() failed");
-
-	int opt = 1;
-	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-		throw std::runtime_error("setsockopt() failed");
-}
-
-void Socket::_bind() {
-	if (bind(_fd, _result->ai_addr, _result->ai_addrlen) < 0)
-		throw std::runtime_error("bind() failed");
-
-	if (_result) {
-		freeaddrinfo(_result);
-		_result = NULL;
+	if (_fd != -1) {
+		::close(_fd);
 	}
 }
 
-void Socket::_listen() {
-	if (listen(_fd, 5) < 0)
-		throw std::runtime_error("listen() failed");
+void Socket::create() {
+	_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (_fd == -1)
+		throw std::runtime_error("Failed to create socket");
 }
 
 void Socket::setNonBlocking() {
 	int flags = fcntl(_fd, F_GETFL, 0);
-	if (flags < 0)
-		throw std::runtime_error("fcntl(F_GETFL) failed");
-
-	if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) < 0)
-		throw std::runtime_error("fcntl(F_SETFL) failed");
+	if (flags == -1)
+		throw std::runtime_error("Failed to get socket flags");
+	if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		throw std::runtime_error("Failed to set non-blocking mode");
 }
 
-void Socket::setPort(const std::string &port) {
-	_port = port;
+void Socket::setNonBlocking(int fd) {
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		throw std::runtime_error("Failed to get socket flags");
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		throw std::runtime_error("Failed to set non-blocking mode");
 }
 
-void Socket::setHost(const std::string &host) {
-	_host = host;
+void Socket::setReuseAddr() {
+	int opt = 1;
+	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+		throw std::runtime_error("Failed to set SO_REUSEADDR");
 }
 
-void Socket::setFd(int fd) {
-	_fd = fd;
+void Socket::bind() {
+	struct addrinfo	 hints;
+	struct addrinfo *result;
+	struct addrinfo *rp;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family	  = AF_INET;	 // IPv4
+	hints.ai_socktype = SOCK_STREAM; // TCP
+	hints.ai_flags	  = AI_PASSIVE;	 // For bind
+
+	// Use NULL for host if empty or 0.0.0.0 (means INADDR_ANY)
+	const char *hostPtr = NULL;
+	if (!_host.empty() && _host != "0.0.0.0") {
+		hostPtr = _host.c_str();
+	}
+
+	// Get address info
+	int status = getaddrinfo(hostPtr, _port.c_str(), &hints, &result);
+	if (status != 0) {
+		throw std::runtime_error("getaddrinfo failed: " +
+								 std::string(gai_strerror(status)));
+	}
+
+	// Try each address until we successfully bind
+	int bindSuccess = -1;
+	for (rp = result; rp != NULL; rp = rp->ai_next) {
+		bindSuccess = ::bind(_fd, rp->ai_addr, rp->ai_addrlen);
+		if (bindSuccess == 0) {
+			// Save the address info
+			memcpy(&_address, rp->ai_addr, sizeof(_address));
+			break;
+		}
+	}
+
+	freeaddrinfo(result); // Free the linked list
+
+	if (bindSuccess == -1)
+		throw std::runtime_error("Failed to bind socket to " + _host + ":" +
+								 _port);
+}
+
+void Socket::listen(int backlog) {
+	if (::listen(_fd, backlog) == -1)
+		throw std::runtime_error("Failed to listen on socket");
+}
+
+int Socket::accept() {
+	struct sockaddr_in clientAddr;
+	socklen_t		   clientLen = sizeof(clientAddr);
+
+	int clientFd = ::accept(_fd, (struct sockaddr *) &clientAddr, &clientLen);
+	if (clientFd == -1)
+		throw std::runtime_error("Failed to accept connection");
+
+	return clientFd;
+}
+
+void Socket::close() {
+	if (_fd != -1) {
+		::close(_fd);
+		_fd = -1;
+	}
 }
 
 int Socket::getFd() const {
 	return _fd;
 }
 
-const std::string &Socket::getPort() const {
-	return _port;
-}
-
 const std::string &Socket::getHost() const {
 	return _host;
+}
+
+const std::string &Socket::getPort() const {
+	return _port;
 }
 
 std::ostream &operator<<(std::ostream &out, const Socket &socket) {

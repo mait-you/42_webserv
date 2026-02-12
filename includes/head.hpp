@@ -16,13 +16,18 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+#include <sstream>
 
 #ifndef DEBUGGING
 #define DEBUGGING 0
 #endif
 
+#define MAX_EVENTS 10
+
 #define LOG_DEBUGG(className, msg)                                             \
 	if (DEBUGGING)                                                             \
 		std::cout << "[" << className << "]: " << msg << std::endl;
+
+void setupSignals();
 
 #endif
