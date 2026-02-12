@@ -8,7 +8,11 @@ OBJ_DIR     = obj
 INC_DIR     = includes
 
 # Source files
-SRCS        = $(SRC_DIR)/main.cpp
+SRCS        = $(SRC_DIR)/main.cpp \
+	$(SRC_DIR)/server/Server.cpp \
+	$(SRC_DIR)/server/Socket.cpp \
+	$(SRC_DIR)/config/Config.cpp \
+	$(SRC_DIR)/client/Client.cpp
 
 OBJS        = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
