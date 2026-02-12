@@ -1,24 +1,34 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include "webserv.hpp"
+#include "head.hpp"
 
 struct LocationConfig {
-	std::string				 path;			// location path (/, /upload)
-	std::vector<std::string> allow_methods; // GET, POST, DELETE
-	bool					 autoindex;		// on/off
-	bool					 upload;		// on/off
-	std::string				 upload_path;	// path for uploads
+	std::string				 path; // location path
+	std::vector<std::string> allow_methods;
+	bool					 autoindex;
+	bool					 upload;
+	std::string				 upload_path;
+	std::string				 root;	// root for this location
+	std::string				 index; // default file
+	bool					 has_redirect;
+	std::string				 redirect_url;
+	int						 redirect_code; // 301 or 302
+
+	// bool					 has_cgi;
+	// std::string				 cgi_extension; // ".php"
+	// std::string				 cgi_path;		// "/usr/bin/php-cgi"
 };
 
 struct ServerConfig {
-	std::vector<std::string>	ports;				  // listening ports
-	std::string					host;				  // host address
-	std::string					root;				  // website root
-	std::string					index;				  // index file
-	std::string					error_page;			  // error page path
-	unsigned long				client_max_body_size; // max body size in bytes
-	std::vector<LocationConfig> locations;			  // location blocks
+	std::vector<std::string>	ports;
+	std::string					host;
+	std::string					server_name; // NEW
+	std::string					root;
+	std::string					index;
+	std::string					error_page;
+	unsigned long				client_max_body_size;
+	std::vector<LocationConfig> locations;
 };
 
 class Config {
@@ -37,5 +47,8 @@ class Config {
 	Config &operator=(const Config &other);
 };
 
+std::ostream &operator<<(std::ostream &out, const Config &config);
+std::ostream &operator<<(std::ostream &out, const LocationConfig &loc);
+std::ostream &operator<<(std::ostream &out, const ServerConfig &server);
 
 #endif
