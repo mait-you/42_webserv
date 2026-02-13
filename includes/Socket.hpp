@@ -20,7 +20,6 @@ class Socket {
 
 	void		create();
 	void		setNonBlocking();
-	static void setNonBlocking(int fd);
 	void		setReuseAddr();
 	void		bind();
 	void		listen(int backlog);

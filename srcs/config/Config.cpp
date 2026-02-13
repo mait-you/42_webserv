@@ -1,24 +1,20 @@
 #include "../../includes/Config.hpp"
 
 Config::Config() {
-	LOG_DEBUGG("Config", "Default constructor called");
 }
 
 Config::Config(const Config &) {
-	LOG_DEBUGG("Config", "Copy constructor called");
 }
 
 Config &Config::operator=(const Config &) {
-	LOG_DEBUGG("Config", "Copy assignment constructor called");
+
 	return *this;
 }
 
 Config::~Config() {
-	LOG_DEBUGG("Config", "Destructor constructor called");
 }
 
 void Config::parse(const std::string &) {
-	LOG_DEBUGG("Config", "Parsing configuration file: ");
 
 	ServerConfig server;
 	server.host = "127.0.0.1";

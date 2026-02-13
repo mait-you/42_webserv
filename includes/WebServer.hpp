@@ -8,11 +8,11 @@
 
 class WebServer {
   private:
-	std::vector<Socket>	  _sockets;
+	std::vector<Socket>	  _ServerSockets;
 	std::map<int, Client> _clients;
 	Config				  _config;
 	int					  _epollFd;
-	struct epoll_event	  events[MAX_EVENTS];
+	t_ev				  events[MAX_EVENTS];
 
 	static bool running;
 
@@ -36,6 +36,5 @@ class WebServer {
 	WebServer(const WebServer &other);
 	WebServer &operator=(const WebServer &other);
 };
-
 
 #endif

@@ -1,39 +1,37 @@
 #include "../../includes/Client.hpp"
 
-Client::Client() : _fd(-1), _requestComplete(false), _responseSent(false) {
-	LOG_DEBUGG("Client", "Default constructor called");
+Client::Client() : _requestComplete(false), _responseSent(false), _socket() {
 }
 
-Client::Client(const int fd)
-	: _fd(fd), _requestComplete(false), _responseSent(false) {
-	LOG_DEBUGG("Client", "Parameterized constructor called");
+Client::Client(Socket socket)
+	: _requestComplete(false), _responseSent(false), _socket(socket) {
 }
 
-Client::Client(const Client &other) {
-	LOG_DEBUGG("Client", "Copy constructor called");
-	*this = other;
+Client::Client(const Client &other)
+	: _buffer(other._buffer), _response(other._response),
+	  _requestComplete(other._requestComplete),
+	  _responseSent(other._responseSent), _socket(other._socket) {
 }
 
 Client &Client::operator=(const Client &other) {
 	if (this != &other) {
-		_fd				 = other._fd;
 		_buffer			 = other._buffer;
 		_response		 = other._response;
 		_requestComplete = other._requestComplete;
 		_responseSent	 = other._responseSent;
+		_socket			 = other._socket;
 	}
-	LOG_DEBUGG("Client", "Copy assignment constructor called");
+
 	return *this;
 }
 
 Client::~Client() {
-	LOG_DEBUGG("Client", "Destructor called");
 }
 
 void Client::readData() {
 	char buffer[1024];
 
-	ssize_t n = recv(_fd, buffer, sizeof(buffer) - 1, 0);
+	ssize_t n = recv(_socket.getFd(), buffer, sizeof(buffer) - 1, 0);
 	if (n <= 0)
 		return;
 	buffer[n] = 0;
@@ -46,13 +44,9 @@ void Client::readData() {
 }
 
 void Client::sendData() {
-	ssize_t n = send(_fd, _response.c_str(), _response.length(), 0);
+	ssize_t n = send(_socket.getFd(), _response.c_str(), _response.length(), 0);
 	if (n <= 0)
 		return;
-}
-
-int Client::getFd() const {
-	return _fd;
 }
 
 // bool Client::isRequestComplete() const {

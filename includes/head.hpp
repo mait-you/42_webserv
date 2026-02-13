@@ -11,22 +11,25 @@
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
+#include <sstream>
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
-#include <sstream>
 
 #ifndef DEBUGGING
-#define DEBUGGING 0
+#define DEBUGGING 1
 #endif
 
 #define MAX_EVENTS 10
+#define LOG_FILE "weberv.log"
 
-#define LOG_DEBUGG(className, msg)                                             \
+typedef struct epoll_event t_ev;
+
+#define LOG_DEBUGG(msg)                                                        \
 	if (DEBUGGING)                                                             \
-		std::cout << "[" << className << "]: " << msg << std::endl;
+		std::cout << msg << std::endl;
 
 void setupSignals();
 

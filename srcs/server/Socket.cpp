@@ -1,11 +1,13 @@
 #include "../../includes/Socket.hpp"
 
-Socket::Socket() : _fd(-1), _host(""), _port(0) {
-	memset(&_address, 0, sizeof(_address));
+Socket::Socket() : _fd(-1), _host(""), _port("") {
+	std::memset(&_address, 0, sizeof(_address));
 }
 Socket::Socket(int fd) : _fd(fd), _host(""), _port("") {
-	memset(&_address, 0, sizeof(_address));
+	if (fd < 0)
+		std::runtime_error("Socket failed to craeat from fd");
 
+	std::memset(&_address, 0, sizeof(_address));
 	// Get socket address info using getsockname
 	struct sockaddr_in addr;
 	socklen_t		   len = sizeof(addr);
@@ -27,25 +29,9 @@ Socket::Socket(int fd) : _fd(fd), _host(""), _port("") {
 	}
 }
 
-Socket &Socket::operator=(const Socket &other) {
-	if (this != &other) {
-		if (_fd != -1) {
-			::close(_fd);
-			_fd = -1;
-		}
-
-		// Copy data members
-		_host = other._host;
-		_port = other._port;
-		_fd	  = dup(other._fd);
-		memcpy(&_address, &other._address, sizeof(_address));
-	}
-	return *this;
-}
-
 Socket::Socket(const std::string &host, const std::string &port)
 	: _fd(-1), _host(host), _port(port) {
-	memset(&_address, 0, sizeof(_address));
+	std::memset(&_address, 0, sizeof(_address));
 }
 
 Socket::Socket(const Socket &other)
@@ -53,10 +39,21 @@ Socket::Socket(const Socket &other)
 	memcpy(&_address, &other._address, sizeof(_address));
 }
 
-Socket::~Socket() {
-	if (_fd != -1) {
-		::close(_fd);
+Socket &Socket::operator=(const Socket &other) {
+	if (this != &other) {
+		if (_fd != -1)
+			::close(_fd);
+		_fd	  = ::dup(other._fd);
+		_host = other._host;
+		_port = other._port;
+		std::memset(&_address, 0, sizeof(_address));
 	}
+	return *this;
+}
+
+Socket::~Socket() {
+	if (_fd != -1)
+		::close(_fd);
 }
 
 void Socket::create() {
@@ -73,14 +70,6 @@ void Socket::setNonBlocking() {
 		throw std::runtime_error("Failed to set non-blocking mode");
 }
 
-void Socket::setNonBlocking(int fd) {
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1)
-		throw std::runtime_error("Failed to get socket flags");
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		throw std::runtime_error("Failed to set non-blocking mode");
-}
-
 void Socket::setReuseAddr() {
 	int opt = 1;
 	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
@@ -90,32 +79,23 @@ void Socket::setReuseAddr() {
 void Socket::bind() {
 	struct addrinfo	 hints;
 	struct addrinfo *result;
-	struct addrinfo *rp;
 
-	memset(&hints, 0, sizeof(hints));
+	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family	  = AF_INET;	 // IPv4
 	hints.ai_socktype = SOCK_STREAM; // TCP
 	hints.ai_flags	  = AI_PASSIVE;	 // For bind
 
-	// Use NULL for host if empty or 0.0.0.0 (means INADDR_ANY)
-	const char *hostPtr = NULL;
-	if (!_host.empty() && _host != "0.0.0.0") {
-		hostPtr = _host.c_str();
-	}
-
-	// Get address info
-	int status = getaddrinfo(hostPtr, _port.c_str(), &hints, &result);
+	int status = getaddrinfo(_host.c_str(), _port.c_str(), &hints, &result);
 	if (status != 0) {
 		throw std::runtime_error("getaddrinfo failed: " +
 								 std::string(gai_strerror(status)));
 	}
 
-	// Try each address until we successfully bind
-	int bindSuccess = -1;
+	struct addrinfo *rp;
+	int				 bindSuccess = -1;
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		bindSuccess = ::bind(_fd, rp->ai_addr, rp->ai_addrlen);
 		if (bindSuccess == 0) {
-			// Save the address info
 			memcpy(&_address, rp->ai_addr, sizeof(_address));
 			break;
 		}
@@ -134,14 +114,10 @@ void Socket::listen(int backlog) {
 }
 
 int Socket::accept() {
-	struct sockaddr_in clientAddr;
-	socklen_t		   clientLen = sizeof(clientAddr);
-
-	int clientFd = ::accept(_fd, (struct sockaddr *) &clientAddr, &clientLen);
-	if (clientFd == -1)
-		throw std::runtime_error("Failed to accept connection");
-
-	return clientFd;
+	int client_fd = ::accept(_fd, NULL, NULL);
+	if (client_fd == -1)
+		std::cout << "Failed to accept a Client" << std::endl;
+	return client_fd;
 }
 
 void Socket::close() {
