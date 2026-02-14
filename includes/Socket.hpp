@@ -16,6 +16,7 @@ class Socket {
 	Socket(const std::string &host, const std::string &port);
 	Socket(const Socket &other);
 	Socket &operator=(const Socket &other);
+	bool operator==(const Socket &other);
 	~Socket();
 
 	void		create();
@@ -30,7 +31,6 @@ class Socket {
 	const std::string &getHost() const;
 	const std::string &getPort() const;
 
-  private:
 };
 
 std::ostream &operator<<(std::ostream &out, const Socket &socket);

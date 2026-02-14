@@ -35,7 +35,7 @@ Socket::Socket(const std::string &host, const std::string &port)
 }
 
 Socket::Socket(const Socket &other)
-	: _fd(dup(other._fd)), _host(other._host), _port(other._port) {
+	: _fd(other._fd), _host(other._host), _port(other._port) {
 	memcpy(&_address, &other._address, sizeof(_address));
 }
 
@@ -43,7 +43,7 @@ Socket &Socket::operator=(const Socket &other) {
 	if (this != &other) {
 		if (_fd != -1)
 			::close(_fd);
-		_fd	  = ::dup(other._fd);
+		_fd	  = other._fd;
 		_host = other._host;
 		_port = other._port;
 		std::memset(&_address, 0, sizeof(_address));
@@ -52,8 +52,8 @@ Socket &Socket::operator=(const Socket &other) {
 }
 
 Socket::~Socket() {
-	if (_fd != -1)
-		::close(_fd);
+	// if (_fd != -1)
+	// 	::close(_fd);
 }
 
 void Socket::create() {
@@ -137,6 +137,10 @@ const std::string &Socket::getHost() const {
 
 const std::string &Socket::getPort() const {
 	return _port;
+}
+
+bool Socket::operator==(const Socket &other) {
+	return _fd == other._fd && this == &other;
 }
 
 std::ostream &operator<<(std::ostream &out, const Socket &socket) {

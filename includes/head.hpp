@@ -1,6 +1,7 @@
 #ifndef WEBSERV_HPP
 #define WEBSERV_HPP
 
+#include <cerrno>
 #include <cstring>
 #include <errno.h>
 #include <exception>
@@ -19,13 +20,15 @@
 #include <vector>
 
 #ifndef DEBUGGING
-#define DEBUGGING 1
+#define DEBUGGING 0
 #endif
 
 #define MAX_EVENTS 10
-#define LOG_FILE "weberv.log"
 
 typedef struct epoll_event t_ev;
+#define EPOLL_EVENT(name)                                                      \
+	t_ev name;                                                                 \
+	std::memset(&name, 0, sizeof(name))
 
 #define LOG_DEBUGG(msg)                                                        \
 	if (DEBUGGING)                                                             \

@@ -1,16 +1,16 @@
 #include "../../includes/Client.hpp"
 
-Client::Client() : _requestComplete(false), _responseSent(false), _socket() {
+Client::Client() : _socket(), _requestComplete(false), _responseSent(false) {
 }
 
-Client::Client(Socket socket)
-	: _requestComplete(false), _responseSent(false), _socket(socket) {
+Client::Client(const Socket &socket)
+	: _socket(socket), _requestComplete(false), _responseSent(false) {
 }
 
 Client::Client(const Client &other)
-	: _buffer(other._buffer), _response(other._response),
-	  _requestComplete(other._requestComplete),
-	  _responseSent(other._responseSent), _socket(other._socket) {
+	: _socket(other._socket), _buffer(other._buffer),
+	  _response(other._response), _requestComplete(other._requestComplete),
+	  _responseSent(other._responseSent) {
 }
 
 Client &Client::operator=(const Client &other) {
@@ -26,6 +26,7 @@ Client &Client::operator=(const Client &other) {
 }
 
 Client::~Client() {
+	// _socket.close();
 }
 
 void Client::readData() {
@@ -47,6 +48,10 @@ void Client::sendData() {
 	ssize_t n = send(_socket.getFd(), _response.c_str(), _response.length(), 0);
 	if (n <= 0)
 		return;
+}
+
+Socket &Client::getSocket() {
+	return _socket;
 }
 
 // bool Client::isRequestComplete() const {
