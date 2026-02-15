@@ -28,10 +28,8 @@ void WebServer::init(const std::string &configFile) {
 		const ServerConfig &server = webServers[i];
 		for (size_t j = 0; j < server.ports.size(); ++j) {
 			Socket socket(server.host, server.ports[j]);
-			socket.create();
-			socket.setReuseAddr();
+			socket.createAndBind();
 			socket.setNonBlocking();
-			socket.bind();
 			socket.listen(128);
 			_ServerSockets.push_back(socket);
 		}
@@ -92,7 +90,7 @@ void WebServer::handleClientWrite(Socket &socket) {
 
 bool WebServer::isWebServerSocket(const Socket &socket) {
 	for (size_t i = 0; i < _ServerSockets.size(); ++i)
-		if (_ServerSockets[i] == socket)
+		if (_ServerSockets[i].getFd() == socket.getFd())
 			return true;
 	return false;
 }
@@ -129,7 +127,7 @@ void WebServer::run() {
 					handleClientWrite(socket);
 			}
 		}
-		std::memset(&events, 0, MAX_EVENTS);
+		std::memset(&events, 0, sizeof events);
 	}
 	std::cout << "WebServer shutting down..." << std::endl;
 }

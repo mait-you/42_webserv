@@ -17,10 +17,10 @@ Config::~Config() {
 void Config::parse(const std::string &) {
 
 	ServerConfig server;
-	server.host = "127.0.0.1";
+	server.host = "";
 	server.ports.push_back("8080");
 	server.server_name			= "localhost";
-	server.root					= "/var/www";
+	server.root					= "./www";
 	server.index				= "index.html";
 	server.error_page			= "";
 	server.client_max_body_size = 1000000;

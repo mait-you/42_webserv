@@ -32,7 +32,7 @@ Client::~Client() {
 void Client::readData() {
 	char buffer[1024];
 
-	ssize_t n = recv(_socket.getFd(), buffer, sizeof(buffer) - 1, 0);
+	ssize_t n = recv(_socket.getFd(), buffer, sizeof buffer - 1, 0);
 	if (n <= 0)
 		return;
 	buffer[n] = 0;
