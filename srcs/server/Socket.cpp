@@ -17,11 +17,17 @@ Socket::Socket(const std::string &host, const std::string &port)
 	  _is_listening(false) {
 }
 
-Socket::Socket(const Socket &other)
-	: _fd(other._fd), _host(other._host), _port(other._port),
-	  _family(other._family), _is_bound(other._is_bound),
-	  _is_listening(other._is_listening) {
+// Socket::Socket(const Socket &other)
+// 	: _fd(other._fd), _host(other._host), _port(other._port),
+// 	  _family(other._family), _is_bound(other._is_bound),
+// 	  _is_listening(other._is_listening) {
+// }
+
+Socket::Socket(const Socket &other) {
+	*this = other;
 }
+
+// useed only in push_back()
 Socket &Socket::operator=(const Socket &other) {
 	if (this != &other) {
 		_fd			  = other._fd;
@@ -37,7 +43,7 @@ Socket &Socket::operator=(const Socket &other) {
 Socket::~Socket() {
 }
 
-void Socket::setupSocket(int family) {
+void Socket::setupSocketopt(int family) {
 	int opt = 1;
 
 	// Enable address reuse
@@ -67,32 +73,22 @@ void Socket::createAndBind() {
 	int			status = getaddrinfo(node, _port.c_str(), &hints, &result);
 	if (status != 0)
 		throw std::runtime_error("getaddrinfo failed");
-
-	// Try each address until we successfully bind
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		// Create socket
 		_fd = socket(rp->ai_family, SOCK_STREAM, 0);
 		if (_fd == -1)
 			continue;
-
 		_family = rp->ai_family;
-
-		// Setup socket options
 		try {
-			setupSocket(rp->ai_family);
+			setupSocketopt(rp->ai_family);
 		} catch (std::exception &e) {
 			::close(_fd);
 			_fd = -1;
 			continue;
 		}
-
-		// Bind socket
 		if (::bind(_fd, rp->ai_addr, rp->ai_addrlen) == 0) {
 			_is_bound = true;
 			break;
-		}
-
-		// Bind failed, try next
+		} 
 		::close(_fd);
 		_fd = -1;
 	}
@@ -141,6 +137,14 @@ void Socket::close() {
 		::close(_fd);
 		_fd = -1;
 	}
+}
+
+void Socket::setHost(const std::string &host) {
+	_host = host;
+}
+
+void Socket::setPort(const std::string &port) {
+	_port = port;
 }
 
 int Socket::getFd() const {

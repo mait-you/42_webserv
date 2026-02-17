@@ -12,14 +12,12 @@ class Socket {
 	bool		_is_bound;
 	bool		_is_listening;
 
-	void setupSocket(int family);
+	void setupSocketopt(int family);
 
   public:
 	Socket();
 	Socket(int fd);
 	Socket(const std::string &host, const std::string &port);
-	Socket(const Socket &other);
-	Socket &operator=(const Socket &other);
 	~Socket();
 
 	void createAndBind();
@@ -28,6 +26,9 @@ class Socket {
 	int	 accept();
 	void close();
 
+	void setHost(const std::string &host);
+	void setPort(const std::string &port);
+
 	int				   getFd() const;
 	const std::string &getHost() const;
 	const std::string &getPort() const;
@@ -35,6 +36,10 @@ class Socket {
 	bool			   isBound() const;
 	bool			   isListening() const;
 	bool			   isValid() const;
+
+//   private:
+	Socket(const Socket &other);
+	Socket &operator=(const Socket &other);
 };
 
 std::ostream &operator<<(std::ostream &out, const Socket &socket);
