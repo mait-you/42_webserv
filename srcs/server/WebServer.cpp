@@ -74,7 +74,7 @@ void WebServer::setupEpoll() {
 
 void WebServer::init(const std::string &configFile) {
 	_config.parse(configFile);
-	std::cout << _config << std::endl;
+	// std::cout << _config << std::endl;
 	setupSockets();
 	setupEpoll();
 }

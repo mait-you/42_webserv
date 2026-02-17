@@ -3,6 +3,18 @@
 
 #include "head.hpp"
 
+enum TokenType {
+	word,
+	openBrace,
+	closeBrace,
+	semiColone
+};
+
+struct Token {
+	TokenType type;
+	std::string value;
+};
+
 struct LocationConfig {
 	std::string				 path; // location path
 	std::vector<std::string> allow_methods;
@@ -14,16 +26,17 @@ struct LocationConfig {
 	bool					 has_redirect;
 	std::string				 redirect_url;
 	int						 redirect_code; // 301 or 302
+	std::map<int, std::string> error_pages;
 
-	// bool					 has_cgi;
-	// std::string				 cgi_extension; // ".php"
-	// std::string				 cgi_path;		// "/usr/bin/php-cgi"
+	bool					 has_cgi;
+	std::string				 cgi_extension; // ".php"
+	std::string				 cgi_path;		// "/usr/bin/php-cgi"
 };
 
 struct ServerConfig {
 	std::vector<std::string>	ports;
 	std::string					host;
-	std::string					server_name; // NEW
+	std::string					server_name;
 	std::string					root;
 	std::string					index;
 	std::string					error_page;

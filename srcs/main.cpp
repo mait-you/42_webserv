@@ -9,13 +9,13 @@ int main(int ac, char **av, char **env) {
 		return 1;
 	}
 	std::string configFile = (ac == 2) ? av[1] : "config/default.conf";
-	setupSignals();
+	// setupSignals();
 	try {
 		WebServer webServer;
 		webServer.init(configFile);
-		std::cout << "Server started successfully Press Ctrl+C to stop"
-				  << std::endl;
-		webServer.run();
+		// std::cout << "Server started successfully Press Ctrl+C to stop"
+		// 		  << std::endl;
+		// webServer.run();
 	} catch (const std::exception &e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 		return 1;
