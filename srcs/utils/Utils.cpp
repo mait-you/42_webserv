@@ -19,14 +19,3 @@ std::string ipv4Tostr(uint32_t ip) {
 	return ss.str();
 }
 
-std::string ipv6Tostr(const unsigned char ip[16]) {
-	std::stringstream ss;
-	ss << std::hex;
-	for (int i = 0; i < 16; i += 2) {
-		uint16_t group = (static_cast<uint16_t>(ip[i]) << 8) | ip[i + 1];
-		ss << group;
-		if (i < 14)
-			ss << ":";
-	}
-	return ss.str();
-}

@@ -36,7 +36,6 @@ typedef struct epoll_event t_ev;
 
 void		setupSignals();
 std::string ipv4Tostr(uint32_t ip);
-std::string ipv6Tostr(const uint8_t ip[16]);
 std::string portTostr(uint16_t port);
 
 #endif
