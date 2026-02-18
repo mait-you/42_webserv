@@ -8,7 +8,7 @@ WebServer::WebServer() : _epollFd(-1) {
 WebServer::~WebServer() {
 	for (size_t i = 0; i < _ServerSockets.size(); ++i)
 		_ServerSockets[i].close();
-	for (tClientIt it = _clients.begin(); it != _clients.end(); ++it)
+	for (Client::ClientIterator it = _clients.begin(); it != _clients.end(); ++it)
 		it->second.getSocket().close();
 	if (_epollFd != -1)
 		close(_epollFd);
@@ -32,6 +32,7 @@ void WebServer::init(const std::string &configFile) {
 			socket.setNonBlocking();
 			socket.listen(128);
 			_ServerSockets.push_back(socket);
+			LOG("Server Socket         | " << socket);
 		}
 	}
 	for (size_t i = 0; i < _ServerSockets.size(); ++i) {
@@ -68,7 +69,7 @@ void WebServer::acceptNewClient(Socket &socket) {
 }
 
 void WebServer::handleClientRead(Socket &socket) {
-	tClientIt it = _clients.find(socket.getFd());
+	Client::ClientIterator it = _clients.find(socket.getFd());
 	if (it == _clients.end())
 		return;
 	LOG("Request received      | " << it->second);
@@ -80,7 +81,7 @@ void WebServer::handleClientRead(Socket &socket) {
 }
 
 void WebServer::handleClientWrite(Socket &socket) {
-	tClientIt it = _clients.find(socket.getFd());
+	Client::ClientIterator it = _clients.find(socket.getFd());
 	if (it == _clients.end())
 		return;
 	it->second.sendData();
@@ -102,7 +103,7 @@ Socket &WebServer::findSocketByFd(int fd) {
 		if (_ServerSockets[i].getFd() == fd)
 			return _ServerSockets[i];
 	}
-	tClientIt it = _clients.find(fd);
+	Client::ClientIterator it = _clients.find(fd);
 	if (it != _clients.end())
 		return it->second.getSocket();
 	throw std::runtime_error("Socket not found");
@@ -119,7 +120,6 @@ void WebServer::run() {
 		}
 		for (int i = 0; i < numEvents; i++) {
 			Socket &socket = findSocketByFd(events[i].data.fd);
-			LOG("Event triggered       | " << socket);
 			if (isWebServerSocket(socket)) {
 				acceptNewClient(socket);
 			} else {

@@ -13,8 +13,6 @@ int main(int ac, char **av) {
 	try {
 		WebServer webServer;
 		webServer.init(configFile);
-		std::cout << "Server started successfully Press Ctrl+C to stop"
-				  << std::endl;
 		webServer.run();
 	} catch (const std::exception &e) {
 		std::cerr << "Error: " << e.what() << std::endl;

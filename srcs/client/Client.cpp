@@ -28,19 +28,22 @@ Client &Client::operator=(const Client &other) {
 Client::~Client() {
 }
 
+
 void Client::readData() {
-	char buffer[1024];
+	char buffer[4096] = {0};
 
 	ssize_t n = recv(_socket.getFd(), buffer, sizeof buffer - 1, 0);
 	if (n <= 0)
 		return;
-	buffer[n] = 0;
 	_buffer += buffer;
-	_response = "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nhello\n";
 
-	// std::cout << "{" << std::endl;
-	// std::cout << _buffer << std::endl;
-	// std::cout << "}" << std::endl;
+	if (_buffer.find("\r\n\r\n") == std::string::npos)
+		return; // wait for more data
+
+	_request.parse(_buffer);
+	_requestComplete = true;
+
+	_response = "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nhello\n";
 }
 
 void Client::sendData() {

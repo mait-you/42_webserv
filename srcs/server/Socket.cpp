@@ -50,12 +50,7 @@ void Socket::createAndBind() {
 		if (_fd == -1)
 			continue;
 		int opt = 1;
-		if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) ==
-			-1) {
-			::close(_fd);
-			_fd = -1;
-			continue;
-		}
+		setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 		if (::bind(_fd, rp->ai_addr, rp->ai_addrlen) == 0) {
 			_is_bound = true;
 			break;

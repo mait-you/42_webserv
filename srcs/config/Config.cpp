@@ -19,26 +19,8 @@ void Config::parse(const std::string &) {
 	ServerConfig server;
 	server.host = "localhost";
 	server.ports.push_back("8080");
-	server.server_name			= "localhost";
-	server.root					= "./www";
-	server.index				= "index.html";
-	server.error_page			= "";
-	server.client_max_body_size = 1000000;
 
-	LocationConfig loc;
-	loc.path = "/";
-	loc.allow_methods.push_back("GET");
-	loc.allow_methods.push_back("POST");
-	loc.autoindex	  = true;
-	loc.upload		  = false;
-	loc.upload_path	  = "";
-	loc.root		  = "";
-	loc.index		  = "";
-	loc.has_redirect  = false;
-	loc.redirect_url  = "";
-	loc.redirect_code = 0;
 
-	server.locations.push_back(loc);
 	_servers.push_back(server);
 }
 

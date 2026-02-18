@@ -7,13 +7,10 @@
 #include "head.hpp"
 
 class WebServer {
-  private:
-	typedef std::map<int, Client> tClientMap;
-	typedef tClientMap::iterator  tClientIt;
 
   private:
 	std::vector<Socket> _ServerSockets;
-	tClientMap			_clients;
+	Client::ClientMap	_clients;
 	Config				_config;
 	int					_epollFd;
 	t_ev				events[MAX_EVENTS];
