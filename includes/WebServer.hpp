@@ -11,6 +11,7 @@ class WebServer {
 	typedef std::map<int, Client> tClientMap;
 	typedef tClientMap::iterator  tClientIt;
 
+  private:
 	std::vector<Socket> _ServerSockets;
 	tClientMap			_clients;
 	Config				_config;

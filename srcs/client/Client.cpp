@@ -60,3 +60,10 @@ Socket &Client::getSocket() {
 // bool Client::isResponseSent() const {
 // 	return _responseSent;
 // }
+
+std::ostream &operator<<(std::ostream &out, Client &client) {
+	out << "Client(fd=" << client.getSocket().getFd() << ", "
+		<< client.getSocket().getIp() << ":" << client.getSocket().getPort()
+		<< ")";
+	return out;
+}

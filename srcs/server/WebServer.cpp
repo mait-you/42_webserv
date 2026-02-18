@@ -64,14 +64,14 @@ void WebServer::acceptNewClient(Socket &socket) {
 		return;
 	}
 	_clients[nweClient.getFd()] = client;
-	std::cout << "New client connected! FD: " << nweClient.getFd() << std::endl;
+	LOG("New client connected  | " << client.getSocket());
 }
 
 void WebServer::handleClientRead(Socket &socket) {
 	tClientIt it = _clients.find(socket.getFd());
 	if (it == _clients.end())
 		return;
-	std::cout << "Request from FD " << socket.getFd() << std::endl;
+	LOG("Request received      | " << it->second);
 	it->second.readData();
 	EPOLL_EVENT(ev);
 	ev.events  = EPOLLIN | EPOLLOUT;
@@ -84,10 +84,9 @@ void WebServer::handleClientWrite(Socket &socket) {
 	if (it == _clients.end())
 		return;
 	it->second.sendData();
-	std::cout << "Response sent to FD " << socket.getFd() << ", closing"
-			  << std::endl;
+	LOG("Response sent         | " << it->second);
 	epoll_ctl(_epollFd, EPOLL_CTL_DEL, socket.getFd(), NULL);
-	socket.close(); // wiiiiiiiiiiiiii3
+	socket.close();
 	_clients.erase(it);
 }
 
@@ -110,7 +109,7 @@ Socket &WebServer::findSocketByFd(int fd) {
 }
 
 void WebServer::run() {
-	std::cout << "WebServer running..." << std::endl;
+	LOG("WebServer running...");
 	while (WebServer::running) {
 		int numEvents = epoll_wait(_epollFd, events, MAX_EVENTS, -1);
 		if (numEvents == -1) {
@@ -120,7 +119,7 @@ void WebServer::run() {
 		}
 		for (int i = 0; i < numEvents; i++) {
 			Socket &socket = findSocketByFd(events[i].data.fd);
-			std::cout << "socketEvent :" << socket << std::endl;
+			LOG("Event triggered       | " << socket);
 			if (isWebServerSocket(socket)) {
 				acceptNewClient(socket);
 			} else {
@@ -132,5 +131,5 @@ void WebServer::run() {
 		}
 		std::memset(&events, 0, sizeof events);
 	}
-	std::cout << "WebServer shutting down..." << std::endl;
+	LOG("WebServer shutting down...");
 }

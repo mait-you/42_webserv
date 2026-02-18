@@ -10,7 +10,7 @@
 typedef struct epoll_event t_ev;
 #define EPOLL_EVENT(name)                                                      \
 	t_ev name;                                                                 \
-	std::memset(&name, 0, sizeof(name))
+	std::memset(&name, 0, sizeof(name));
 
 #define LOG_DEBUGG(msg)                                                        \
 	if (DEBUGGING)                                                             \
@@ -18,6 +18,7 @@ typedef struct epoll_event t_ev;
 
 #include <cerrno>
 #include <cstring>
+#include <ctime>
 #include <errno.h>
 #include <exception>
 #include <fcntl.h>
@@ -33,6 +34,15 @@ typedef struct epoll_event t_ev;
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+
+inline std::string getTime() {
+	std::time_t t = std::time(NULL);
+	char		buf[20];
+	std::strftime(buf, sizeof(buf), "%H:%M:%S", std::localtime(&t));
+	return std::string(buf);
+}
+
+#define LOG(msg) std::cout << "[" << getTime() << "] " << msg << std::endl
 
 void		setupSignals();
 std::string ipv4Tostr(uint32_t ip);

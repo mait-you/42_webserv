@@ -1,7 +1,7 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
-#include "webserv.hpp"
+#include "head.hpp"
 
 class Request {
   private:

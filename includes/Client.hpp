@@ -27,4 +27,6 @@ class Client {
 	// bool isResponseSent() const;
 };
 
+std::ostream &operator<<(std::ostream &out, Client &client);
+
 #endif
