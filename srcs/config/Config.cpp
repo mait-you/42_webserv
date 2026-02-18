@@ -17,7 +17,7 @@ Config::~Config() {
 void Config::parse(const std::string &) {
 
 	ServerConfig server;
-	server.host = "";
+	server.host = "localhost";
 	server.ports.push_back("8080");
 	server.server_name			= "localhost";
 	server.root					= "./www";

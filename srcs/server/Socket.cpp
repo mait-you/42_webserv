@@ -1,27 +1,18 @@
 #include "../../includes/Socket.hpp"
 
 Socket::Socket()
-	: _fd(-1), _host(""), _port(""), _family(AF_UNSPEC), _is_bound(false),
-	  _is_listening(false) {
+	: _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
 }
 
 Socket::Socket(int fd)
-	: _fd(fd), _host(""), _port(""), _family(AF_UNSPEC), _is_bound(false),
-	  _is_listening(false) {
-	if (fd < 0)
+	: _fd(fd), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
+	if (fd == -1)
 		throw std::runtime_error("Socket: invalid file descriptor");
 }
 
 Socket::Socket(const std::string &host, const std::string &port)
-	: _fd(-1), _host(host), _port(port), _family(AF_UNSPEC), _is_bound(false),
-	  _is_listening(false) {
+	: _fd(-1), _ip(host), _port(port), _is_bound(false), _is_listening(false) {
 }
-
-// Socket::Socket(const Socket &other)
-// 	: _fd(other._fd), _host(other._host), _port(other._port),
-// 	  _family(other._family), _is_bound(other._is_bound),
-// 	  _is_listening(other._is_listening) {
-// }
 
 Socket::Socket(const Socket &other) {
 	*this = other;
@@ -31,9 +22,8 @@ Socket::Socket(const Socket &other) {
 Socket &Socket::operator=(const Socket &other) {
 	if (this != &other) {
 		_fd			  = other._fd;
-		_host		  = other._host;
+		_ip			  = other._ip;
 		_port		  = other._port;
-		_family		  = other._family;
 		_is_bound	  = other._is_bound;
 		_is_listening = other._is_listening;
 	}
@@ -43,44 +33,25 @@ Socket &Socket::operator=(const Socket &other) {
 Socket::~Socket() {
 }
 
-void Socket::setupSocketopt(int family) {
-	int opt = 1;
-
-	// Enable address reuse
-	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
-		throw std::runtime_error("setsockopt SO_REUSEADDR failed");
-
-	// For IPv6, accept both IPv4 and IPv6 connections
-	if (family == AF_INET6) {
-		int no = 0;
-		if (setsockopt(_fd, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no)) == -1)
-			throw std::runtime_error("setsockopt IPV6_V6ONLY failed");
-	}
-}
-
 void Socket::createAndBind() {
-	struct addrinfo	 hints;
-	struct addrinfo *result;
-	struct addrinfo *rp;
+	struct addrinfo hints, *result, *rp;
 
 	std::memset(&hints, 0, sizeof(hints));
-	hints.ai_family	  = AF_UNSPEC;
+	hints.ai_family	  = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags	  = AI_PASSIVE;
-	hints.ai_protocol = 0;
 
-	const char *node   = _host.empty() ? NULL : _host.c_str();
-	int			status = getaddrinfo(node, _port.c_str(), &hints, &result);
+	int status = getaddrinfo(_ip.empty() ? NULL : _ip.c_str(), _port.c_str(),
+							 &hints, &result);
 	if (status != 0)
 		throw std::runtime_error("getaddrinfo failed");
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		_fd = socket(rp->ai_family, SOCK_STREAM, 0);
 		if (_fd == -1)
 			continue;
-		_family = rp->ai_family;
-		try {
-			setupSocketopt(rp->ai_family);
-		} catch (std::exception &e) {
+		int opt = 1;
+		if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) ==
+			-1) {
 			::close(_fd);
 			_fd = -1;
 			continue;
@@ -88,7 +59,7 @@ void Socket::createAndBind() {
 		if (::bind(_fd, rp->ai_addr, rp->ai_addrlen) == 0) {
 			_is_bound = true;
 			break;
-		} 
+		}
 		::close(_fd);
 		_fd = -1;
 	}
@@ -121,15 +92,17 @@ void Socket::listen(int backlog) {
 	_is_listening = true;
 }
 
-int Socket::accept() {
+Socket Socket::accept() {
 	if (!_is_listening)
-		return -1;
-
-	struct sockaddr_storage client_addr;
-	socklen_t				addr_len = sizeof(client_addr);
-
-	int client_fd = ::accept(_fd, (struct sockaddr *) &client_addr, &addr_len);
-	return client_fd;
+		return Socket(-1);
+	struct sockaddr_in client_addr;
+	socklen_t		   addr_len = sizeof(client_addr);
+	std::memset(&client_addr, 0, sizeof(client_addr));
+	int clientFd = ::accept(_fd, (struct sockaddr *) &client_addr, &addr_len);
+	Socket clientSock(clientFd);
+	clientSock.setIp(ipv4Tostr(client_addr.sin_addr.s_addr));
+	clientSock.setPort(portTostr(ntohs(client_addr.sin_port)));
+	return clientSock;
 }
 
 void Socket::close() {
@@ -139,8 +112,8 @@ void Socket::close() {
 	}
 }
 
-void Socket::setHost(const std::string &host) {
-	_host = host;
+void Socket::setIp(const std::string &host) {
+	_ip = host;
 }
 
 void Socket::setPort(const std::string &port) {
@@ -151,16 +124,12 @@ int Socket::getFd() const {
 	return _fd;
 }
 
-const std::string &Socket::getHost() const {
-	return _host;
+const std::string &Socket::getIp() const {
+	return _ip;
 }
 
 const std::string &Socket::getPort() const {
 	return _port;
-}
-
-int Socket::getFamily() const {
-	return _family;
 }
 
 bool Socket::isBound() const {
@@ -176,13 +145,8 @@ bool Socket::isValid() const {
 }
 
 std::ostream &operator<<(std::ostream &out, const Socket &socket) {
-	out << "Socket(fd=" << socket.getFd() << ", " << socket.getHost() << ":"
+	out << "Socket(fd=" << socket.getFd() << ", " << socket.getIp() << ":"
 		<< socket.getPort();
-
-	if (socket.getFamily() == AF_INET)
-		out << ", IPv4";
-	else if (socket.getFamily() == AF_INET6)
-		out << ", IPv6";
 
 	if (socket.isBound())
 		out << ", bound";

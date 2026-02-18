@@ -47,21 +47,24 @@ void WebServer::init(const std::string &configFile) {
 }
 
 void WebServer::acceptNewClient(Socket &socket) {
-	int clientFd = socket.accept();
-	if (clientFd == -1)
+	Socket nweClient;
+	try {
+		nweClient = socket.accept();
+	} catch (const std::exception &e) {
 		return;
-	Client client(clientFd);
+	}
+	Client client(nweClient);
 	client.getSocket().setNonBlocking();
 	EPOLL_EVENT(ev);
 	ev.events  = EPOLLIN;
-	ev.data.fd = clientFd;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
+	ev.data.fd = nweClient.getFd();
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, nweClient.getFd(), &ev) == -1) {
 		std::cout << "epoll_ctl ADD failed: " << std::strerror(errno)
 				  << std::endl;
 		return;
 	}
-	_clients[clientFd] = client;
-	std::cout << "New client connected! FD: " << clientFd << std::endl;
+	_clients[nweClient.getFd()] = client;
+	std::cout << "New client connected! FD: " << nweClient.getFd() << std::endl;
 }
 
 void WebServer::handleClientRead(Socket &socket) {
@@ -117,7 +120,7 @@ void WebServer::run() {
 		}
 		for (int i = 0; i < numEvents; i++) {
 			Socket &socket = findSocketByFd(events[i].data.fd);
-			std::cout << "socket :" << socket << std::endl;
+			std::cout << "socketEvent :" << socket << std::endl;
 			if (isWebServerSocket(socket)) {
 				acceptNewClient(socket);
 			} else {

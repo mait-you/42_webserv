@@ -26,7 +26,6 @@ Client &Client::operator=(const Client &other) {
 }
 
 Client::~Client() {
-	// _socket.close();
 }
 
 void Client::readData() {
