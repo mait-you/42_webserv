@@ -74,7 +74,7 @@ void WebServer::setupEpoll() {
 
 void WebServer::init(const std::string &configFile) {
 	_config.parse(configFile);
-	// std::cout << _config << std::endl;
+	std::cout << _config << std::endl;
 	setupSockets();
 	setupEpoll();
 }
@@ -91,6 +91,7 @@ void WebServer::acceptNewClient(Socket &socket) {
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, socket.getFd(), &ev) == -1) {
 		std::cout << "Failed to add client to epoll" << std::endl;
+		perror("epoll_ctl");
 		close(socket.getFd());
 		return;
 	}

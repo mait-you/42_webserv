@@ -16,13 +16,13 @@ struct Token {
 };
 
 struct LocationConfig {
-	std::string				 path; // location path
+	std::string				 path;
 	std::vector<std::string> allow_methods;
 	bool					 autoindex;
 	bool					 upload;
 	std::string				 upload_path;
-	std::string				 root;	// root for this location
-	std::string				 index; // default file
+	std::string				 root;
+	std::string				 index;
 	bool					 has_redirect;
 	std::string				 redirect_url;
 	int						 redirect_code; // 301 or 302
@@ -30,7 +30,8 @@ struct LocationConfig {
 
 	bool					 has_cgi;
 	std::string				 cgi_extension; // ".php"
-	std::string				 cgi_path;		// "/usr/bin/php-cgi"
+	std::string				 cgi_path; // "/usr/bin/php-cgi"
+	LocationConfig();
 };
 
 struct ServerConfig {
@@ -40,13 +41,15 @@ struct ServerConfig {
 	std::string					root;
 	std::string					index;
 	std::string					error_page;
+	std::map<int, std::string> error_pages;
 	unsigned long				client_max_body_size;
 	std::vector<LocationConfig> locations;
+	ServerConfig();
 };
 
 class Config {
   private:
-	std::vector<ServerConfig> _servers; // multiple server blocks
+	std::vector<ServerConfig> _servers;
 
   public:
 	Config();

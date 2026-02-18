@@ -18,6 +18,26 @@ Config::~Config() {
 }
 
 
+ServerConfig::ServerConfig()
+{
+	ports.push_back("8080");
+	host = "0.0.0.0";
+	root = "./www";
+	index = "index.html";
+	client_max_body_size = 1 * 1080 * 1080;
+}
+
+LocationConfig::LocationConfig()
+{
+	allow_methods.push_back("GET");
+	autoindex = false;
+	upload = false;
+	has_redirect = false;
+	redirect_code = 0; 
+	has_cgi = false;
+}
+
+
 std::vector<Token> tokenize(const std::string &filename)
 {
 	char c;
@@ -35,6 +55,15 @@ std::vector<Token> tokenize(const std::string &filename)
 	{
 		if (isspace(c))
 			continue;
+		if (c == '#')
+		{
+			while (configFile.get(c))
+			{
+				if (c == '\n')
+					break;
+			}
+			continue;
+		}
 		if (c == '{')
 		{
 			token.type = openBrace;
@@ -71,9 +100,10 @@ std::vector<Token> tokenize(const std::string &filename)
 		tokens.push_back(token);
 	}
 	configFile.close();
+	return tokens;
 }
 
-void parseLocation(std::vector<Token> &tokens, int &i, LocationConfig &location)
+void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &location)
 {
 		while (i < tokens.size())
 		{
@@ -82,7 +112,7 @@ void parseLocation(std::vector<Token> &tokens, int &i, LocationConfig &location)
 				i++;
 				return;
 			}
-			if (tokens[i].type == word && tokens[i].value == "autoindex")
+			else if (tokens[i].type == word && tokens[i].value == "index")
 			{
 				i++;
 				if (tokens[i].type != word)
@@ -99,7 +129,7 @@ void parseLocation(std::vector<Token> &tokens, int &i, LocationConfig &location)
 				}
 				i++;
 			}
-			if (tokens[i].type == word && tokens[i].value == "upload_path")
+			else if (tokens[i].type == word && tokens[i].value == "upload_path")
 			{
 				i++;
 				if (tokens[i].type != word)
@@ -116,7 +146,35 @@ void parseLocation(std::vector<Token> &tokens, int &i, LocationConfig &location)
 				}
 				i++;
 			}
-			if (tokens[i].type == word && tokens[i].value == "allowed_methods")
+			else if (tokens[i].type == word && tokens[i].value == "autoindex")
+			{
+				i++;
+				if (tokens[i].type != word)
+				{
+					std::cerr << "Expected auto index" << std::endl;
+					return;
+				}
+				if (tokens[i].value == "on")
+				{
+					location.autoindex = true;
+				}
+				else if (tokens[i].value == "off")
+				{
+					location.autoindex = false;
+				}
+				else{
+					std::cerr << "Expected auto index" << std::endl;
+					return;
+				}
+				i++;
+				if (tokens[i].type != semiColone)
+				{
+					std::cerr << "Expected ;" << std::endl;
+					return;
+				}
+				i++;
+			}
+			else if (tokens[i].type == word && tokens[i].value == "allowed_methods")
 			{
 				i++;
 				if (tokens[i].type != word)
@@ -124,20 +182,22 @@ void parseLocation(std::vector<Token> &tokens, int &i, LocationConfig &location)
 					std::cerr << "Expected upload allowed methods" << std::endl;
 					return;
 				}
-				int j = 1;
-				while (j <= 3)
+				location.allow_methods.clear();
+
+				for ( int j = 1; j <= 3; j++)
 				{
-					if (tokens[i].type == word)
+					if (tokens[i].type == word && (tokens[i].value == "GET" || tokens[i].value == "POST" || tokens[i].value == "DELETE"))
 					{
 						location.allow_methods.push_back(tokens[i].value);
 						i++;
 					}
-					else if (tokens[i].type == semiColone)
+					else if (tokens[i].type == semiColone && j != 1)
 					{
 						break;
 					}
 					else
 					{
+						// i think should return error code ? when method not found ?
 						std::cerr << "unexpected upload method" << std::endl;
 						return;
 					}
@@ -150,7 +210,40 @@ void parseLocation(std::vector<Token> &tokens, int &i, LocationConfig &location)
 				i++;
 			}
 
-			if (tokens[i].type == word && tokens[i].value == "cgi_pass")
+			else if (tokens[i].type == word && tokens[i].value == "error_page")
+			{
+				// add this later: muti erros codes can share same error page
+				// error_page 500 502 503 /50x.html;
+				i++;
+				if (tokens[i].type != word)
+				{
+					std::cerr << "Expected error page" << std::endl;
+					return;
+				}
+				unsigned int errorCode;
+				std::stringstream ss(tokens[i].value);
+				ss >> errorCode;
+				if (ss.fail() || !ss.eof())
+				{
+					std::cerr << "Expected error code" << std::endl;
+					return;
+				}
+				i++;
+				if (tokens[i].type != word)
+				{
+					std::cerr << "Expected error page path" << std::endl;
+					return;
+				}
+				location.error_pages[errorCode] = tokens[i].value;
+				if (tokens[i].type != semiColone)
+				{
+					std::cerr << "Expected ;" << std::endl;
+					return;
+				}
+				i++;
+			}
+
+			else if (tokens[i].type == word && tokens[i].value == "cgi_pass")
 			{
 				i++;
 				if (tokens[i].type != word)
@@ -169,12 +262,59 @@ void parseLocation(std::vector<Token> &tokens, int &i, LocationConfig &location)
 				}
 				i++;
 			}
+			else if (tokens[i].type == word && tokens[i].value == "return")
+			{
+				i++;
+				if (tokens[i].type != word)
+				{
+					std::cerr << "Expected redirection status code" << std::endl;
+					return;
+				}
+				unsigned int statusCode;
+				std::stringstream ss(tokens[i].value);
+				ss >> statusCode;
+				if (ss.fail() || !ss.eof())
+				{
+					std::cerr << "Expected redirection status code" << std::endl;
+					return;
+				}
+				if (statusCode != 301 && statusCode != 302)
+				{
+					std::cerr << "status code not allowed" << std::endl;
+					return;
+				}
+				i++;
+				if (tokens[i].type != word)
+				{
+					std::cerr << "Expected redirection url" << std::endl;
+					return;
+				}
+				if (location.has_redirect == true)
+				{
+					std::cerr << "must be one redirection per location" << std::endl;
+					return;
+				}
+				location.has_redirect = true;
+				location.redirect_code = statusCode;
+				location.redirect_url = tokens[i].value;
+				i++;
+				if (tokens[i].type != semiColone)
+				{
+					std::cerr << "Expected ;" << std::endl;
+					return;
+				}
+				i++;
+			}
+			else
+			{
+				std::cerr << "unexpected token: " << tokens[i].value << std::endl;
+				return;
+			}
 		}
 }
 
-void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
+void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 {
-	server.client_max_body_size = 1024 * 1024;
 	while ( i < tokens.size())
 	{
 		if (tokens[i].type == closeBrace)
@@ -190,7 +330,28 @@ void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
 				std::cerr << "Expected port" << std::endl;
 				return;
 			}
-			server.ports.push_back(tokens[i].value);
+			server.ports.clear();
+			std::string port;
+			size_t pos = 0;
+			pos = tokens[i].value.find(':');
+			if (pos != std::string::npos)
+			{
+				server.host = tokens[i].value.substr(0, pos);
+				if (server.host.empty())
+				{
+					std::cerr << "invalid host" << std::endl;
+					return;
+				}
+				port = tokens[i].value.substr(pos + 1);
+				if (server.host.empty() || !isNumber(port))
+				{
+					std::cerr << "invalid port" << std::endl;
+					return;
+				}
+				server.ports.push_back(port);
+			}
+			else
+				server.ports.push_back(tokens[i].value);
 			i++;
 			if (tokens[i].type != semiColone)
 			{
@@ -225,6 +386,7 @@ void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
 				return;
 			}
 			server.root = tokens[i].value;
+			i++;
 			if (tokens[i].type != semiColone)
 			{
 				std::cerr << "Expected ;" << std::endl;
@@ -241,6 +403,7 @@ void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
 				return;
 			}
 			server.index = tokens[i].value;
+			i++;
 			if (tokens[i].type != semiColone)
 			{
 				std::cerr << "Expected ;" << std::endl;
@@ -250,13 +413,30 @@ void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
 		}
 		else if (tokens[i].type == word && tokens[i].value == "error_page")
 		{
+			// add this later: muti erros codes can share same error page
+			// error_page 500 502 503 /50x.html;
 			i++;
 			if (tokens[i].type != word)
 			{
 				std::cerr << "Expected error page" << std::endl;
 				return;
 			}
-			server.error_page = tokens[i].value;
+			unsigned int errorCode;
+			std::stringstream ss(tokens[i].value);
+			ss >> errorCode;
+			if (ss.fail() || !ss.eof())
+			{
+				std::cerr << "Expected error code" << std::endl;
+				return;
+			}
+			i++;
+			if (tokens[i].type != word)
+			{
+				std::cerr << "Expected error page path" << std::endl;
+				return;
+			}
+			server.error_pages[errorCode] = tokens[i].value;
+			i++;
 			if (tokens[i].type != semiColone)
 			{
 				std::cerr << "Expected ;" << std::endl;
@@ -296,6 +476,7 @@ void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
 				}
 			}
 			server.client_max_body_size = value;
+			i++;
 			if (tokens[i].type != semiColone)
 			{
 				std::cerr << "Expected ;" << std::endl;
@@ -329,7 +510,6 @@ void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
 			i++;
 			parseLocation(tokens, i, location);
 			server.locations.push_back(location);
-			// i++;
 		}
 		else
 		{
@@ -340,16 +520,17 @@ void parseServer(std::vector<Token> &tokens, int &i, ServerConfig &server)
 }
 
 void Config::parse(const std::string &filename) {
-	// File → Lexer → Vector<Token> → Parser → Config Structure
-	// file reading + tokenizing + parsing logic.
-	// 1- read file	
-	// 2-Tokenize
-	// 3-Validate structure
-	// 4-Store in structs
+	// 1- read file	 and Tokenize
+	// 2-parse and Validate structure
+	// 3-Store in Config Structure
 
 	std::vector<Token> tokens = tokenize(filename);
-
-	int i = 0;
+	// for (size_t i = 0; i < tokens.size(); i++)
+	// {
+	// 	std::cout << tokens[i].value << " | " << tokens[i].type << std::endl;
+	// }
+	// return;
+	size_t i = 0;
 
 	while ( i < tokens.size())
 	{
@@ -372,32 +553,6 @@ void Config::parse(const std::string &filename) {
 		}
 		i++;
 	}
-	
-
-	ServerConfig server;
-	server.host = "127.0.0.1";
-	server.ports.push_back("8080");
-	server.server_name			= "localhost";
-	server.root					= "/var/www";
-	server.index				= "index.html";
-	server.error_page			= "";
-	server.client_max_body_size = 1000000;
-
-	LocationConfig loc;
-	loc.path = "/";
-	loc.allow_methods.push_back("GET");
-	loc.allow_methods.push_back("POST");
-	loc.autoindex	  = true;
-	loc.upload		  = false;
-	loc.upload_path	  = "";
-	loc.root		  = "";
-	loc.index		  = "";
-	loc.has_redirect  = false;
-	loc.redirect_url  = "";
-	loc.redirect_code = 0;
-
-	server.locations.push_back(loc);
-	_servers.push_back(server);
 }
 
 const std::vector<ServerConfig> &Config::getServers() const {
@@ -425,6 +580,11 @@ std::ostream &operator<<(std::ostream &out, const LocationConfig &loc) {
 		out << "      Redirect: " << loc.redirect_code << " "
 			<< loc.redirect_url << std::endl;
 	}
+
+	out << "      has_cgi: " << (loc.has_cgi ? "on" : "off") << std::endl;
+	out << "      has_cgi: " << loc.has_cgi<< std::endl;
+	out << "      cgi_pass: " << loc.cgi_path << std::endl;
+	out << "      cgi_extension: " << loc.cgi_extension  << std::endl;
 	return out;
 }
 

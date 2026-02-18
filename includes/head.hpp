@@ -29,5 +29,6 @@
 		std::cout << "[" << className << "]: " << msg << std::endl;
 
 void setupSignals();
+bool isNumber(std::string str);
 
 #endif
