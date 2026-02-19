@@ -30,5 +30,6 @@
 
 void setupSignals();
 bool isNumber(std::string str);
+bool isValidPort(std::string str);
 
 #endif

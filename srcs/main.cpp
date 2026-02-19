@@ -15,9 +15,9 @@ int main(int ac, char **av, char **env) {
 		webServer.init(configFile);
 		std::cout << "Server started successfully Press Ctrl+C to stop"
 				  << std::endl;
-		webServer.run();
+		// webServer.run();
 	} catch (const std::exception &e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		std::cerr << e.what() << std::endl;
 		return 1;
 	}
 }

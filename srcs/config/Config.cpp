@@ -1,20 +1,20 @@
 #include "../../includes/Config.hpp"
 
 Config::Config() {
-	LOG_DEBUGG("Config", "Default constructor called");
+	LOG_DEBUGG("Invalid config: ", "Default constructor called");
 }
 
 Config::Config(const Config &) {
-	LOG_DEBUGG("Config", "Copy constructor called");
+	LOG_DEBUGG("Invalid config: ", "Copy constructor called");
 }
 
 Config &Config::operator=(const Config &) {
-	LOG_DEBUGG("Config", "Copy assignment constructor called");
+	LOG_DEBUGG("Invalid config: ", "Copy assignment constructor called");
 	return *this;
 }
 
 Config::~Config() {
-	LOG_DEBUGG("Config", "Destructor constructor called");
+	LOG_DEBUGG("Invalid config: ", "Destructor constructor called");
 }
 
 
@@ -45,11 +45,9 @@ std::vector<Token> tokenize(const std::string &filename)
 	std::vector<Token> tokens;
 
 	std::ifstream configFile(filename.c_str());
-	int fd = open(filename.c_str(), O_RDONLY);
-	if (fd < 0)
+	if (!configFile.is_open())
 	{
-		std::cerr << "Error: cannot open config file" << std::endl;
-		return tokens;
+		throw std::runtime_error("Error: cannot open config file");
 	}
 	while (configFile.get(c))
 	{
@@ -105,7 +103,12 @@ std::vector<Token> tokenize(const std::string &filename)
 
 void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &location)
 {
-		while (i < tokens.size())
+		size_t tokenSize = tokens.size();
+		if (i >= tokenSize)
+		{
+			throw std::runtime_error("Invalid config: expected }");
+		}
+		while (i < tokenSize)
 		{
 			if (tokens[i].type == closeBrace)
 			{
@@ -115,44 +118,41 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 			else if (tokens[i].type == word && tokens[i].value == "index")
 			{
 				i++;
-				if (tokens[i].type != word)
+				if (i >= tokenSize || tokens[i].type != word)
 				{
-					std::cerr << "Expected auto index" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: Expected auto index");
+					
 				}
 				location.upload_path = tokens[i].value;
 				i++;
-				if (tokens[i].type != semiColone)
-				{
-					std::cerr << "Expected ;" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != semiColone)
+				{					
+					throw std::runtime_error("Invalid config: Expected ;");
 				}
 				i++;
 			}
 			else if (tokens[i].type == word && tokens[i].value == "upload_path")
 			{
 				i++;
-				if (tokens[i].type != word)
+				if (i >= tokenSize || tokens[i].type != word)
 				{
-					std::cerr << "Expected upload path" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: Expected upload path");
 				}
 				location.upload_path = tokens[i].value;
+				location.upload = true;
 				i++;
-				if (tokens[i].type != semiColone)
+				if (i >= tokenSize || tokens[i].type != semiColone)
 				{
-					std::cerr << "Expected ;" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: Expected ;");
 				}
 				i++;
 			}
 			else if (tokens[i].type == word && tokens[i].value == "autoindex")
 			{
 				i++;
-				if (tokens[i].type != word)
-				{
-					std::cerr << "Expected auto index" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != word)
+				{					
+					throw std::runtime_error("Invalid config: Expected auto index");
 				}
 				if (tokens[i].value == "on")
 				{
@@ -162,25 +162,22 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 				{
 					location.autoindex = false;
 				}
-				else{
-					std::cerr << "Expected auto index" << std::endl;
-					return;
+				else{					
+					throw std::runtime_error("Invalid config: Expected auto index");
 				}
 				i++;
-				if (tokens[i].type != semiColone)
-				{
-					std::cerr << "Expected ;" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != semiColone)
+				{					
+					throw std::runtime_error("Invalid config: Expected ;");
 				}
 				i++;
 			}
 			else if (tokens[i].type == word && tokens[i].value == "allowed_methods")
 			{
 				i++;
-				if (tokens[i].type != word)
-				{
-					std::cerr << "Expected upload allowed methods" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != word)
+				{					
+					throw std::runtime_error("Invalid config: Expected upload allowed methods");
 				}
 				location.allow_methods.clear();
 
@@ -197,15 +194,13 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 					}
 					else
 					{
-						// i think should return error code ? when method not found ?
-						std::cerr << "unexpected upload method" << std::endl;
-						return;
+						// i think should return error code ? when method not found ?						
+						throw std::runtime_error("Invalid config: unexpected upload method");
 					}
 				}
 				if (tokens[i].type != semiColone)
 				{
-					std::cerr << "Expected ;" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: Expected ;");
 				}
 				i++;
 			}
@@ -215,30 +210,27 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 				// add this later: muti erros codes can share same error page
 				// error_page 500 502 503 /50x.html;
 				i++;
-				if (tokens[i].type != word)
-				{
-					std::cerr << "Expected error page" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != word)
+				{					
+					throw std::runtime_error("Invalid config: Expected error page");
 				}
 				unsigned int errorCode;
 				std::stringstream ss(tokens[i].value);
 				ss >> errorCode;
 				if (ss.fail() || !ss.eof())
-				{
-					std::cerr << "Expected error code" << std::endl;
-					return;
+				{					
+					throw std::runtime_error("Invalid config: Expected error code");
 				}
 				i++;
-				if (tokens[i].type != word)
-				{
-					std::cerr << "Expected error page path" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != word)
+				{					
+					throw std::runtime_error("Invalid config: Expected error page path");
 				}
 				location.error_pages[errorCode] = tokens[i].value;
-				if (tokens[i].type != semiColone)
+				i++;
+				if (i >= tokenSize || tokens[i].type != semiColone)
 				{
-					std::cerr << "Expected ;" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: Expected ;");
 				}
 				i++;
 			}
@@ -246,76 +238,86 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 			else if (tokens[i].type == word && tokens[i].value == "cgi_pass")
 			{
 				i++;
-				if (tokens[i].type != word)
-				{
-					std::cerr << "Expected upload path" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != word)
+				{					
+					throw std::runtime_error("Invalid config: Expected upload path");
 				}
 				location.cgi_path = tokens[i].value;
 				location.has_cgi = true;
 				location.cgi_extension = location.path;
 				i++;
-				if (tokens[i].type != semiColone)
+				if (i >= tokenSize || tokens[i].type != semiColone)
 				{
-					std::cerr << "Expected ;" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: Expected ;");
 				}
 				i++;
 			}
 			else if (tokens[i].type == word && tokens[i].value == "return")
 			{
 				i++;
-				if (tokens[i].type != word)
-				{
-					std::cerr << "Expected redirection status code" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != word)
+				{					
+					throw std::runtime_error("Invalid config: Expected redirection status code");
 				}
 				unsigned int statusCode;
 				std::stringstream ss(tokens[i].value);
 				ss >> statusCode;
 				if (ss.fail() || !ss.eof())
-				{
-					std::cerr << "Expected redirection status code" << std::endl;
-					return;
+				{					
+					throw std::runtime_error("Invalid config: Expected redirection status code");
 				}
 				if (statusCode != 301 && statusCode != 302)
-				{
-					std::cerr << "status code not allowed" << std::endl;
-					return;
+				{					
+					throw std::runtime_error("Invalid config: status code not allowed");
 				}
 				i++;
-				if (tokens[i].type != word)
-				{
-					std::cerr << "Expected redirection url" << std::endl;
-					return;
+				if (i >= tokenSize || tokens[i].type != word)
+				{					
+					throw std::runtime_error("Invalid config: Expected redirection url");
 				}
 				if (location.has_redirect == true)
 				{
-					std::cerr << "must be one redirection per location" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: must be one redirection per location");
 				}
 				location.has_redirect = true;
 				location.redirect_code = statusCode;
 				location.redirect_url = tokens[i].value;
 				i++;
-				if (tokens[i].type != semiColone)
+				if (i >= tokenSize || tokens[i].type != semiColone)
 				{
-					std::cerr << "Expected ;" << std::endl;
-					return;
+					throw std::runtime_error("Invalid config: Expected ;");
 				}
 				i++;
 			}
 			else
-			{
-				std::cerr << "unexpected token: " << tokens[i].value << std::endl;
-				return;
+			{		
+				std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
+				throw std::runtime_error(str);
 			}
 		}
 }
 
+bool dupLocation(std::vector<LocationConfig> locations, std::string path)
+{
+	for (size_t i = 0; i < locations.size(); i++)
+	{
+		if(locations[i].path == path)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 {
-	while ( i < tokens.size())
+	size_t tokenSize = tokens.size();
+	if (i >= tokenSize)
+	{		
+		throw std::runtime_error("Invalid config: expected }");
+	}
+
+	while ( i < tokenSize)
 	{
 		if (tokens[i].type == closeBrace)
 		{
@@ -325,12 +327,10 @@ void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 		if (tokens[i].type == word && tokens[i].value == "listen")
 		{
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "Expected port" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: Expected port");
 			}
-			server.ports.clear();
 			std::string port;
 			size_t pos = 0;
 			pos = tokens[i].value.find(':');
@@ -338,76 +338,75 @@ void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 			{
 				server.host = tokens[i].value.substr(0, pos);
 				if (server.host.empty())
-				{
-					std::cerr << "invalid host" << std::endl;
-					return;
+				{					
+					throw std::runtime_error("Invalid config: invalid host");
 				}
 				port = tokens[i].value.substr(pos + 1);
-				if (server.host.empty() || !isNumber(port))
-				{
-					std::cerr << "invalid port" << std::endl;
-					return;
+				if (server.host.empty() || !isNumber(port) || !isValidPort(port))
+				{					
+					throw std::runtime_error("Invalid config: invalid port");
 				}
+				server.ports.clear();
 				server.ports.push_back(port);
 			}
 			else
-				server.ports.push_back(tokens[i].value);
-			i++;
-			if (tokens[i].type != semiColone)
 			{
-				std::cerr << "Expected ;" << std::endl;
-				return;
+				if (tokens[i].value.empty() || !isNumber(tokens[i].value) || !isValidPort(tokens[i].value))
+				{					
+					throw std::runtime_error("Invalid config: invalid port");
+				}
+				server.ports.clear();
+				server.ports.push_back(tokens[i].value);
+			}
+			i++;
+			if (i >= tokenSize || tokens[i].type != semiColone)
+			{
+				throw std::runtime_error("Invalid config: Expected ;");
 			}
 			i++;
 		}
 		else if (tokens[i].type == word && tokens[i].value == "server_name")
 		{
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "Expected server name" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: Expected server name");
 			}
 			server.server_name = tokens[i].value;
 			i++;
-			if (tokens[i].type != semiColone)
+			if (i >= tokenSize || tokens[i].type != semiColone)
 			{
-				std::cerr << "Expected ;" << std::endl;
-				return;
+				throw std::runtime_error("Invalid config: Expected ;");
 			}
 			i++;
 		}
 		else if (tokens[i].type == word && tokens[i].value == "root")
 		{
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "Expected root" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: Expected root");
 			}
 			server.root = tokens[i].value;
 			i++;
-			if (tokens[i].type != semiColone)
+			if (i >= tokenSize || tokens[i].type != semiColone)
 			{
-				std::cerr << "Expected ;" << std::endl;
-				return;
+				throw std::runtime_error("Invalid config: Expected ;");
 			}
 			i++;
 		}
 		else if (tokens[i].type == word && tokens[i].value == "index")
 		{
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "Expected index" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: Expected index");
 			}
 			server.index = tokens[i].value;
 			i++;
-			if (tokens[i].type != semiColone)
+			if (i >= tokenSize || tokens[i].type != semiColone)
 			{
-				std::cerr << "Expected ;" << std::endl;
-				return;
+				throw std::runtime_error("Invalid config: Expected ;");
 			}
 			i++;
 		}
@@ -416,50 +415,44 @@ void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 			// add this later: muti erros codes can share same error page
 			// error_page 500 502 503 /50x.html;
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "Expected error page" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: Expected error page");
 			}
 			unsigned int errorCode;
 			std::stringstream ss(tokens[i].value);
 			ss >> errorCode;
 			if (ss.fail() || !ss.eof())
-			{
-				std::cerr << "Expected error code" << std::endl;
-				return;
+			{				
+				throw std::runtime_error("Invalid config:Expected error code ");
 			}
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "Expected error page path" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: Expected error page path");
 			}
 			server.error_pages[errorCode] = tokens[i].value;
 			i++;
-			if (tokens[i].type != semiColone)
+			if (i >= tokenSize || tokens[i].type != semiColone)
 			{
-				std::cerr << "Expected ;" << std::endl;
-				return;
+				throw std::runtime_error("Invalid config: Expected ;");
 			}
 			i++;
 		}
 		else if (tokens[i].type == word && tokens[i].value == "client_max_body_size")
 		{
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "Expected client max body size" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: Expected client max body size");
 			}
 			unsigned long value;
 			std::string remaining;
 			std::stringstream ss(tokens[i].value);
 			ss >> value;
 			if (ss.fail())
-			{
-				std::cerr << "client max body size not valid" << std::endl;
-				return;
+			{				
+				throw std::runtime_error("Invalid config: client max body size not valid");
 			}
 			if (!ss.eof())
 			{
@@ -470,27 +463,24 @@ void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 					value *= 1024 * 1024;
 				else if (remaining == "G" || remaining == "GB")
 					value *= 1024 * 1024 *1024;
-				else {
-					std::cerr << "client_max_body_size not valid" << std::endl;
-					return;
+				else {					
+					throw std::runtime_error("Invalid config: client_max_body_size not valid");
 				}
 			}
 			server.client_max_body_size = value;
 			i++;
-			if (tokens[i].type != semiColone)
+			if (i >= tokenSize || tokens[i].type != semiColone)
 			{
-				std::cerr << "Expected ;" << std::endl;
-				return;
+				throw std::runtime_error("Invalid config: Expected ;");
 			}
 			i++;
 		}
 		else if (tokens[i].type == word && tokens[i].value == "location")
 		{
 			i++;
-			if (tokens[i].type != word)
-			{
-				std::cerr << "unexpected location path" << std::endl;
-				return;
+			if (i >= tokenSize || tokens[i].type != word)
+			{				
+				throw std::runtime_error("Invalid config: unexpected location path");
 			}
 			LocationConfig location;
 			location.autoindex = false;
@@ -498,14 +488,18 @@ void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 			location.has_redirect = false;
 			location.has_cgi = false;
 
-			location.path = tokens[i].value;
-			if (location.path == "/upload")
-				location.upload = true;
-			i++;
-			if (tokens[i].type != openBrace)
+			if (dupLocation(server.locations, tokens[i].value))
 			{
-				std::cerr << "expected { after location" << std::endl;
-				return;
+				std::string dupPath = "Invalid config: duplicate location " + tokens[i].value;
+				throw std::runtime_error(dupPath);
+			}
+
+			location.path = tokens[i].value;
+			// std::cout << "location path: " << location.path << std::endl;
+			i++;
+			if (i >= tokenSize || tokens[i].type != openBrace)
+			{				
+				throw std::runtime_error("Invalid config: expected { after location");
 			}
 			i++;
 			parseLocation(tokens, i, location);
@@ -513,16 +507,13 @@ void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server)
 		}
 		else
 		{
-			std::cerr << "unexpected token: " << tokens[i].value << std::endl;
-			return;
+			std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
+			throw std::runtime_error(str);
 		}
 	}
 }
 
 void Config::parse(const std::string &filename) {
-	// 1- read file	 and Tokenize
-	// 2-parse and Validate structure
-	// 3-Store in Config Structure
 
 	std::vector<Token> tokens = tokenize(filename);
 	// for (size_t i = 0; i < tokens.size(); i++)
@@ -537,22 +528,30 @@ void Config::parse(const std::string &filename) {
 		if (tokens[i].type == word && tokens[i].value == "server")
 		{
 			i++;
-			if (tokens[i].type != openBrace)
+			if (i >= tokens.size() || tokens[i].type != openBrace)
 			{
-				std::cerr << "expected { after server" << std::endl;
-				return;
+				throw std::runtime_error("Invalid config: expected { after server");
 			}
 			i++;
 			ServerConfig server;
 			parseServer(tokens, i, server);
+			if (_servers.size() != 0 && server.ports == _servers.back().ports)
+			{
+				if (server.server_name == _servers.back().server_name || server.host == _servers.back().host)
+				{
+					throw std::runtime_error("Invalid config: Invalid server config");
+				}
+			}
 			_servers.push_back(server);
 		}
 		else
 		{
-			std::cerr << "unexpected token: " << tokens[i].value << std::endl;
+			std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
+			throw std::runtime_error(str);
 		}
-		i++;
 	}
+	if (_servers.empty())
+		throw std::runtime_error("Config file is empty or contains no server blocks");
 }
 
 const std::vector<ServerConfig> &Config::getServers() const {

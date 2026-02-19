@@ -16,3 +16,13 @@ bool isNumber(std::string str)
 	}
 	return true;
 }
+
+bool isValidPort(std::string str)
+{
+	int port = -1;
+	std::stringstream ss(str);
+	ss >> port;
+	if (port >= 1 && port <= 65535)
+		return true;
+	return false;
+}
