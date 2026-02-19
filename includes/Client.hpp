@@ -17,6 +17,7 @@ class Client {
 	std::string _response;		  // response to send
 	bool		_requestComplete; // is request fully received?
 	bool		_responseSent;	  // is response sent?
+	std::size_t _bytesSent;
 	Request		_request;
 
   public:
@@ -30,8 +31,8 @@ class Client {
 	void sendData(); // send to socket
 
 	Socket &getSocket();
-	bool isRequestComplete() const;
-	bool isResponseSent() const;
+	bool	isRequestComplete() const;
+	bool	isResponseSent() const;
 };
 
 std::ostream &operator<<(std::ostream &out, Client &client);

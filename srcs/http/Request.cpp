@@ -6,16 +6,12 @@ Request::~Request() {
 }
 
 void Request::parse(const std::string &rawRequest) {
-
 	std::size_t pos = 0;
-	// --- 1. Parse Request Line ---
 	std::string requestLine = getLine(rawRequest, pos);
 	{
 		std::istringstream iss(requestLine);
 		iss >> _method >> _uri >> _version;
 	}
-
-	// --- 2. Parse Headers ---
 	while (pos < rawRequest.size()) {
 		std::string line = getLine(rawRequest, pos);
 		if (line.empty())
@@ -28,8 +24,6 @@ void Request::parse(const std::string &rawRequest) {
 		std::string value = trim(line.substr(colon + 1));
 		_headers[key]	  = value;
 	}
-
-	// --- 3. Parse Body ---
 	HeaderIterator it;
 	it = _headers.find("Content-Length");
 	if (it != _headers.end()) {

@@ -34,7 +34,7 @@ void Client::readData() {
 	ssize_t n = recv(_socket.getFd(), buffer, sizeof buffer - 1, 0);
 	if (n <= 0)
 		return;
-	_buffer += buffer;
+	_buffer += std::string(buffer, n);
 
 	LOG("Request received      | \n");
 
@@ -50,10 +50,12 @@ void Client::sendData() {
 	_response = "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nhello\n";
 	if (!_requestComplete)
 		return;
-	ssize_t n = send(_socket.getFd(), _response.c_str(), _response.length(), 0);
-	if (n <= 0)
-		return;
-	_responseSent = true;
+
+	ssize_t n = send(_socket.getFd(), _response.c_str() + _bytesSent,
+					 _response.length() - _bytesSent, 0);
+	if (n > 0)
+		_bytesSent += n;
+	_responseSent = (_bytesSent >= _response.length());
 	LOG("Response sent         | " << *this);
 }
 
