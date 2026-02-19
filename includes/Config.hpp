@@ -67,4 +67,8 @@ std::ostream &operator<<(std::ostream &out, const Config &config);
 std::ostream &operator<<(std::ostream &out, const LocationConfig &loc);
 std::ostream &operator<<(std::ostream &out, const ServerConfig &server);
 
+std::vector<Token> tokenize(const std::string &filename);
+void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &location);
+void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server);
+
 #endif
