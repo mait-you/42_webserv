@@ -48,4 +48,7 @@ void		setupSignals();
 std::string ipv4Tostr(uint32_t ip);
 std::string portTostr(uint16_t port);
 
+std::string getLine(const std::string &raw, size_t &pos);
+std::string trim(const std::string &s);
+
 #endif

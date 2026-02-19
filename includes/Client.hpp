@@ -30,8 +30,8 @@ class Client {
 	void sendData(); // send to socket
 
 	Socket &getSocket();
-	// bool isRequestComplete() const;
-	// bool isResponseSent() const;
+	bool isRequestComplete() const;
+	bool isResponseSent() const;
 };
 
 std::ostream &operator<<(std::ostream &out, Client &client);

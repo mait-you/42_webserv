@@ -22,15 +22,18 @@ class Request {
 
 	void parse(const std::string &rawRequest);
 
-	std::string getMethod() const;
-	std::string getUri() const;
-	std::string getVersion() const;
-	std::string getHeader(const std::string &key) const;
-	std::string getBody() const;
+	std::string		 getMethod() const;
+	std::string		 getUri() const;
+	std::string		 getVersion() const;
+	std::string		 getHeader(const std::string &key) const;
+	std::string		 getBody() const;
+	const HeaderMap &getHeaders() const;
 
   private:
 	Request(const Request &other);
 	Request &operator=(const Request &other);
 };
+
+std::ostream &operator<<(std::ostream &out, const Request &request);
 
 #endif

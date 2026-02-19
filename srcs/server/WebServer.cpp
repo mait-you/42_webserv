@@ -8,7 +8,8 @@ WebServer::WebServer() : _epollFd(-1) {
 WebServer::~WebServer() {
 	for (size_t i = 0; i < _ServerSockets.size(); ++i)
 		_ServerSockets[i].close();
-	for (Client::ClientIterator it = _clients.begin(); it != _clients.end(); ++it)
+	for (Client::ClientIterator it = _clients.begin(); it != _clients.end();
+		 ++it)
 		it->second.getSocket().close();
 	if (_epollFd != -1)
 		close(_epollFd);
@@ -72,11 +73,13 @@ void WebServer::handleClientRead(Socket &socket) {
 	Client::ClientIterator it = _clients.find(socket.getFd());
 	if (it == _clients.end())
 		return;
-	LOG("Request received      | " << it->second);
 	it->second.readData();
+
 	EPOLL_EVENT(ev);
-	ev.events  = EPOLLIN | EPOLLOUT;
 	ev.data.fd = socket.getFd();
+	if (!it->second.isRequestComplete())
+		return;
+	ev.events = EPOLLIN | EPOLLOUT;
 	epoll_ctl(_epollFd, EPOLL_CTL_MOD, socket.getFd(), &ev);
 }
 
@@ -85,7 +88,9 @@ void WebServer::handleClientWrite(Socket &socket) {
 	if (it == _clients.end())
 		return;
 	it->second.sendData();
-	LOG("Response sent         | " << it->second);
+
+	if (!it->second.isResponseSent())
+		return;
 	epoll_ctl(_epollFd, EPOLL_CTL_DEL, socket.getFd(), NULL);
 	socket.close();
 	_clients.erase(it);
@@ -118,6 +123,7 @@ void WebServer::run() {
 				continue;
 			throw std::runtime_error("epoll_wait() failed");
 		}
+		// LOG("Events Number         | " << numEvents);
 		for (int i = 0; i < numEvents; i++) {
 			Socket &socket = findSocketByFd(events[i].data.fd);
 			if (isWebServerSocket(socket)) {
@@ -128,6 +134,9 @@ void WebServer::run() {
 				if (events[i].events & EPOLLOUT)
 					handleClientWrite(socket);
 			}
+			// usleep(500000);
+			// sleep(1);
+
 		}
 		std::memset(&events, 0, sizeof events);
 	}

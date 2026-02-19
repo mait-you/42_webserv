@@ -20,7 +20,6 @@ void Config::parse(const std::string &) {
 	server.host = "localhost";
 	server.ports.push_back("8080");
 
-
 	_servers.push_back(server);
 }
 

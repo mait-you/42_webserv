@@ -9,13 +9,14 @@
 class WebServer {
 
   private:
+	static bool running;
+
+  private:
 	std::vector<Socket> _ServerSockets;
 	Client::ClientMap	_clients;
 	Config				_config;
 	int					_epollFd;
 	t_ev				events[MAX_EVENTS];
-
-	static bool running;
 
   public:
 	WebServer();

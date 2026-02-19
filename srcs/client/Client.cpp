@@ -28,41 +28,46 @@ Client &Client::operator=(const Client &other) {
 Client::~Client() {
 }
 
-
 void Client::readData() {
-	char buffer[4096] = {0};
+	char buffer[1024] = {0};
 
 	ssize_t n = recv(_socket.getFd(), buffer, sizeof buffer - 1, 0);
 	if (n <= 0)
 		return;
 	_buffer += buffer;
 
+	LOG("Request received      | \n");
+
 	if (_buffer.find("\r\n\r\n") == std::string::npos)
 		return; // wait for more data
 
 	_request.parse(_buffer);
 	_requestComplete = true;
-
-	_response = "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nhello\n";
+	LOG("Request complet       | \n" << _request);
 }
 
 void Client::sendData() {
+	_response = "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nhello\n";
+	if (!_requestComplete)
+		return;
 	ssize_t n = send(_socket.getFd(), _response.c_str(), _response.length(), 0);
 	if (n <= 0)
 		return;
+	_responseSent = true;
+	LOG("Response sent         | " << *this);
 }
 
 Socket &Client::getSocket() {
 	return _socket;
 }
 
-// bool Client::isRequestComplete() const {
-// 	return _requestComplete;
-// }
+bool Client::isRequestComplete() const {
+	return _requestComplete;
+}
 
-// bool Client::isResponseSent() const {
-// 	return _responseSent;
-// }
+bool Client::isResponseSent() const {
+	return _responseSent;
+}
 
 std::ostream &operator<<(std::ostream &out, Client &client) {
 	out << "Client(fd=" << client.getSocket().getFd() << ", "
