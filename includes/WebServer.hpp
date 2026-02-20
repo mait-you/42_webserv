@@ -7,14 +7,16 @@
 #include "head.hpp"
 
 class WebServer {
-  private:
-	std::vector<Socket>	  _sockets;
-	std::map<int, Client> _clients;
-	Config				  _config;
-	int					  _epollFd;
-	struct epoll_event	  events[MAX_EVENTS];
 
+  private:
 	static bool running;
+
+  private:
+	Socket::Map _ServerSock;
+	Client::Map _clients;
+	Config		_config;
+	int			_epollFd;
+	t_ev		events[MAX_EVENTS];
 
   public:
 	WebServer();
@@ -26,16 +28,12 @@ class WebServer {
 	static void stop(int);
 
   private:
-	void setupSockets();
-	void setupEpoll();
-	void acceptNewClient(Socket &socket);
-	void handleClientRead(Socket &socket);
-	void handleClientWrite(Socket &socket);
-	bool isWebServerSocket(const Socket &socket) const;
+	void	acceptNewClient(Socket &ServerSock);
+	void	handleClientRead(int fd);
+	void	handleClientWrite(int fd);
 
 	WebServer(const WebServer &other);
 	WebServer &operator=(const WebServer &other);
 };
-
 
 #endif

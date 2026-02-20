@@ -1,20 +1,17 @@
 #include "../../includes/Config.hpp"
 
 Config::Config() {
-	LOG_DEBUGG("Invalid config: ", "Default constructor called");
 }
 
 Config::Config(const Config &) {
-	LOG_DEBUGG("Invalid config: ", "Copy constructor called");
 }
 
 Config &Config::operator=(const Config &) {
-	LOG_DEBUGG("Invalid config: ", "Copy assignment constructor called");
+
 	return *this;
 }
 
 Config::~Config() {
-	LOG_DEBUGG("Invalid config: ", "Destructor constructor called");
 }
 
 
@@ -33,7 +30,7 @@ LocationConfig::LocationConfig()
 	autoindex = false;
 	upload = false;
 	has_redirect = false;
-	redirect_code = 0; 
+	redirect_code = 0;
 	has_cgi = false;
 }
 

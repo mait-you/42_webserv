@@ -1,8 +1,8 @@
 #include "../includes/WebServer.hpp"
 #include "../includes/head.hpp"
 
-int main(int ac, char **av, char **env) {
-	(void) env; // cgi
+int main(int ac, char **av) {
+
 	if (ac > 2) {
 		std::cerr << "Error: Too many arguments" << std::endl;
 		std::cerr << "Usage: ./webserv [configuration_file]" << std::endl;
@@ -13,11 +13,10 @@ int main(int ac, char **av, char **env) {
 	try {
 		WebServer webServer;
 		webServer.init(configFile);
-		std::cout << "Server started successfully Press Ctrl+C to stop"
-				  << std::endl;
-		// webServer.run();
+		webServer.run();
 	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		return 1;
 	}
+	return 0;
 }

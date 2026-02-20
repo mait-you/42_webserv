@@ -40,7 +40,7 @@ struct ServerConfig {
 	std::string					server_name;
 	std::string					root;
 	std::string					index;
-	std::string					error_page;
+	// std::string					error_page;
 	std::map<int, std::string> error_pages;
 	unsigned long				client_max_body_size;
 	std::vector<LocationConfig> locations;
