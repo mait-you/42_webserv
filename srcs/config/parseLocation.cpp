@@ -198,7 +198,7 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 				parseUploadPath(i, tokens, location);
 			else if (tokens[i].type == word && tokens[i].value == "autoindex")
 				parseAutoIndex(i, tokens, location);
-			else if (tokens[i].type == word && tokens[i].value == "allowed_methods")
+			else if (tokens[i].type == word && tokens[i].value == "allow_methods")
 				parseAllowedMethods(i, tokens, location);
 			else if (tokens[i].type == word && tokens[i].value == "error_page")
 				parseErrorPage(i, tokens, location);
