@@ -4,6 +4,12 @@
 #include "head.hpp"
 
 class Socket {
+
+  public:
+	typedef std::map<int, Socket> Map;
+	typedef Map::iterator		  It;
+	typedef Map::const_iterator	  ConstIt;
+
   private:
 	int			_fd;
 	std::string _ip;

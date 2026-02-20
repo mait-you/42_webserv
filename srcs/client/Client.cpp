@@ -1,16 +1,18 @@
 #include "../../includes/Client.hpp"
 
-Client::Client() : _socket(), _requestComplete(false), _responseSent(false) {
+Client::Client()
+	: _socket(), _requestComplete(false), _responseSent(false), _bytesSent(0) {
 }
 
 Client::Client(const Socket &socket)
-	: _socket(socket), _requestComplete(false), _responseSent(false) {
+	: _socket(socket), _requestComplete(false), _responseSent(false),
+	  _bytesSent(0) {
 }
 
 Client::Client(const Client &other)
 	: _socket(other._socket), _buffer(other._buffer),
 	  _response(other._response), _requestComplete(other._requestComplete),
-	  _responseSent(other._responseSent) {
+	  _responseSent(other._responseSent), _bytesSent(other._bytesSent) {
 }
 
 Client &Client::operator=(const Client &other) {
@@ -20,8 +22,8 @@ Client &Client::operator=(const Client &other) {
 		_requestComplete = other._requestComplete;
 		_responseSent	 = other._responseSent;
 		_socket			 = other._socket;
+		_bytesSent		 = other._bytesSent;
 	}
-
 	return *this;
 }
 
