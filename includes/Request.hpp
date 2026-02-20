@@ -32,6 +32,8 @@ class Request {
   private:
 	Request(const Request &other);
 	Request &operator=(const Request &other);
+
+	std::string parseChunkedBody(const std::string &raw, std::size_t pos);
 };
 
 std::ostream &operator<<(std::ostream &out, const Request &request);

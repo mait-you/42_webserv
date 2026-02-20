@@ -31,17 +31,21 @@ Client::~Client() {
 }
 
 void Client::readData() {
-	char buffer[1024] = {0};
-
-	ssize_t n = recv(_socket.getFd(), buffer, sizeof buffer - 1, 0);
+	char	buffer[4096] = {0};
+	ssize_t n			 = recv(_socket.getFd(), buffer, sizeof(buffer) - 1, 0);
 	if (n <= 0)
 		return;
 	_buffer += std::string(buffer, n);
-
 	LOG("Request received      | \n");
 
-	if (_buffer.find("\r\n\r\n") == std::string::npos)
+	std::size_t headerEnd = _buffer.find("\r\n\r\n");
+	if (headerEnd == std::string::npos)
 		return; // wait for more data
+
+	if (_buffer.substr(0, headerEnd).find("Transfer-Encoding: chunked") !=
+		std::string::npos)
+		if (_buffer.find("0\r\n\r\n") == std::string::npos)
+			return; // wait for more data
 
 	_request.parse(_buffer);
 	_requestComplete = true;

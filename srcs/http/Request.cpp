@@ -5,8 +5,14 @@ Request::Request() {
 Request::~Request() {
 }
 
+std::string Request::parseChunkedBody(const std::string &, std::size_t ) {
+	std::string result;
+
+	return result;
+}
+
 void Request::parse(const std::string &rawRequest) {
-	std::size_t pos = 0;
+	std::size_t pos			= 0;
 	std::string requestLine = getLine(rawRequest, pos);
 	{
 		std::istringstream iss(requestLine);
@@ -24,8 +30,7 @@ void Request::parse(const std::string &rawRequest) {
 		std::string value = trim(line.substr(colon + 1));
 		_headers[key]	  = value;
 	}
-	HeaderIterator it;
-	it = _headers.find("Content-Length");
+	HeaderIterator it = _headers.find("Content-Length");
 	if (it != _headers.end()) {
 		std::size_t bodyLen = 0;
 		{
