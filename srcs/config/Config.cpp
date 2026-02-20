@@ -122,8 +122,8 @@ std::ostream &operator<<(std::ostream &out, const ServerConfig &server) {
 		out << "    Server Name: " << server.server_name << std::endl;
 	out << "    Root: " << server.root << std::endl;
 	out << "    Index: " << server.index << std::endl;
-	if (!server.error_page.empty())
-		out << "    Error Page: " << server.error_page << std::endl;
+	// if (!server.error_page.empty())
+	// 	out << "    Error Page: " << server.error_page << std::endl;
 	out << "    Max Body Size: " << server.client_max_body_size << " bytes"
 		<< std::endl;
 
