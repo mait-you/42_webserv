@@ -6,6 +6,7 @@
 #endif
 
 #define MAX_EVENTS 10
+#define RECV_BUFFER_SIZE 4096
 
 typedef struct epoll_event t_ev;
 #define EPOLL_EVENT(name)                                                      \

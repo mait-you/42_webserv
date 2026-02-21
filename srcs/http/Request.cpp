@@ -1,46 +1,80 @@
 #include "../../includes/Request.hpp"
+
 Request::Request() {
+}
+
+Request::Request(const Request &other)
+	: _method(other._method), _uri(other._uri), _version(other._version),
+	  _headers(other._headers), _body(other._body) {
+}
+
+Request &Request::operator=(const Request &other) {
+	if (this != &other) {
+		_method	 = other._method;
+		_uri	 = other._uri;
+		_version = other._version;
+		_headers = other._headers;
+		_body	 = other._body;
+	}
+	return *this;
 }
 
 Request::~Request() {
 }
 
-std::string Request::parseChunkedBody(const std::string &, std::size_t ) {
-	std::string result;
+std::string Request::parseChunkedBody(const std::string &raw, std::size_t pos) {
+	std::string body;
 
-	return result;
-}
-
-void Request::parse(const std::string &rawRequest) {
-	std::size_t pos			= 0;
-	std::string requestLine = getLine(rawRequest, pos);
-	{
-		std::istringstream iss(requestLine);
-		iss >> _method >> _uri >> _version;
-	}
-	while (pos < rawRequest.size()) {
-		std::string line = getLine(rawRequest, pos);
+	while (pos < raw.size()) {
+		std::string line = getLine(raw, pos);
 		if (line.empty())
 			break;
 
+		std::size_t		   chunkSize = 0;
+		std::istringstream iss(line);
+		if (!(iss >> std::hex >> chunkSize) || chunkSize == 0)
+			break;
+		if (pos + chunkSize > raw.size())
+			break;
+		body += raw.substr(pos, chunkSize);
+		pos += chunkSize;
+		if (pos + 2 <= raw.size())
+			pos += 2;
+	}
+	return body;
+}
+
+bool Request::parse(const std::string &buffer) {
+	std::size_t		   pos	= 0;
+	std::string		   line = getLine(buffer, pos);
+	std::istringstream iss(line);
+	if (!(iss >> _method >> _uri >> _version))
+		return false;
+	while (pos < buffer.size()) {
+		std::string line = getLine(buffer, pos);
+		if (line.empty())
+			break;
 		std::size_t colon = line.find(':');
 		if (colon == std::string::npos)
-			continue; // bad line, skip wiii3
-		std::string key	  = trim(line.substr(0, colon));
-		std::string value = trim(line.substr(colon + 1));
-		_headers[key]	  = value;
+			continue;
+		_headers[trim(line.substr(0, colon))] = trim(line.substr(colon + 1));
 	}
-	HeaderIterator it = _headers.find("Content-Length");
-	if (it != _headers.end()) {
-		std::size_t bodyLen = 0;
-		{
-			std::istringstream iss(it->second.c_str());
+	std::string te = getHeader("Transfer-Encoding");
+	if (te == "chunked") {
+		_body = parseChunkedBody(buffer, pos);
+	} else {
+		std::string cl = getHeader("Content-Length");
+		if (!cl.empty()) {
+			std::size_t		   bodyLen = 0;
+			std::istringstream iss(cl);
 			if (!(iss >> bodyLen))
-				return;
+				return false;
+			if (pos + bodyLen > buffer.size())
+				return false;
+			_body = buffer.substr(pos, bodyLen);
 		}
-		if (pos + bodyLen <= rawRequest.size())
-			_body = rawRequest.substr(pos, bodyLen);
 	}
+	return true;
 }
 
 std::string Request::getMethod() const {
@@ -56,31 +90,25 @@ std::string Request::getBody() const {
 	return _body;
 }
 
-std::string Request::getHeader(const std::string &key) const {
-	ConstHeaderIterator it = _headers.find(key);
-	if (it == _headers.end())
-		return "";
-	return it->second;
-}
-
 const Request::HeaderMap &Request::getHeaders() const {
 	return _headers;
 }
 
-std::ostream &operator<<(std::ostream &out, const Request &request) {
-	out << "Method:  " << request.getMethod() << "\n";
-	out << "URI:     " << request.getUri() << "\n";
-	out << "Version: " << request.getVersion() << "\n";
+std::string Request::getHeader(const std::string &key) const {
+	ConstHeaderIt it = _headers.find(key);
+	return (it != _headers.end()) ? it->second : "";
+}
 
-	const Request::HeaderMap	&headers = request.getHeaders();
-	Request::ConstHeaderIterator it		 = headers.begin();
-	while (it != headers.end()) {
+std::ostream &operator<<(std::ostream &out, const Request &req) {
+	out << req.getMethod() << " " << req.getUri() << " " << req.getVersion()
+		<< "\n";
+
+	const Request::HeaderMap &hdrs = req.getHeaders();
+	for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
 		out << it->first << ": " << it->second << "\n";
-		++it;
-	}
 
-	if (!request.getBody().empty())
-		out << "\n" << request.getBody() << "\n";
+	if (!req.getBody().empty())
+		out << "\n" << req.getBody() << "\n";
 
 	return out;
 }

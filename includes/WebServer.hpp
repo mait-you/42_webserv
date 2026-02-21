@@ -1,5 +1,5 @@
-#ifndef WEB_SERVER_HPP
-#define WEB_SERVER_HPP
+#ifndef WEBSERVER_HPP
+#define WEBSERVER_HPP
 
 #include "Client.hpp"
 #include "Config.hpp"
@@ -7,16 +7,14 @@
 #include "head.hpp"
 
 class WebServer {
-
   private:
 	static bool running;
 
-  private:
-	Socket::Map _ServerSock;
+	Socket::Map _serverSockets;
 	Client::Map _clients;
 	Config		_config;
 	int			_epollFd;
-	t_ev		events[MAX_EVENTS];
+	t_ev		_events[MAX_EVENTS];
 
   public:
 	WebServer();
@@ -25,13 +23,18 @@ class WebServer {
 	void init(const std::string &configFile);
 	void run();
 
-	static void stop(int);
+	static void stop(int signo);
 
   private:
-	void	acceptNewClient(Socket &ServerSock);
-	void	handleClientRead(int fd);
-	void	handleClientWrite(int fd);
+	void acceptClient(Socket &serverSock);
 
+	bool handleRead(int fd);
+
+	bool handleWrite(int fd);
+
+	void removeClient(int fd);
+
+  private:
 	WebServer(const WebServer &other);
 	WebServer &operator=(const WebServer &other);
 };

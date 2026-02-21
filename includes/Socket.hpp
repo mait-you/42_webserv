@@ -4,7 +4,6 @@
 #include "head.hpp"
 
 class Socket {
-
   public:
 	typedef std::map<int, Socket> Map;
 	typedef Map::iterator		  It;
@@ -19,29 +18,29 @@ class Socket {
 
   public:
 	Socket();
-	Socket(int fd); // throw
+	Socket(int fd); // throws if fd == -1
 	Socket(const std::string &ip, const std::string &port);
+	Socket(const Socket &other);
+	Socket &operator=(const Socket &other);
 	~Socket();
 
-	void   createAndBind();
-	void   setNonBlocking();
-	void   listen(int backlog);
-	Socket accept(); // throw
+	void createAndBind();
+	void setNonBlocking();
+	void startListening(int backlog);
+	Socket acceptClient();
 	void   close();
 
+	// Setters
 	void setIp(const std::string &ip);
 	void setPort(const std::string &port);
 
+	// Getters
 	int				   getFd() const;
 	const std::string &getIp() const;
 	const std::string &getPort() const;
 	bool			   isBound() const;
 	bool			   isListening() const;
 	bool			   isValid() const;
-
-	//   private:
-	Socket(const Socket &other);
-	Socket &operator=(const Socket &other);
 };
 
 std::ostream &operator<<(std::ostream &out, const Socket &socket);
