@@ -25,12 +25,12 @@ struct LocationConfig {
 	std::string				 index;
 	bool					 has_redirect;
 	std::string				 redirect_url;
-	int						 redirect_code; // 301 or 302
+	int						 redirect_code;
 	std::map<int, std::string> error_pages;
 
 	bool					 has_cgi;
-	std::string				 cgi_extension; // ".php"
-	std::string				 cgi_path; // "/usr/bin/php-cgi"
+	std::string				 cgi_extension;
+	std::string				 cgi_path;
 	LocationConfig();
 };
 

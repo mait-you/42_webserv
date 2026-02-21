@@ -5,6 +5,7 @@
 #include "Config.hpp"
 #include "Socket.hpp"
 #include "head.hpp"
+#include "Response.hpp"
 
 class WebServer {
 
@@ -24,6 +25,8 @@ class WebServer {
 
 	void init(const std::string &configFile);
 	void run();
+	ServerConfig matchedServer(Request &req);
+	LocationConfig* matchedLocation(ServerConfig &srv, Request &req);
 
 	static void stop(int);
 

@@ -5,10 +5,10 @@
 
 class Response {
   private:
-	int								   _statusCode;	   // 200, 404, etc.
-	std::string						   _statusMessage; // OK, Not Found, etc.
-	std::map<std::string, std::string> _headers;	   // response headers
-	std::string						   _body;		   // response body
+	int								   _statusCode;
+	std::string						   _statusMessage;
+	std::map<std::string, std::string> _headers;
+	std::string						   _body;
 
   public:
 	Response();
@@ -20,7 +20,7 @@ class Response {
 	void setHeader(const std::string &key, const std::string &value);
 	void setBody(const std::string &body);
 
-	std::string build() const; // create full HTTP response
+	std::string build() const;
 };
 
 #endif

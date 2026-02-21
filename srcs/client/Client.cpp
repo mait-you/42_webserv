@@ -66,6 +66,11 @@ Socket &Client::getSocket() {
 	return _socket;
 }
 
+Request &Client::getRequest()
+{
+	return _request;
+}
+
 bool Client::isRequestComplete() const {
 	return _requestComplete;
 }

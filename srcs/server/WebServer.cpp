@@ -29,8 +29,104 @@ void WebServer::handleClientRead(int fd) {
 	epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
 }
 
+ServerConfig WebServer::matchedServer(Request &req)
+{
+	std::string port = "8080";
+	std::string server_name;
+	std::string host = req.getHeader("Host");
+	const ServerConfig *matchedPort = NULL;
+
+	size_t pos = host.find(':');
+	if (pos != std::string::npos)
+	{
+		server_name = host.substr(0, pos);
+		port = host.substr(pos + 1);
+	}
+	const std::vector<ServerConfig> &servers = _config.getServers();
+	for (size_t i = 0; i < servers.size(); i++)
+	{
+		for (size_t j = 0; j < servers[i].ports.size(); j++)
+		{
+			if (servers[i].ports[j] == port)
+			{
+				if (!matchedPort)
+					matchedPort = &servers[i];
+				if (servers[i].server_name == server_name)
+					return servers[i];
+			}
+		}
+	}
+	if(matchedPort)
+		return *matchedPort;
+	return servers[0];
+}
+
+LocationConfig* WebServer::matchedLocation(ServerConfig &srv, Request &req)
+{
+	for (size_t i = 0; i < srv.locations.size(); i++)
+	{
+		if (srv.locations[i].path == req.getUri())
+		{
+			return &srv.locations[i];
+		}
+	}
+	return NULL;
+}
+
+bool allowedMethods(LocationConfig *locConfig, Request &req)
+{
+	for (size_t i = 0; i < locConfig->allow_methods.size(); i++)
+	{
+		if (req.getMethod() == locConfig->allow_methods[i])
+			return true;
+	}
+	return false;
+}
+
+bool bodySize(ServerConfig &srv, Request&req)
+{
+	unsigned long max = 0;
+
+	std::string maxStr = req.getHeader("Content-Length");
+	std::stringstream ss(maxStr);
+	ss >> max;
+	if (ss.fail() || !ss.eof())
+		return false;
+	if (max > srv.client_max_body_size)
+		return false;
+	return true;
+}
+
 void WebServer::handleClientWrite(int fd) {
 	Client &client = _clients[fd];
+	Response res;
+
+	ServerConfig srv = matchedServer(client.getRequest());
+	LocationConfig *locConfig = matchedLocation(srv, client.getRequest());
+	if (!locConfig)
+	{
+		res.setStatus(404, "Not Found");
+	}
+	if (locConfig->has_redirect)
+	{
+		if (locConfig->redirect_code == 300)
+			res.setStatus(301, "Moved Permanently");
+		else
+			res.setStatus(302, "Found");
+	}
+	if (!allowedMethods(locConfig, client.getRequest()))
+	{
+		res.setStatus(405, "Method Not Allowed");
+	}
+	if(bodySize( srv, client.getRequest()))
+	{
+		res.setStatus(413, "Payload Too Large");
+	}
+	std::string fullPath = srv.root + client.getRequest().getUri();
+
+
+
+
 	client.sendData();
 	if (!client.isResponseSent())
 		return;

@@ -32,6 +32,7 @@ class Client {
 	void sendData(); // send to socket
 
 	Socket &getSocket();
+	Request &getRequest();
 	bool	isRequestComplete() const;
 	bool	isResponseSent() const;
 };
