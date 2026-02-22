@@ -7,7 +7,6 @@
 
 #define HTTP_VERSION "HTTP/1.1"
 
-
 #define MAX_EVENTS 10
 #define RECV_BUFFER_SIZE 4096
 

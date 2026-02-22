@@ -47,6 +47,10 @@ void Request::validate() {
 		_error = BAD_REQUEST;
 		return;
 	}
+	if (_version != HTTP_VERSION) {
+		_error = UNSUPPORTED_VERSION;
+		return;
+	}
 	_error = OK;
 }
 

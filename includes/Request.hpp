@@ -14,8 +14,9 @@ class Request {
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
 
 	enum HttpError {
-		OK					 = 0,
-		BAD_REQUEST			 = 400,
+		OK					= 0,
+		BAD_REQUEST			= 400,
+		UNSUPPORTED_VERSION = 505,
 	};
 
   private:
