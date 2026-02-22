@@ -3,11 +3,20 @@
 
 #include "head.hpp"
 
+#define END_OF_HEADERS "\r\n\r\n"
+#define MAX_URI_LENGTH 8192
+#define MAX_BODY_SIZE (1024 * 1024)
+
 class Request {
   public:
 	typedef std::map<std::string, std::string> HeaderMap;
 	typedef HeaderMap::iterator				   HeaderIt;
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
+
+	enum HttpError {
+		OK					 = 0,
+		BAD_REQUEST			 = 400,
+	};
 
   private:
 	std::string _method;
@@ -15,6 +24,7 @@ class Request {
 	std::string _version;
 	HeaderMap	_headers;
 	std::string _body;
+	HttpError	_error;
 
   public:
 	Request();
@@ -22,9 +32,11 @@ class Request {
 	Request &operator=(const Request &other);
 	~Request();
 
-	// Returns true when parsing succeeds.
 	bool parse(const std::string &buffer);
+	void validate();
 
+	HttpError		 getError() const;
+	bool			 isValid() const;
 	std::string		 getMethod() const;
 	std::string		 getUri() const;
 	std::string		 getVersion() const;
@@ -33,6 +45,8 @@ class Request {
 	std::string		 getHeader(const std::string &key) const;
 
   private:
+	bool		isValidMethod(const std::string &method) const;
+	bool		isValidUriChars(const std::string &uri) const;
 	std::string parseChunkedBody(const std::string &raw, std::size_t pos);
 };
 

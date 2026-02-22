@@ -33,12 +33,12 @@ Client::~Client() {
 }
 
 bool Client::checkRequestComplete() const {
-	std::size_t headerEnd = _rawBuffer.find("\r\n\r\n");
+	std::size_t headerEnd = _rawBuffer.find(END_OF_HEADERS);
 	if (headerEnd == std::string::npos)
 		return false;
 	std::string headers = _rawBuffer.substr(0, headerEnd);
 	if (headers.find("Transfer-Encoding: chunked") != std::string::npos)
-		return _rawBuffer.find("0\r\n\r\n") != std::string::npos;
+		return _rawBuffer.find("0" END_OF_HEADERS) != std::string::npos;
 	std::size_t clPos = headers.find("Content-Length: ");
 	if (clPos != std::string::npos) {
 		std::size_t		   lineEnd = headers.find("\r\n", clPos + 16);
@@ -52,31 +52,20 @@ bool Client::checkRequestComplete() const {
 	return true;
 }
 
-void Client::buildResponse() {
-	Response resp;
-	resp.setStatus(200, "OK");
-	resp.setHeader("Content-Type", "text/plain");
-	resp.setBody("hello\n");
-	_response = resp.build();
-}
-
 bool Client::readData() {
 	char	buf[RECV_BUFFER_SIZE];
-	ssize_t n = recv(_socket.getFd(), buf, sizeof(buf), 0);
-	if (n == 0)
-		return false;
-	if (n < 0) {
+	ssize_t n = recv(_socket.getFd(), buf, sizeof(buf), MSG_DONTWAIT);
+	if (n <= 0) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return true;
 		return false;
 	}
-	_rawBuffer += std::string(buf, static_cast<std::size_t>(n));
+	_rawBuffer += std::string(buf, n);
 	if (!_requestComplete && checkRequestComplete()) {
 		_requestComplete = true;
 		_request.parse(_rawBuffer);
-		buildResponse();
-		LOG("Request complete      |");
-		// LOG("Request complete      |\n" << _request);
+		_request.validate();
+		LOG("Request complete      |\n" << _request);
 	}
 	return true;
 }
@@ -84,20 +73,52 @@ bool Client::readData() {
 bool Client::sendData() {
 	if (!_requestComplete || _responseSent)
 		return true;
+
+	// wiiiiiiiiiiiiiiiiiiiiii3 (for tisting)
+	if (_response.empty()) {
+		std::ostringstream body;
+		std::ostringstream resp;
+
+		if (!_request.isValid()) {
+			body << _request.getError() << " Error\n";
+			resp << "HTTP/1.1 " << _request.getError() << " Error\r\n"
+				 << "Content-Length: " << body.str().size() << "\r\n"
+				 << "\r\n"
+				 << body.str();
+		} else {
+			body << "OK: " << _request.getMethod() << " " << _request.getUri() << "\n";
+			resp << "HTTP/1.1 200 OK\r\n"
+				 << "Content-Length: " << body.str().size() << "\r\n"
+				 << "\r\n"
+				 << body.str();
+		}
+		_response = resp.str();
+	}
+
 	ssize_t n = send(_socket.getFd(), _response.c_str() + _bytesSent,
-					 _response.size() - _bytesSent, 0);
+					 _response.size() - _bytesSent, MSG_DONTWAIT);
 	if (n < 0) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return true;
 		return false;
 	}
-	_bytesSent += static_cast<std::size_t>(n);
+	_bytesSent += n;
 	if (_bytesSent >= _response.size()) {
 		_responseSent = true;
 		LOG("Response sent         | " << *this);
 		return false;
 	}
 	return true;
+}
+
+void Client::setResponse(const std::string &response) {
+	_response	  = response;
+	_bytesSent	  = 0;
+	_responseSent = false;
+}
+
+const Request &Client::getRequest() const {
+	return _request;
 }
 
 Socket &Client::getSocket() {

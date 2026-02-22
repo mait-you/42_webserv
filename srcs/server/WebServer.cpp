@@ -80,7 +80,7 @@ bool WebServer::handleWrite(int fd) {
 
 void WebServer::init(const std::string &configFile) {
 	_config.parse(configFile);
-	_epollFd = epoll_create(1);
+	_epollFd = epoll_create(true);
 	if (_epollFd == -1)
 		throw std::runtime_error(std::string("epoll_create: ") +
 								 std::strerror(errno));

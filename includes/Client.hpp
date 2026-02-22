@@ -14,15 +14,14 @@ class Client {
 
   private:
 	Socket		_socket;
-	std::string _rawBuffer;		  // bytes received so far
-	std::string _response;		  // full response string (built once)
-	std::size_t _bytesSent;		  // how many bytes of _response already sent
-	bool		_requestComplete; // true when a full request is in _rawBuffer
-	bool		_responseSent;	  // true when _response is fully sent
+	std::string _rawBuffer;
+	std::string _response;
+	std::size_t _bytesSent;
+	bool		_requestComplete;
+	bool		_responseSent;
 	Request		_request;
 
 	bool checkRequestComplete() const;
-	void buildResponse();
 
   public:
 	Client();
@@ -34,9 +33,12 @@ class Client {
 	bool readData();
 	bool sendData();
 
-	Socket &getSocket();
-	bool	isRequestComplete() const;
-	bool	isResponseSent() const;
+	void setResponse(const std::string &response);
+
+	Socket		  &getSocket();
+	const Request &getRequest() const;
+	bool		   isRequestComplete() const;
+	bool		   isResponseSent() const;
 };
 
 std::ostream &operator<<(std::ostream &out, const Client &client);
