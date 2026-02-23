@@ -54,6 +54,7 @@ std::string Response::build() const
 		oss << it->first << ": " << it->second << "\r\n";
 	}
 	oss << "Content-Length: " << _body.size() << "\r\n";
+	// oss << "Content-type: " << "text/html" << "\r\n";
 	oss << "\r\n";
 	oss << _body;
 	return oss.str();

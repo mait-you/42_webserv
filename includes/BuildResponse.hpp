@@ -3,6 +3,6 @@
 
 #include "WebServer.hpp"
 
-Response buildResponse(Request &req, ServerConfig &srv, LocationConfig *locConfig);
+
 
 #endif

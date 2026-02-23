@@ -2,6 +2,7 @@
 #define CLIENT_HPP
 
 #include "Request.hpp"
+#include "Response.hpp"
 #include "Socket.hpp"
 #include "head.hpp"
 
@@ -12,31 +13,34 @@ class Client {
 	typedef Map::const_iterator	  ConstIt;
 
   private:
-	Socket		_socket;		  // client socket fd
-	std::string _buffer;		  // data received from client
-	std::string _response;		  // response to send
-	bool		_requestComplete; // is request fully received?
-	bool		_responseSent;	  // is response sent?
+	Socket		_socket;
+	std::string _rawBuffer;
+	std::string _response;
 	std::size_t _bytesSent;
+	bool		_requestComplete;
+	bool		_responseSent;
 	Request		_request;
+
+	bool checkRequestComplete() const;
 
   public:
 	Client();
 	Client(const Socket &socket);
 	Client(const Client &other);
-	~Client();
 	Client &operator=(const Client &other);
+	~Client();
 
-	void readData(); // read from socket
-	void sendData(); // send to socket
+	bool readData();
+	bool sendData();
 
-	Socket &getSocket();
+	void setResponse(const std::string &response);
+
+	Socket	&getSocket();
 	Request &getRequest();
-	bool	isRequestComplete() const;
-	bool	isResponseSent() const;
-	void setResponse(std::string str);
+	bool	 isRequestComplete() const;
+	bool	 isResponseSent() const;
 };
 
-std::ostream &operator<<(std::ostream &out, Client &client);
+std::ostream &operator<<(std::ostream &out, const Client &client);
 
 #endif

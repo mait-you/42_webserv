@@ -5,7 +5,10 @@
 #define DEBUGGING 0
 #endif
 
+#define HTTP_VERSION "HTTP/1.1"
+
 #define MAX_EVENTS 10
+#define RECV_BUFFER_SIZE 4096
 
 typedef struct epoll_event t_ev;
 #define EPOLL_EVENT(name)                                                      \
@@ -37,14 +40,7 @@ typedef struct epoll_event t_ev;
 #include <vector>
 #include <sys/stat.h>
 
-inline std::string getTime() {
-	std::time_t t = std::time(NULL);
-	char		buf[20];
-	std::strftime(buf, sizeof(buf), "%H:%M:%S", std::localtime(&t));
-	return std::string(buf);
-}
-
-#define LOG(msg) std::cout << "[" << getTime() << "] " << msg << std::endl
+#define LOG(msg) std::cout << msg << std::endl
 
 void setupSignals();
 bool isNumber(std::string str);
