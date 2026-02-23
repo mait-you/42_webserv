@@ -63,70 +63,35 @@ ServerConfig WebServer::matchedServer(Request &req)
 
 LocationConfig* WebServer::matchedLocation(ServerConfig &srv, Request &req)
 {
+	LocationConfig *matched = NULL;
+	const std::string &uri = req.getUri();
+	size_t matchedLen = 0;
+
 	for (size_t i = 0; i < srv.locations.size(); i++)
 	{
-		if (srv.locations[i].path == req.getUri())
+		std::string &path = srv.locations[i].path;
+		if (uri.compare(0, path.size(), path) == 0)
 		{
-			return &srv.locations[i];
+			if (path.size() > matchedLen)
+			{
+				matchedLen = path.size();
+				matched = &srv.locations[i];
+			}
 		}
 	}
-	return NULL;
+	return matched;
 }
 
-bool allowedMethods(LocationConfig *locConfig, Request &req)
-{
-	for (size_t i = 0; i < locConfig->allow_methods.size(); i++)
-	{
-		if (req.getMethod() == locConfig->allow_methods[i])
-			return true;
-	}
-	return false;
-}
-
-bool bodySize(ServerConfig &srv, Request&req)
-{
-	unsigned long max = 0;
-
-	std::string maxStr = req.getHeader("Content-Length");
-	std::stringstream ss(maxStr);
-	ss >> max;
-	if (ss.fail() || !ss.eof())
-		return false;
-	if (max > srv.client_max_body_size)
-		return false;
-	return true;
-}
 
 void WebServer::handleClientWrite(int fd) {
 	Client &client = _clients[fd];
-	Response res;
 
 	ServerConfig srv = matchedServer(client.getRequest());
 	LocationConfig *locConfig = matchedLocation(srv, client.getRequest());
-	if (!locConfig)
-	{
-		res.setStatus(404, "Not Found");
-	}
-	if (locConfig->has_redirect)
-	{
-		if (locConfig->redirect_code == 300)
-			res.setStatus(301, "Moved Permanently");
-		else
-			res.setStatus(302, "Found");
-	}
-	if (!allowedMethods(locConfig, client.getRequest()))
-	{
-		res.setStatus(405, "Method Not Allowed");
-	}
-	if(bodySize( srv, client.getRequest()))
-	{
-		res.setStatus(413, "Payload Too Large");
-	}
-	std::string fullPath = srv.root + client.getRequest().getUri();
 
+	Response res = buildResponse(client.getRequest(), srv, locConfig);
 
-
-
+	client.setResponse(res.build());
 	client.sendData();
 	if (!client.isResponseSent())
 		return;

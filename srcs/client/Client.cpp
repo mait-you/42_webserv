@@ -49,8 +49,6 @@ void Client::readData() {
 }
 
 void Client::sendData() {
-	_response = "HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nhello\n";
-
 	if (!_requestComplete)
 		return;
 
@@ -69,6 +67,11 @@ Socket &Client::getSocket() {
 Request &Client::getRequest()
 {
 	return _request;
+}
+
+void Client::setResponse(std::string str)
+{
+	_response = str;
 }
 
 bool Client::isRequestComplete() const {

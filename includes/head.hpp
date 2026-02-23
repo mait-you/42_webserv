@@ -26,6 +26,7 @@ typedef struct epoll_event t_ev;
 #include <iostream>
 #include <map>
 #include <netdb.h>
+
 #include <poll.h>
 #include <signal.h>
 #include <sstream>
@@ -34,6 +35,7 @@ typedef struct epoll_event t_ev;
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+#include <sys/stat.h>
 
 inline std::string getTime() {
 	std::time_t t = std::time(NULL);

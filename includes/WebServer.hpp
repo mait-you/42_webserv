@@ -6,6 +6,7 @@
 #include "Socket.hpp"
 #include "head.hpp"
 #include "Response.hpp"
+#include "BuildResponse.hpp"
 
 class WebServer {
 

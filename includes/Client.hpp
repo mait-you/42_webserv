@@ -19,7 +19,6 @@ class Client {
 	bool		_responseSent;	  // is response sent?
 	std::size_t _bytesSent;
 	Request		_request;
-	// Response	_response;
 
   public:
 	Client();
@@ -35,6 +34,7 @@ class Client {
 	Request &getRequest();
 	bool	isRequestComplete() const;
 	bool	isResponseSent() const;
+	void setResponse(std::string str);
 };
 
 std::ostream &operator<<(std::ostream &out, Client &client);

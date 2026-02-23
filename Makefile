@@ -17,7 +17,9 @@ SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/config/serverConfig.cpp \
 	$(SRC_DIR)/client/Client.cpp \
 	$(SRC_DIR)/http/Request.cpp \
-	$(SRC_DIR)/utils/Utils.cpp
+	$(SRC_DIR)/utils/Utils.cpp \
+	$(SRC_DIR)/http/Response.cpp \
+	$(SRC_DIR)/http/buildResponse.cpp
 
 OBJS        = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
