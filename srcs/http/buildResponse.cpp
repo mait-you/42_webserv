@@ -169,10 +169,74 @@ Response handleGet(Request &req, ServerConfig &srv, LocationConfig *locConfig)
 	return res;
 }
 
-Response buildResponse(Request &req, ServerConfig &srv, LocationConfig *locConfig)
+
+ServerConfig matchedServer(Request &req, const std::vector<ServerConfig> &servers) {
+	std::string			port = "8080";
+	std::string			server_name;
+	std::string			host		= req.getHeader("Host");
+	const ServerConfig *matchedPort = NULL;
+
+	size_t pos = host.find(':');
+	if (pos != std::string::npos) {
+		server_name = host.substr(0, pos);
+		port		= host.substr(pos + 1);
+	}
+
+	for (size_t i = 0; i < servers.size(); i++) {
+		for (size_t j = 0; j < servers[i].ports.size(); j++) {
+			if (servers[i].ports[j] == port) {
+				if (!matchedPort)
+					matchedPort = &servers[i];
+				if (servers[i].server_name == server_name)
+					return servers[i];
+			}
+		}
+	}
+	if (matchedPort)
+		return *matchedPort;
+	return servers[0];
+}
+
+LocationConfig *matchedLocation(ServerConfig &srv, Request &req) {
+	LocationConfig	  *matched	  = NULL;
+	const std::string &uri		  = req.getUri();
+	size_t			   matchedLen = 0;
+
+	for (size_t i = 0; i < srv.locations.size(); i++) {
+		std::string &path = srv.locations[i].path;
+		if (uri.compare(0, path.size(), path) == 0) {
+			if (path.size() > matchedLen) {
+				matchedLen = path.size();
+				matched	   = &srv.locations[i];
+			}
+		}
+	}
+	return matched;
+}
+
+Response buildResponse(Request &req, const std::vector<ServerConfig> &servers, Client &client)
 {
+	ServerConfig	srv		  = matchedServer(client.getRequest(), servers);
+	LocationConfig *locConfig = matchedLocation(srv, client.getRequest());
 	Response res;
 
+	if (!req.isValid())
+	{
+		Request::HttpError error = req.getError();
+		if (error == 400)
+		{
+			res.setStatus(error, "Bad Request");
+			res.setHeader("Content-type", "text/html");
+			res.setBody("<html><body style='display: flex; justify-content: center;''><h1>400 Bad Request</h1></body></html>");
+		}
+		else if(error == 505)
+		{
+			res.setStatus(error, "HTTP Version Not Supported");
+			res.setHeader("Content-type", "text/html");
+			res.setBody("<html><body style='display: flex; justify-content: center;''><h1>505 HTTP Version Not Supported</h1></body></html>");
+		}
+		return res;
+	}
 	if (!locConfig)
 	{
 		res.setStatus(404, "Not Found");

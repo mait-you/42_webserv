@@ -24,8 +24,6 @@ class WebServer {
 
 	void			init(const std::string &configFile);
 	void			run();
-	ServerConfig	matchedServer(Request &req);
-	LocationConfig *matchedLocation(ServerConfig &srv, Request &req);
 
 	static void stop(int signo);
 
@@ -42,7 +40,6 @@ class WebServer {
 	WebServer &operator=(const WebServer &other);
 };
 
-Response buildResponse(Request &req, ServerConfig &srv, LocationConfig *locConfig);
-ServerConfig matchedServer(Request &req);
+Response buildResponse(Request &req, const std::vector<ServerConfig> &servers, Client &client);
 
 #endif

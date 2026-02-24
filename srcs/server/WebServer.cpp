@@ -71,57 +71,10 @@ bool WebServer::handleRead(int fd) {
 	return true;
 }
 
-ServerConfig WebServer::matchedServer(Request &req) {
-	std::string			port = "8080";
-	std::string			server_name;
-	std::string			host		= req.getHeader("Host");
-	const ServerConfig *matchedPort = NULL;
-
-	size_t pos = host.find(':');
-	if (pos != std::string::npos) {
-		server_name = host.substr(0, pos);
-		port		= host.substr(pos + 1);
-	}
-	const std::vector<ServerConfig> &servers = _config.getServers();
-	for (size_t i = 0; i < servers.size(); i++) {
-		for (size_t j = 0; j < servers[i].ports.size(); j++) {
-			if (servers[i].ports[j] == port) {
-				if (!matchedPort)
-					matchedPort = &servers[i];
-				if (servers[i].server_name == server_name)
-					return servers[i];
-			}
-		}
-	}
-	if (matchedPort)
-		return *matchedPort;
-	return servers[0];
-}
-
-LocationConfig *WebServer::matchedLocation(ServerConfig &srv, Request &req) {
-	LocationConfig	  *matched	  = NULL;
-	const std::string &uri		  = req.getUri();
-	size_t			   matchedLen = 0;
-
-	for (size_t i = 0; i < srv.locations.size(); i++) {
-		std::string &path = srv.locations[i].path;
-		if (uri.compare(0, path.size(), path) == 0) {
-			if (path.size() > matchedLen) {
-				matchedLen = path.size();
-				matched	   = &srv.locations[i];
-			}
-		}
-	}
-	return matched;
-}
-
 bool WebServer::handleWrite(int fd) {
 	Client &client = _clients[fd];
 
-	ServerConfig	srv		  = matchedServer(client.getRequest());
-	LocationConfig *locConfig = matchedLocation(srv, client.getRequest());
-
-	Response res = buildResponse(client.getRequest(), srv, locConfig);
+	Response res = buildResponse(client.getRequest(), _config.getServers(), client);
 
 	client.setResponse(res.build());
 	if (!client.sendData())
