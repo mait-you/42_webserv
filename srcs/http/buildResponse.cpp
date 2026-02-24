@@ -2,6 +2,8 @@
 #include "../../includes/BuildResponse.hpp"
 #include "../../includes/MimeTypes.hpp"
 
+Response handleFile(ServerConfig &srv, LocationConfig *locConfig, const std::string &fullPath);
+
 bool allowedMethods(LocationConfig *locConfig, Request &req)
 {
 	for (size_t i = 0; i < locConfig->allow_methods.size(); i++)
@@ -11,7 +13,6 @@ bool allowedMethods(LocationConfig *locConfig, Request &req)
 	}
 	return false;
 }
-
 
 bool bodySize(ServerConfig &srv, Request &req)
 {
@@ -39,13 +40,32 @@ std::string getExtension(std::string fullPath)
 	return "";
 }
 
-Response handleFile(const std::string &fullPath)
+Response errorPage(ServerConfig &srv, LocationConfig *locConfig, int code, std::string codeMsg)
+{
+	Response res;
+	if (locConfig->error_pages.find(code) != locConfig->error_pages.end())
+		res = handleFile(srv , locConfig, locConfig->error_pages[code]);
+	else if (srv.error_pages.find(code) != srv.error_pages.end())
+		res = handleFile(srv , locConfig, srv.error_pages[code]);
+	else
+	{
+		res.setHeader("Content-type", "text/html");
+		std::string defaultErr = "<html><body style='display: flex; justify-content: center;''><h1>code";
+		defaultErr += codeMsg;
+		defaultErr += "</h1></body></html>";
+		res.setBody(defaultErr);
+	}
+	res.setStatus(code, codeMsg);
+	return res;
+}
+
+Response handleFile(ServerConfig &srv, LocationConfig *locConfig, const std::string &fullPath)
 {
 	Response res;
 	std::ifstream file(fullPath.c_str());
 	if (!file.is_open())
 	{
-		res.setStatus(403, "Forbidden");
+		res = errorPage(srv, locConfig, 403 , "Forbidden");
 		return res;
 	}
 	std::stringstream ss;
@@ -53,7 +73,6 @@ Response handleFile(const std::string &fullPath)
 	std::string fileContent = ss.str();
 	res.setStatus(200, "OK");
 	std::string extension = getExtension(fullPath);
-	std::cout << "extension: " << extension << std::endl;
 	Mime mm;
 	res.setHeader("Content-type",mm.getType(extension));
 	res.setBody(fileContent);
@@ -73,23 +92,33 @@ std::string  getList(std::string fullPath, std::string uri)
 	struct dirent *entry;
 	res += "<html><body><h1> Index of ";
 	res += uri;
+	res += "</h1> ";
 	res += "<hr><pre style='display: flex; flex-direction: column; gap: 10px;'>";
+	struct stat st;
 	while ((entry = readdir(dir)) != NULL)
 	{
 		res += "<a href='";
-		res += entry->d_name;
-		res += "'>";
-		res += entry->d_name;
+		if (stat((fullPath + entry->d_name).c_str(), &st) == 0 && S_ISDIR(st.st_mode))
+		{
+			res += entry->d_name;
+			res += "/";
+			res += "'> ";
+			res += entry->d_name;
+			res += "/";
+		}
+		else
+		{
+			res += entry->d_name;
+			res += "'> ";
+			res += entry->d_name;
+		}
 		res += "</a>";
 	}
 	res += "</pre></body></html>";
 	closedir(dir);
 	return res;
 }
-// std::string findPage(int errorCode)
-// {
-// 	if ()
-// }
+
 
 Response handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig, const std::string &fullPath)
 {
@@ -113,13 +142,12 @@ Response handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig, c
 		struct stat st;
 		if (stat(indexPath.c_str(), &st) == 0 && S_ISREG(st.st_mode))
 		{
-			res = handleFile(indexPath);
+			res = handleFile(srv , locConfig, indexPath);
 			return res;
 		}
 	}
 	if (locConfig->autoindex)
 	{
-
 		std::string DirList = getList(fullPath, uri);
 		if (!DirList.empty())
 		{
@@ -128,20 +156,10 @@ Response handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig, c
 			res.setBody(DirList);
 		}
 		else
-		{
-			res.setStatus(403, "Forbidden");
-			res.setHeader("Content-type", "text/html");
-			// std::strinf errorPage = findPage(403);
-			if (srv.error_pages.find(403) != srv.error_pages.end())
-			{
-				res = handleFile(srv.error_pages[403]);
-			}
-			else
-				res.setBody("<html><body style='display: flex; justify-content: center;''><h1>403 Forbidden ss</h1></body></html>");
-		}
-		return res;
+			res = errorPage(srv, locConfig, 403, "Forbidden");
 	}
-	res.setStatus(403, "Forbidden");
+	else
+		res = errorPage(srv, locConfig, 403, "Forbidden");
 	return res;
 }
 
@@ -157,15 +175,15 @@ Response handleGet(Request &req, ServerConfig &srv, LocationConfig *locConfig)
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0)
 	{
-		res.setStatus(404, "Not Found");
+		res = errorPage(srv, locConfig, 404 , "Not Found");
 		return res;
 	}
 	if (S_ISREG(buffer.st_mode))
-		res = handleFile(fullPath);
+		res = handleFile(srv , locConfig, fullPath);
 	else if (S_ISDIR(buffer.st_mode))
 		res = handleDir(req, srv, locConfig, fullPath);
 	else
-		res.setStatus(404, "Not Found");
+		res = errorPage(srv, locConfig, 404 , "Not Found");
 	return res;
 }
 
@@ -224,41 +242,33 @@ Response buildResponse(Request &req, const std::vector<ServerConfig> &servers, C
 	{
 		Request::HttpError error = req.getError();
 		if (error == 400)
-		{
-			res.setStatus(error, "Bad Request");
-			res.setHeader("Content-type", "text/html");
-			res.setBody("<html><body style='display: flex; justify-content: center;''><h1>400 Bad Request</h1></body></html>");
-		}
+			res = errorPage(srv, locConfig, 400 , "Bad Request");
 		else if(error == 505)
-		{
-			res.setStatus(error, "HTTP Version Not Supported");
-			res.setHeader("Content-type", "text/html");
-			res.setBody("<html><body style='display: flex; justify-content: center;''><h1>505 HTTP Version Not Supported</h1></body></html>");
-		}
+			res = errorPage(srv, locConfig, 505 , "HTTP Version Not Supported");
 		return res;
 	}
 	if (!locConfig)
 	{
-		res.setStatus(404, "Not Found");
+		res = errorPage(srv, locConfig, 404 , "Not Found");
 		return res;
 	}
 	if (locConfig->has_redirect)
 	{
 		if (locConfig->redirect_code == 301)
-			res.setStatus(locConfig->redirect_code,"Moved Permanently");
+			res = errorPage(srv, locConfig, 301 , "Moved Permanently");
 		else
-			res.setStatus(locConfig->redirect_code,"Found");
+			res = errorPage(srv, locConfig, 302 , "Found");
 		res.setHeader("Location", locConfig->redirect_url);
 		return res;
 	}
 	if (!allowedMethods(locConfig, req))
 	{
-		res.setStatus(405, "Method Not Allowed");
+		res = errorPage(srv, locConfig, 405 , "Method Not Allowed");
 		return res;
 	}
 	if (!bodySize(srv, req))
 	{
-		res.setStatus(413, "Payload Too Large");
+		res = errorPage(srv, locConfig, 413 , "Payload Too Large");
 		return res;
 	}
 
