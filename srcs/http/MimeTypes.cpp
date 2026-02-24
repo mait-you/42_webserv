@@ -1,0 +1,131 @@
+#include "../../includes/MimeTypes.hpp"
+
+Mime::Mime()
+{
+	_types["html"] = "text/html";
+	_types["htm"] = "text/html";
+	_types["shtml"] = "text/html";
+	_types["css"] = "text/css";
+	_types["xml"] = "text/xml";
+	_types["gif"] = "image/gif";
+	_types["jpeg"] = "image/jpeg";
+	_types["jpg"] = "image/jpeg";
+	_types["js"] = "application/javascript";
+	_types["atom"] = "application/atom+xml";
+	_types["rss"] = "application/rss+xml";
+	_types["mml"] = "text/mathml";
+	_types["txt"] = "text/plain";
+	_types["jad"] = "text/vnd.sun.j2me.app-descriptor";
+	_types["wml"] = "text/vnd.wap.wml";
+	_types["htc"] = "text/x-component";
+	_types["avif"] = "image/avif";
+	_types["png"] = "image/png";
+	_types["svg"] = "image/svg+xml";
+	_types["svgz"] = "image/svg+xml";
+	_types["tif"] = "image/tiff";
+	_types["tiff"] = "image/tiff";
+	_types["wbmp"] = "image/vnd.wap.wbmp";
+	_types["webp"] = "image/webp";
+	_types["ico"] = "image/x-icon";
+	_types["jng"] = "image/x-jng";
+	_types["bmp"] = "image/x-ms-bmp";
+	_types["woff"] = "font/woff";
+	_types["woff2"] = "font/woff2";
+	_types["jar"] = "application/java-archive";
+	_types["war"] = "application/java-archive";
+	_types["ear"] = "application/java-archive";
+	_types["json"] = "application/json";
+	_types["hqx"] = "application/mac-binhex40";
+	_types["doc"] = "application/msword";
+	_types["pdf"] = "application/pdf";
+	_types["ps"] = "application/postscript";
+	_types["eps"] = "application/postscript";
+	_types["ai"] = "application/postscript";
+	_types["rtf"] = "application/rtf";
+	_types["m3u8"] = "application/vnd.apple.mpegurl";
+	_types["kml"] = "application/vnd.google-earth.kml+xml";
+	_types["kmz"] = "application/vnd.google-earth.kmz";
+	_types["xls"] = "application/vnd.ms-excel";
+	_types["eot"] = "application/vnd.ms-fontobject";
+	_types["ppt"] = "application/vnd.ms-powerpoint";
+	_types["odg"] = "application/vnd.oasis.opendocument.graphics";
+	_types["odp"] = "application/vnd.oasis.opendocument.presentation";
+	_types["ods"] = "application/vnd.oasis.opendocument.spreadsheet";
+	_types["odt"] = "application/vnd.oasis.opendocument.text";
+	_types["pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+	_types["xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+	_types["docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+	_types["wmlc"] = "application/vnd.wap.wmlc";
+	_types["wasm"] = "application/wasm";
+	_types["7z"] = "application/x-7z-compressed";
+	_types["cco"] = "application/x-cocoa";
+	_types["jardiff"] = "application/x-java-archive-diff";
+	_types["jnlp"] = "application/x-java-jnlp-file";
+	_types["run"] = "application/x-makeself";
+	_types["pl"] = "application/x-perl";
+	_types["pm"] = "application/x-perl";
+	_types["prc"] = "application/x-pilot";
+	_types["pdb"] = "application/x-pilot";
+	_types["rar"] = "application/x-rar-compressed";
+	_types["rpm"] = "application/x-redhat-package-manager";
+	_types["sea"] = "application/x-sea";
+	_types["swf"] = "application/x-shockwave-flash";
+	_types["sit"] = "application/x-stuffit";
+	_types["tcl"] = "application/x-tcl";
+	_types["tk"] = "application/x-tcl";
+	_types["der"] = "application/x-x509-ca-cert";
+	_types["pem"] = "application/x-x509-ca-cert";
+	_types["crt"] = "application/x-x509-ca-cert";
+	_types["xpi"] = "application/x-xpinstall";
+	_types["xhtml"] = "application/xhtml+xml";
+	_types["xspf"] = "application/xspf+xml";
+	_types["zip"] = "application/zip";
+	_types["bin"] = "application/octet-stream";
+	_types["exe"] = "application/octet-stream";
+	_types["dll"] = "application/octet-stream";
+	_types["deb"] = "application/octet-stream";
+	_types["dmg"] = "application/octet-stream";
+	_types["iso"] = "application/octet-stream";
+	_types["img"] = "application/octet-stream";
+	_types["msi"] = "application/octet-stream";
+	_types["msp"] = "application/octet-stream";
+	_types["msm"] = "application/octet-stream";
+	_types["mid"] = "audio/midi";
+	_types["midi"] = "audio/midi";
+	_types["kar"] = "audio/midi";
+	_types["mp3"] = "audio/mpeg";
+	_types["ogg"] = "audio/ogg";
+	_types["m4a"] = "audio/x-m4a";
+	_types["ra"] = "audio/x-realaudio";
+	_types["3gpp"] = "video/3gpp";
+	_types["3gp"] = "video/3gpp";
+	_types["ts"] = "video/mp2t";
+	_types["mp4"] = "video/mp4";
+	_types["mpeg"] = "video/mpeg";
+	_types["mpg"] = "video/mpeg";
+	_types["mov"] = "video/quicktime";
+	_types["webm"] = "video/webm";
+	_types["flv"] = "video/x-flv";
+	_types["m4v"] = "video/x-m4v";
+	_types["mng"] = "video/x-mng";
+	_types["asx"] = "video/x-ms-asf";
+	_types["asf"] = "video/x-ms-asf";
+	_types["wmv"] = "video/x-ms-wmv";
+	_types["avi"] = "video/x-msvideo";
+}
+
+
+Mime::~Mime()
+{
+	
+}
+
+
+std::string Mime::getType(const std::string &extension)
+{
+	if (_types.find(extension) != _types.end())
+	{
+		return _types[extension];
+	}
+	return "application/octet-stream";
+}

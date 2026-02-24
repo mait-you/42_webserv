@@ -39,6 +39,7 @@ typedef struct epoll_event t_ev;
 #include <unistd.h>
 #include <vector>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #define LOG(msg) std::cout << msg << std::endl
 

@@ -1,5 +1,6 @@
 
 #include "../../includes/BuildResponse.hpp"
+#include "../../includes/MimeTypes.hpp"
 
 bool allowedMethods(LocationConfig *locConfig, Request &req)
 {
@@ -27,10 +28,21 @@ bool bodySize(ServerConfig &srv, Request &req)
 	return false;
 }
 
+std::string getExtension(std::string fullPath)
+{
+	size_t lastSlash = fullPath.find_last_of('/');
+	if (lastSlash != std::string::npos)
+		fullPath = fullPath.substr(lastSlash + 1);
+	size_t pos = fullPath.find_last_of('.');
+	if (pos != std::string::npos)
+		return fullPath.substr(pos + 1);
+	return "";
+}
+
 Response handleFile(const std::string &fullPath)
 {
 	Response res;
-	std::ifstream file(fullPath.c_str(), std::ios::binary);
+	std::ifstream file(fullPath.c_str());
 	if (!file.is_open())
 	{
 		res.setStatus(403, "Forbidden");
@@ -39,10 +51,45 @@ Response handleFile(const std::string &fullPath)
 	std::stringstream ss;
 	ss << file.rdbuf();
 	std::string fileContent = ss.str();
-	res.setBody(fileContent);
 	res.setStatus(200, "OK");
+	std::string extension = getExtension(fullPath);
+	std::cout << "extension: " << extension << std::endl;
+	Mime mm;
+	res.setHeader("Content-type",mm.getType(extension));
+	res.setBody(fileContent);
 	return res;
 }
+
+std::string  getList(std::string fullPath, std::string uri)
+{
+	std::string  res;
+	DIR *dir;
+
+	dir = opendir(fullPath.c_str());
+	if (dir == NULL)
+	{
+		return res;
+	}
+	struct dirent *entry;
+	res += "<html><body><h1> Index of ";
+	res += uri;
+	res += "<hr><pre style='display: flex; flex-direction: column; gap: 10px;'>";
+	while ((entry = readdir(dir)) != NULL)
+	{
+		res += "<a href='";
+		res += entry->d_name;
+		res += "'>";
+		res += entry->d_name;
+		res += "</a>";
+	}
+	res += "</pre></body></html>";
+	closedir(dir);
+	return res;
+}
+// std::string findPage(int errorCode)
+// {
+// 	if ()
+// }
 
 Response handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig, const std::string &fullPath)
 {
@@ -72,8 +119,26 @@ Response handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig, c
 	}
 	if (locConfig->autoindex)
 	{
-		res.setStatus(200, "OK");
-		res.setBody("<html><body><h1>files inside this directory</h1></body></html>");
+
+		std::string DirList = getList(fullPath, uri);
+		if (!DirList.empty())
+		{
+			res.setStatus(200, "OK");
+			res.setHeader("Content-type", "text/html");
+			res.setBody(DirList);
+		}
+		else
+		{
+			res.setStatus(403, "Forbidden");
+			res.setHeader("Content-type", "text/html");
+			// std::strinf errorPage = findPage(403);
+			if (srv.error_pages.find(403) != srv.error_pages.end())
+			{
+				res = handleFile(srv.error_pages[403]);
+			}
+			else
+				res.setBody("<html><body style='display: flex; justify-content: center;''><h1>403 Forbidden ss</h1></body></html>");
+		}
 		return res;
 	}
 	res.setStatus(403, "Forbidden");
