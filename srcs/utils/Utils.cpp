@@ -1,25 +1,26 @@
+#include "../../includes/Head.hpp"
 #include "../../includes/WebServer.hpp"
-#include "../../includes/head.hpp"
 
-void setupSignals() {
-	signal(SIGINT, WebServer::stop);
+static void handler(int) {
+	WebServer::running = false;
 }
 
-bool isNumber(std::string str)
-{
+void setupSignals() {
+	signal(SIGINT, handler);
+}
+
+bool isNumber(const std::string &str) {
 	if (str.empty())
 		return false;
-	for (size_t i = 0; i < str.size(); i++)
-	{
+	for (size_t i = 0; i < str.size(); i++) {
 		if (!isdigit(str[i]))
 			return false;
 	}
 	return true;
 }
 
-bool isValidPort(std::string str)
-{
-	int port = -1;
+bool isValidPort(const std::string &str) {
+	int				  port = -1;
 	std::stringstream ss(str);
 	ss >> port;
 	if (port >= 1 && port <= 65535)

@@ -1,9 +1,16 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
-#include "head.hpp"
+#include "Config.hpp"
+#include "Head.hpp"
+#include "Request.hpp"
 
 class Response {
+  public:
+	typedef std::map<std::string, std::string> HeaderMap;
+	typedef HeaderMap::iterator				   HeaderIt;
+	typedef HeaderMap::const_iterator		   ConstHeaderIt;
+
   private:
 	int								   _statusCode;
 	std::string						   _statusMessage;
@@ -20,7 +27,28 @@ class Response {
 	void setHeader(const std::string &key, const std::string &value);
 	void setBody(const std::string &body);
 
-	std::string build() const;
+	std::string build(Request						  &request,
+					  const std::vector<ServerConfig> &servers);
+
+  private:
+	std::string buildSendBuffer() const;
+
+	// helpers
+	ServerConfig	matchedServer(Request						  &req,
+								  const std::vector<ServerConfig> &servers);
+	LocationConfig *matchedLocation(ServerConfig &srv, Request &req);
+	bool			allowedMethods(LocationConfig *locConfig, Request &req);
+	bool			bodySize(ServerConfig &srv, Request &req);
+	std::string		getExtension(const std::string &fullPath);
+	std::string getList(const std::string &fullPath, const std::string &uri);
+
+	void handleFile(ServerConfig &srv, LocationConfig *locConfig,
+					const std::string &fullPath);
+	void errorPage(ServerConfig &srv, LocationConfig *locConfig, int code,
+				   const std::string &codeMsg);
+	void handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig,
+				   const std::string &fullPath);
+	void handleGet(Request &req, ServerConfig &srv, LocationConfig *locConfig);
 };
 
 #endif

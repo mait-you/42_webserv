@@ -7,7 +7,7 @@ Socket::Socket()
 Socket::Socket(int fd)
 	: _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
 	if (fd == -1)
-		throw std::runtime_error("Socket: invalid file descriptor");
+		throwError("Socket: invalid file descriptor");
 	_fd = fd;
 }
 
@@ -46,9 +46,7 @@ void Socket::createAndBind() {
 	int status = getaddrinfo(_ip.empty() ? NULL : _ip.c_str(), _port.c_str(),
 							 &hints, &result);
 	if (status != 0)
-		throw std::runtime_error(std::string("getaddrinfo: ") +
-								 gai_strerror(status));
-
+		throwError("getaddrinfo: " + std::string(gai_strerror(status)));
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		_fd = ::socket(rp->ai_family, SOCK_STREAM, 0);
 		if (_fd == -1)
@@ -64,28 +62,24 @@ void Socket::createAndBind() {
 	}
 	freeaddrinfo(result);
 	if (!_is_bound)
-		throw std::runtime_error("Socket::createAndBind: failed on " + _ip +
-								 ":" + _port);
+		throwError("Socket::createAndBind: failed on " + _ip + ":" + _port);
 }
 
 void Socket::setNonBlocking() {
 	if (_fd == -1)
-		throw std::runtime_error("Socket::setNonBlocking: socket not created");
+		throwError("Socket::setNonBlocking: socket not created");
 	int flags = fcntl(_fd, F_GETFL, 0);
 	if (flags == -1)
-		throw std::runtime_error(std::string("fcntl F_GETFL: ") +
-								 std::strerror(errno));
+		throwError(std::string("fcntl F_GETFL: ") + std::strerror(errno));
 	if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		throw std::runtime_error(std::string("fcntl F_SETFL: ") +
-								 std::strerror(errno));
+		throwError("fcntl F_SETFL: ");
 }
 
 void Socket::startListening(int backlog) {
 	if (!_is_bound)
-		throw std::runtime_error("Socket::startListening: socket not bound");
+		throwError("Socket::startListening: socket not bound");
 	if (::listen(_fd, backlog) == -1)
-		throw std::runtime_error(std::string("listen: ") +
-								 std::strerror(errno));
+		throwError("listen: ");
 	_is_listening = true;
 }
 
@@ -95,8 +89,7 @@ Socket Socket::acceptClient() {
 	std::memset(&client_addr, 0, sizeof(client_addr));
 	int clientFd = ::accept(_fd, (struct sockaddr *) &client_addr, &addr_len);
 	if (clientFd == -1)
-		throw std::runtime_error(std::string("accept: ") +
-								 std::strerror(errno));
+		throwError("accept: ");
 	Socket s(clientFd);
 	s.setIp(ipv4Tostr(client_addr.sin_addr.s_addr));
 	s.setPort(portTostr(ntohs(client_addr.sin_port)));

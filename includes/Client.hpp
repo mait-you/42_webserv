@@ -4,7 +4,6 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Socket.hpp"
-#include "head.hpp"
 
 class Client {
   public:
@@ -14,18 +13,20 @@ class Client {
 
   private:
 	Socket		_socket;
-	std::string _rawBuffer;
-	std::string _response;
+	std::string _recvBuffer;
+	std::string _sendBuffer;
 	std::size_t _bytesSent;
+	Request		_request;
+	Response	_response;
+	Config		_config;
 	bool		_requestComplete;
 	bool		_responseSent;
-	Request		_request;
 
 	bool checkRequestComplete() const;
 
   public:
 	Client();
-	Client(const Socket &socket);
+	Client(const Socket &socket, const Config &conf);
 	Client(const Client &other);
 	Client &operator=(const Client &other);
 	~Client();

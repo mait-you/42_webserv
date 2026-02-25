@@ -1,7 +1,8 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
-#include "head.hpp"
+#include "Config.hpp"
+#include "Head.hpp"
 
 #define END_OF_HEADERS "\r\n\r\n"
 #define MAX_URI_LENGTH 8192

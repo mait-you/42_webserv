@@ -10,11 +10,11 @@ int main(int ac, char **av) {
 	setupSignals();
 
 	try {
-		WebServer server;
-		server.init(configFile);
+		Config config(configFile);
+		WebServer server(config);
 		server.run();
 	} catch (const std::exception &e) {
-		std::cerr << "Fatal: " << e.what() << std::endl;
+		std::cerr << "ERROR: " << e.what() << std::endl;
 		return 1;
 	}
 	return 0;

@@ -3,11 +3,16 @@
 Config::Config() {
 }
 
-Config::Config(const Config &) {
+Config::Config(const std::string &confFIle) {
+	parse(confFIle);
 }
 
-Config &Config::operator=(const Config &) {
+Config::Config(const Config &other) : _servers(other._servers) {
+}
 
+Config &Config::operator=(const Config &other) {
+	if (this != &other)
+		_servers = other._servers;
 	return *this;
 }
 

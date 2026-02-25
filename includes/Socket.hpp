@@ -1,7 +1,7 @@
 #ifndef SOCKET_HPP
 #define SOCKET_HPP
 
-#include "head.hpp"
+#include "Head.hpp"
 
 class Socket {
   public:
@@ -18,16 +18,16 @@ class Socket {
 
   public:
 	Socket();
-	Socket(int fd); // throws if fd == -1
+	Socket(int fd); // throws
 	Socket(const std::string &ip, const std::string &port);
 	Socket(const Socket &other);
 	Socket &operator=(const Socket &other);
 	~Socket();
 
-	void createAndBind();
-	void setNonBlocking();
-	void startListening(int backlog);
-	Socket acceptClient();
+	void   createAndBind();				// throws
+	void   setNonBlocking();			// throws
+	void   startListening(int backlog); // throws
+	Socket acceptClient();				// throws
 	void   close();
 
 	// Setters

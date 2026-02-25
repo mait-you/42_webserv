@@ -1,15 +1,15 @@
 #ifndef MIMETYPES_HPP
 #define MIMETYPES_HPP
 
-#include "head.hpp"
+#include "Head.hpp"
 
-class Mime
-{
-	private:
-		std::map<std::string, std::string> _types;
-	public:
-		Mime();
-		~Mime();
-		std::string getType(const std::string &extension);
+class Mime {
+  private:
+	std::map<std::string, std::string> _types;
+
+  public:
+	Mime();
+	~Mime();
+	std::string getType(const std::string &extension);
 };
 #endif

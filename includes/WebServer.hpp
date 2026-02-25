@@ -4,28 +4,26 @@
 #include "BuildResponse.hpp"
 #include "Client.hpp"
 #include "Config.hpp"
+#include "Request.hpp"
 #include "Response.hpp"
 #include "Socket.hpp"
-#include "head.hpp"
 
 class WebServer {
-  private:
+  public:
 	static bool running;
 
-	Socket::Map _serverSockets;
-	Client::Map _clients;
-	Config		_config;
-	int			_epollFd;
-	t_ev		_events[MAX_EVENTS];
+  private:
+	Socket::Map	  _serverSockets;
+	Client::Map	  _clients;
+	int			  _epollFd;
+	t_ev		  _events[MAX_EVENTS];
+	const Config &_config;
 
   public:
-	WebServer();
+	WebServer(const Config &conf);
 	~WebServer();
 
-	void			init(const std::string &configFile);
-	void			run();
-
-	static void stop(int signo);
+	void run();
 
   private:
 	void acceptClient(Socket &serverSock);
@@ -36,10 +34,10 @@ class WebServer {
 	void removeClient(int fd);
 
   private:
+	WebServer();
 	WebServer(const WebServer &other);
 	WebServer &operator=(const WebServer &other);
 };
 
-Response buildResponse(Request &req, const std::vector<ServerConfig> &servers, Client &client);
 
 #endif

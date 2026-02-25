@@ -1,13 +1,24 @@
 NAME        = webserv
-CXX         = c++
-CXXFLAGS    = -Wall -Wextra -Werror -std=c++98
 
 # Directories
 SRC_DIR     = srcs
 OBJ_DIR     = obj
 INC_DIR     = includes
 
-# Source files
+CXX         = c++
+CXXFLAGS    = -Wall -Wextra -Werror -std=c++98
+
+
+# Headers
+HEADERS     = $(INC_DIR)/WebServer.hpp \
+	$(INC_DIR)/Client.hpp \
+	$(INC_DIR)/Config.hpp \
+	$(INC_DIR)/Head.hpp \
+	$(INC_DIR)/MimeTypes.hpp \
+	$(INC_DIR)/Request.hpp \
+	$(INC_DIR)/Response.hpp \
+	$(INC_DIR)/Socket.hpp
+
 SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/server/WebServer.cpp \
 	$(SRC_DIR)/server/Socket.cpp \
@@ -18,7 +29,8 @@ SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/client/Client.cpp \
 	$(SRC_DIR)/http/Request.cpp \
 	$(SRC_DIR)/utils/Utils.cpp \
-	$(SRC_DIR)/http/buildResponse.cpp \
+	$(SRC_DIR)/http/ResponseHelpers.cpp \
+	$(SRC_DIR)/http/ResponseHandlers.cpp \
 	$(SRC_DIR)/http/Response.cpp \
 	$(SRC_DIR)/http/MimeTypes.cpp
 
@@ -35,7 +47,7 @@ $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 	echo "$(GREEN)✓ $(NAME) compiled successfully$(NC)"
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 	echo "$(BLUE)Compiled: $<$(NC)"

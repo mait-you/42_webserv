@@ -1,9 +1,29 @@
 #include "../../includes/WebServer.hpp"
 
-bool WebServer::running = true;
+bool		  WebServer::running = true;
 
-WebServer::WebServer() : _epollFd(-1) {
+WebServer::WebServer(const Config &conf) : _epollFd(-1), _config(conf) {
 	std::memset(_events, 0, sizeof(_events));
+	_epollFd = epoll_create(true);
+	if (_epollFd == -1)
+		throwError("epoll_create: ");
+	const std::vector<ServerConfig> &servers = _config.getServers();
+	for (std::size_t i = 0; i < servers.size(); ++i) {
+		const ServerConfig &srv = servers[i];
+		for (std::size_t j = 0; j < srv.ports.size(); ++j) {
+			Socket sock(srv.host, srv.ports[j]);
+			sock.createAndBind();
+			sock.setNonBlocking();
+			sock.startListening(128);
+			EPOLL_EVENT(ev);
+			ev.events  = EPOLLIN;
+			ev.data.fd = sock.getFd();
+			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, sock.getFd(), &ev) == -1)
+				throwError("epoll_ctl: ");
+			_serverSockets[sock.getFd()] = sock;
+			LOG("Listening             | " << sock);
+		}
+	}
 }
 
 WebServer::~WebServer() {
@@ -15,10 +35,6 @@ WebServer::~WebServer() {
 
 	if (_epollFd != -1)
 		::close(_epollFd);
-}
-
-void WebServer::stop(int) {
-	WebServer::running = false;
 }
 
 void WebServer::removeClient(int fd) {
@@ -35,14 +51,8 @@ void WebServer::acceptClient(Socket &serverSock) {
 	Socket newSock;
 	try {
 		newSock = serverSock.acceptClient();
-	} catch (const std::exception &e) {
-		std::cerr << "accept error: " << e.what() << std::endl;
-		return;
-	}
-	try {
 		newSock.setNonBlocking();
 	} catch (const std::exception &e) {
-		std::cerr << "setNonBlocking error: " << e.what() << std::endl;
 		newSock.close();
 		return;
 	}
@@ -54,7 +64,7 @@ void WebServer::acceptClient(Socket &serverSock) {
 		newSock.close();
 		return;
 	}
-	_clients[newSock.getFd()] = Client(newSock);
+	_clients[newSock.getFd()] = Client(newSock, _config);
 	LOG("New client            | " << newSock);
 }
 
@@ -73,51 +83,19 @@ bool WebServer::handleRead(int fd) {
 
 bool WebServer::handleWrite(int fd) {
 	Client &client = _clients[fd];
-
-	Response res = buildResponse(client.getRequest(), _config.getServers(), client);
-
-	client.setResponse(res.build());
 	if (!client.sendData())
 		return false;
 	return true;
 }
 
-void WebServer::init(const std::string &configFile) {
-	_config.parse(configFile);
-	_epollFd = epoll_create(true);
-	if (_epollFd == -1)
-		throw std::runtime_error(std::string("epoll_create: ") +
-								 std::strerror(errno));
-	const std::vector<ServerConfig> &servers = _config.getServers();
-	for (std::size_t i = 0; i < servers.size(); ++i) {
-		const ServerConfig &srv = servers[i];
-		for (std::size_t j = 0; j < srv.ports.size(); ++j) {
-			Socket sock(srv.host, srv.ports[j]);
-			sock.createAndBind();
-			sock.setNonBlocking();
-			sock.startListening(128);
-			EPOLL_EVENT(ev);
-			ev.events  = EPOLLIN;
-			ev.data.fd = sock.getFd();
-			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, sock.getFd(), &ev) == -1)
-				throw std::runtime_error(std::string("epoll_ctl: ") +
-										 std::strerror(errno));
-
-			_serverSockets[sock.getFd()] = sock;
-			LOG("Listening             | " << sock);
-		}
-	}
-}
-
 void WebServer::run() {
 	LOG("WebServer running...");
-	while (WebServer::running) {
+	while (running) {
 		int numEvents = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
 		if (numEvents == -1) {
 			if (errno == EINTR)
 				continue;
-			throw std::runtime_error(std::string("epoll_wait: ") +
-									 std::strerror(errno));
+			throwError("epoll_wait: ");
 		}
 		for (int i = 0; i < numEvents; ++i) {
 			int fd = _events[i].data.fd;

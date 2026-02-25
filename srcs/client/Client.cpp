@@ -1,30 +1,35 @@
 #include "../../includes/Client.hpp"
 
 Client::Client()
-	: _socket(), _bytesSent(0), _requestComplete(false), _responseSent(false) {
+	: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(),
+	  _response(), _config(), _requestComplete(false), _responseSent(false) {
 }
 
-Client::Client(const Socket &socket)
-	: _socket(socket), _bytesSent(0), _requestComplete(false),
+Client::Client(const Socket &socket, const Config &conf)
+	: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(),
+	  _response(), _config(conf), _requestComplete(false),
 	  _responseSent(false) {
 }
 
 Client::Client(const Client &other)
-	: _socket(other._socket), _rawBuffer(other._rawBuffer),
-	  _response(other._response), _bytesSent(other._bytesSent),
-	  _requestComplete(other._requestComplete),
-	  _responseSent(other._responseSent), _request(other._request) {
+	: _socket(other._socket), _recvBuffer(other._recvBuffer),
+	  _sendBuffer(other._sendBuffer), _bytesSent(other._bytesSent),
+	  _request(other._request), _response(other._response),
+	  _config(other._config), _requestComplete(other._requestComplete),
+	  _responseSent(other._responseSent) {
 }
 
 Client &Client::operator=(const Client &other) {
 	if (this != &other) {
 		_socket			 = other._socket;
-		_rawBuffer		 = other._rawBuffer;
-		_response		 = other._response;
+		_recvBuffer		 = other._recvBuffer;
+		_sendBuffer		 = other._sendBuffer;
 		_bytesSent		 = other._bytesSent;
+		_request		 = other._request;
+		_response		 = other._response;
+		_config			 = other._config;
 		_requestComplete = other._requestComplete;
 		_responseSent	 = other._responseSent;
-		_request		 = other._request;
 	}
 	return *this;
 }
@@ -33,12 +38,12 @@ Client::~Client() {
 }
 
 bool Client::checkRequestComplete() const {
-	std::size_t headerEnd = _rawBuffer.find(END_OF_HEADERS);
+	std::size_t headerEnd = _recvBuffer.find(END_OF_HEADERS);
 	if (headerEnd == std::string::npos)
 		return false;
-	std::string headers = _rawBuffer.substr(0, headerEnd);
+	std::string headers = _recvBuffer.substr(0, headerEnd);
 	if (headers.find("Transfer-Encoding: chunked") != std::string::npos)
-		return _rawBuffer.find("0" END_OF_HEADERS) != std::string::npos;
+		return _recvBuffer.find("0" END_OF_HEADERS) != std::string::npos;
 	std::size_t clPos = headers.find("Content-Length: ");
 	if (clPos != std::string::npos) {
 		std::size_t		   lineEnd = headers.find("\r\n", clPos + 16);
@@ -46,9 +51,8 @@ bool Client::checkRequestComplete() const {
 		std::istringstream iss(
 			headers.substr(clPos + 16, lineEnd - (clPos + 16)));
 		iss >> bodyLen;
-		return (_rawBuffer.size() - (headerEnd + 4)) >= bodyLen;
+		return (_recvBuffer.size() - (headerEnd + 4)) >= bodyLen;
 	}
-
 	return true;
 }
 
@@ -60,10 +64,10 @@ bool Client::readData() {
 			return true;
 		return false;
 	}
-	_rawBuffer += std::string(buf, n);
+	_recvBuffer += std::string(buf, n);
 	if (!_requestComplete && checkRequestComplete()) {
 		_requestComplete = true;
-		_request.parse(_rawBuffer);
+		_request.parse(_recvBuffer);
 		_request.validate();
 		LOG("Request complete      |\n" << _request);
 	}
@@ -74,37 +78,18 @@ bool Client::sendData() {
 	if (!_requestComplete || _responseSent)
 		return true;
 
+	if (_sendBuffer.empty())
+		_sendBuffer = _response.build(_request, _config.getServers());
 
-	// wiiiiiiiiiiiiiiiiiiiiii3 (for tisting)
-	// if (_response.empty()) {
-	// 	std::ostringstream body;
-	// 	std::ostringstream resp;
-
-	// 	if (!_request.isValid()) {
-	// 		body << _request.getError() << " Error\n";
-	// 		resp << "HTTP/1.1 " << _request.getError() << " Error\r\n"
-	// 			 << "Content-Length: " << body.str().size() << "\r\n"
-	// 			 << "\r\n"
-	// 			 << body.str();
-	// 	} else {
-	// 		body << "OK: " << _request.getMethod() << " " << _request.getUri() << "\n";
-	// 		resp << "HTTP/1.1 200 OK\r\n"
-	// 			 << "Content-Length: " << body.str().size() << "\r\n"
-	// 			 << "\r\n"
-	// 			 << body.str();
-	// 	}
-	// 	_response = resp.str();
-	// }
-
-	ssize_t n = send(_socket.getFd(), _response.c_str() + _bytesSent,
-					 _response.size() - _bytesSent, MSG_DONTWAIT);
+	ssize_t n = send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent,
+					 _sendBuffer.size() - _bytesSent, MSG_DONTWAIT);
 	if (n < 0) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return true;
 		return false;
 	}
 	_bytesSent += n;
-	if (_bytesSent >= _response.size()) {
+	if (_bytesSent >= _sendBuffer.size()) {
 		_responseSent = true;
 		LOG("Response sent         | " << *this);
 		return false;
@@ -113,7 +98,7 @@ bool Client::sendData() {
 }
 
 void Client::setResponse(const std::string &response) {
-	_response	  = response;
+	_sendBuffer	  = response;
 	_bytesSent	  = 0;
 	_responseSent = false;
 }
@@ -125,7 +110,6 @@ Request &Client::getRequest() {
 Socket &Client::getSocket() {
 	return _socket;
 }
-
 
 bool Client::isRequestComplete() const {
 	return _requestComplete;
