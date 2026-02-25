@@ -1,6 +1,6 @@
 #include "../../includes/WebServer.hpp"
 
-bool		  WebServer::running = true;
+bool WebServer::running = true;
 
 WebServer::WebServer(const Config &conf) : _epollFd(-1), _config(conf) {
 	std::memset(_events, 0, sizeof(_events));
@@ -41,7 +41,8 @@ void WebServer::removeClient(int fd) {
 	Client::It it = _clients.find(fd);
 	if (it == _clients.end())
 		return;
-
+	// if (it->second.getRequest().getHeader("Connection") != "close")
+	// 	return;
 	epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 	it->second.getSocket().close();
 	_clients.erase(it);

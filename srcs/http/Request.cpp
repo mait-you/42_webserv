@@ -27,6 +27,25 @@ bool Request::isValidMethod(const std::string &method) const {
 	return (method == "GET" || method == "POST" || method == "DELETE");
 }
 
+bool Request::checkRequestComplete(const std::string &recvBuffer) const {
+	std::size_t headerEnd = recvBuffer.find(END_OF_HEADERS);
+	if (headerEnd == std::string::npos)
+		return false;
+	std::string headers = recvBuffer.substr(0, headerEnd);
+	if (headers.find("Transfer-Encoding: chunked") != std::string::npos)
+		return recvBuffer.find("0" END_OF_HEADERS) != std::string::npos;
+	std::size_t clPos = headers.find("Content-Length: ");
+	if (clPos != std::string::npos) {
+		std::size_t		   lineEnd = headers.find("\r\n", clPos + 16);
+		std::size_t		   bodyLen = 0;
+		std::istringstream iss(
+			headers.substr(clPos + 16, lineEnd - (clPos + 16)));
+		iss >> bodyLen;
+		return (recvBuffer.size() - (headerEnd + 4)) >= bodyLen;
+	}
+	return true;
+}
+
 bool Request::isValidUriChars(const std::string &uri) const {
 	if (uri.empty())
 		return false;
@@ -51,18 +70,24 @@ void Request::validate() {
 		_error = UNSUPPORTED_VERSION;
 		return;
 	}
+	if (getHeader("Host").empty()) {
+		_error = BAD_REQUEST;
+		return;
+	}
 	_error = OK;
 }
 
-bool Request::parse(const std::string &buffer) {
+bool Request::parse(const std::string &recvBuffer) {
+	if (!checkRequestComplete(recvBuffer))
+		return false;
 	_error					= OK;
 	std::size_t		   pos	= 0;
-	std::string		   line = getLine(buffer, pos);
+	std::string		   line = getLine(recvBuffer, pos);
 	std::istringstream iss(line);
 	if (!(iss >> _method >> _uri >> _version))
 		return false;
-	while (pos < buffer.size()) {
-		std::string hline = getLine(buffer, pos);
+	while (pos < recvBuffer.size()) {
+		std::string hline = getLine(recvBuffer, pos);
 		if (hline.empty())
 			break;
 		std::size_t colon = hline.find(':');
@@ -71,7 +96,7 @@ bool Request::parse(const std::string &buffer) {
 		_headers[trim(hline.substr(0, colon))] = trim(hline.substr(colon + 1));
 	}
 	if (getHeader("Transfer-Encoding") == "chunked") {
-		_body = parseChunkedBody(buffer, pos);
+		_body = parseChunkedBody(recvBuffer, pos);
 	} else {
 		std::string clStr = getHeader("Content-Length");
 		if (!clStr.empty()) {
@@ -79,9 +104,9 @@ bool Request::parse(const std::string &buffer) {
 			std::istringstream iss2(clStr);
 			if (!(iss2 >> bodyLen))
 				return false;
-			if (pos + bodyLen > buffer.size())
+			if (pos + bodyLen > recvBuffer.size())
 				return false;
-			_body = buffer.substr(pos, bodyLen);
+			_body = recvBuffer.substr(pos, bodyLen);
 		}
 	}
 	return true;

@@ -34,7 +34,7 @@ class Request {
 	Request &operator=(const Request &other);
 	~Request();
 
-	bool parse(const std::string &buffer);
+	bool parse(const std::string &recvBuffer);
 	void validate();
 
 	HttpError		 getError() const;
@@ -50,6 +50,7 @@ class Request {
 	bool		isValidMethod(const std::string &method) const;
 	bool		isValidUriChars(const std::string &uri) const;
 	std::string parseChunkedBody(const std::string &raw, std::size_t pos);
+	bool		checkRequestComplete(const std::string &recvBuffer) const;
 };
 
 std::ostream &operator<<(std::ostream &out, const Request &request);
