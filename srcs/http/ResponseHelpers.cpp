@@ -30,7 +30,7 @@ ServerConfig Response::matchedServer(Request						 &req,
 
 LocationConfig *Response::matchedLocation(ServerConfig &srv, Request &req) {
 	LocationConfig	  *matched	  = NULL;
-	const std::string &uri		  = req.getUri();
+	const std::string &uri		  = cleanUri(req.getUri());
 	size_t			   matchedLen = 0;
 
 	for (size_t i = 0; i < srv.locations.size(); i++) {
@@ -102,4 +102,38 @@ std::string Response::getList(const std::string &fullPath,
 	res += "</pre></body></html>";
 	closedir(dir);
 	return res;
+}
+
+
+std::string Response::cleanUri(std::string uri)
+{
+	std::string segment;
+	std::vector<std::string> cleanPath;
+	std::stringstream ss(uri);
+
+	while (std::getline(ss, segment, '/'))
+	{
+		if (segment.empty() || segment == ".")
+			continue;
+		if (segment == "..")
+		{
+			if (!cleanPath.empty())
+				cleanPath.pop_back();
+		}
+		else
+		{
+			cleanPath.push_back(segment);
+		}
+	}
+
+	std::string buffer;
+	for (size_t i = 0; i < cleanPath.size(); i++)
+	{
+		buffer += "/";
+		buffer += cleanPath[i];
+	}
+	if (cleanPath.empty())
+		buffer += "/";
+	
+	return buffer;
 }

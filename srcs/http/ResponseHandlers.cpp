@@ -60,7 +60,7 @@ void Response::handleDir(Request &req, ServerConfig &srv,
 	}
 
 	if (locConfig->autoindex) {
-		std::string dirList = getList(fullPath, uri);
+		std::string dirList = getList(fullPath, cleanUri(req.getUri()));
 		if (!dirList.empty()) {
 			setStatus(200, "OK");
 			setHeader("Content-type", "text/html");
@@ -80,7 +80,7 @@ void Response::handleGet(Request &req, ServerConfig &srv,
 		root = locConfig->root;
 	else
 		root= srv.root;
-	std::string fullPath = root + req.getUri();
+	std::string fullPath = root + cleanUri(req.getUri());
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {
