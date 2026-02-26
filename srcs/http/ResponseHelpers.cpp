@@ -104,7 +104,7 @@ std::string Response::getList(const std::string &fullPath,
 	return res;
 }
 
-
+// localhost:8080/test/
 std::string Response::cleanUri(std::string uri)
 {
 	std::string segment;
@@ -132,7 +132,7 @@ std::string Response::cleanUri(std::string uri)
 		buffer += "/";
 		buffer += cleanPath[i];
 	}
-	if (cleanPath.empty())
+	if (cleanPath.empty() || uri[uri.size() - 1] == '/')
 		buffer += "/";
 	
 	return buffer;

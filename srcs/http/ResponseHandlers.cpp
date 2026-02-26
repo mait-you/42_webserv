@@ -20,6 +20,10 @@ void Response::errorPage(ServerConfig &srv, LocationConfig *locConfig, int code,
 
 void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
 						  const std::string &fullPath) {
+	if (access(fullPath.c_str(), F_OK) == -1) {
+		errorPage(srv, locConfig, 404, "Not Found");
+		return;
+	}
 	std::ifstream file(fullPath.c_str());
 	if (!file.is_open()) {
 		errorPage(srv, locConfig, 403, "Forbidden");

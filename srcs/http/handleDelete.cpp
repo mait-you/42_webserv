@@ -2,6 +2,7 @@
 
 void Response::deleteFolder(const std::string &fullPath, ServerConfig &srv, LocationConfig *locConfig)
 {
+	std::cout << "fullPath " << fullPath << std::endl;
 	DIR *dir = opendir(fullPath.c_str());
 	if (!dir)
 		return (errorPage(srv, locConfig, 403, "Forbidden"));
@@ -13,7 +14,7 @@ void Response::deleteFolder(const std::string &fullPath, ServerConfig &srv, Loca
 			continue;
 
 		std::string entryPath = fullPath + entry->d_name;
-
+		std::cout << "entryPath " << entryPath << std::endl;
 		struct stat info;
 		if (stat(entryPath.c_str(), &info) != 0)
 		{
@@ -36,6 +37,7 @@ void Response::deleteFolder(const std::string &fullPath, ServerConfig &srv, Loca
 		}
 		else if (S_ISDIR(info.st_mode))
 		{
+			entryPath += "/";
 			deleteFolder(entryPath, srv, locConfig);
 			if (_statusCode != 204)
 			{
@@ -63,16 +65,18 @@ void Response::handleDelete(Request &req, ServerConfig &srv, LocationConfig *loc
 	else
 		root= srv.root;
 	std::string fullPath = root + cleanUri(req.getUri());
-
+	std::cout << "uri conflect " << req.getUri() << std::endl;
 	if (stat(fullPath.c_str(), &info) == -1 )
 		errorPage(srv, locConfig, 404, "Not Found");
 	else if (S_ISDIR(info.st_mode))
 	{
+		std::cout << "fullPath conflect " << fullPath << std::endl;
 		if (fullPath[fullPath.size() - 1] == '/')
 		{
 			deleteFolder(fullPath, srv, locConfig);
 		}
-		errorPage(srv, locConfig, 409, "Conflict");
+		else
+			errorPage(srv, locConfig, 409, "Conflict");
 	}
 	else if (access(fullPath.c_str(), W_OK) == -1)
 		errorPage(srv, locConfig, 403, "Forbidden");
@@ -80,4 +84,5 @@ void Response::handleDelete(Request &req, ServerConfig &srv, LocationConfig *loc
 		errorPage(srv, locConfig, 500, "Internal Server Error");
 	else
 		setStatus(204, "No Content");
+	setBody("");
 }
