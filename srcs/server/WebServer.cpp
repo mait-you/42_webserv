@@ -102,15 +102,15 @@ void WebServer::run() {
 			int fd = _events[i].data.fd;
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
-				continue;
+			} else {
+				bool keep = true;
+				if (_events[i].events & EPOLLIN)
+					keep = handleRead(fd);
+				if (keep && (_events[i].events & EPOLLOUT))
+					keep = handleWrite(fd);
+				if (!keep)
+					removeClient(fd);
 			}
-			bool keep = true;
-			if (_events[i].events & EPOLLIN)
-				keep = handleRead(fd);
-			if (keep && (_events[i].events & EPOLLOUT))
-				keep = handleWrite(fd);
-			if (!keep)
-				removeClient(fd);
 		}
 	}
 	LOG("WebServer shutting down...");

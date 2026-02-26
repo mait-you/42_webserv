@@ -28,6 +28,7 @@ SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/config/serverConfig.cpp \
 	$(SRC_DIR)/client/Client.cpp \
 	$(SRC_DIR)/http/Request.cpp \
+	$(SRC_DIR)/http/RequestValidtion.cpp \
 	$(SRC_DIR)/utils/Utils.cpp \
 	$(SRC_DIR)/http/ResponseHelpers.cpp \
 	$(SRC_DIR)/http/ResponseHandlers.cpp \

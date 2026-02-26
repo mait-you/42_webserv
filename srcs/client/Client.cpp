@@ -38,14 +38,15 @@ Client::~Client() {
 }
 
 bool Client::readData() {
-	char	buf[RECV_BUFFER_SIZE];
+	char	buf[100];
 	ssize_t n = recv(_socket.getFd(), buf, sizeof(buf), MSG_DONTWAIT);
 	if (n <= 0)
 		return false;
 	_recvBuffer += std::string(buf, n);
 	_requestComplete = _request.parse(_recvBuffer);
+	LOG("Request _recvBuffer   | " << _socket << " Request complete ? "
+								   << _requestComplete << '\n');
 	if (_requestComplete) {
-		_request.validate();
 		LOG("Request complete      |\n" << _request);
 	}
 	return true;

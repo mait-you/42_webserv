@@ -1,21 +1,27 @@
 #include "../../includes/Request.hpp"
 
-Request::Request() : _error(OK) {
+Request::Request()
+	: _error(OK), _state(PARSE_REQUEST_LINE), _parsePos(0), _bodyExpected(0) {
 }
 
 Request::Request(const Request &other)
 	: _method(other._method), _uri(other._uri), _version(other._version),
-	  _headers(other._headers), _body(other._body), _error(other._error) {
+	  _headers(other._headers), _body(other._body), _error(other._error),
+	  _state(other._state), _parsePos(other._parsePos),
+	  _bodyExpected(other._bodyExpected) {
 }
 
 Request &Request::operator=(const Request &other) {
 	if (this != &other) {
-		_method	 = other._method;
-		_uri	 = other._uri;
-		_version = other._version;
-		_headers = other._headers;
-		_body	 = other._body;
-		_error	 = other._error;
+		_method		  = other._method;
+		_uri		  = other._uri;
+		_version	  = other._version;
+		_headers	  = other._headers;
+		_body		  = other._body;
+		_error		  = other._error;
+		_state		  = other._state;
+		_parsePos	  = other._parsePos;
+		_bodyExpected = other._bodyExpected;
 	}
 	return *this;
 }
@@ -23,110 +29,136 @@ Request &Request::operator=(const Request &other) {
 Request::~Request() {
 }
 
-bool Request::isValidMethod(const std::string &method) const {
-	return (method == "GET" || method == "POST" || method == "DELETE");
-}
-
-bool Request::checkRequestComplete(const std::string &recvBuffer) const {
-	std::size_t headerEnd = recvBuffer.find(END_OF_HEADERS);
-	if (headerEnd == std::string::npos)
+bool Request::getLine(const std::string &buf, std::size_t &pos,
+					  std::string &line) const {
+	std::size_t end = buf.find("\r\n", pos);
+	if (end == std::string::npos)
 		return false;
-	std::string headers = recvBuffer.substr(0, headerEnd);
-	if (headers.find("Transfer-Encoding: chunked") != std::string::npos)
-		return recvBuffer.find("0" END_OF_HEADERS) != std::string::npos;
-	std::size_t clPos = headers.find("Content-Length: ");
-	if (clPos != std::string::npos) {
-		std::size_t		   lineEnd = headers.find("\r\n", clPos + 16);
-		std::size_t		   bodyLen = 0;
-		std::istringstream iss(
-			headers.substr(clPos + 16, lineEnd - (clPos + 16)));
-		iss >> bodyLen;
-		return (recvBuffer.size() - (headerEnd + 4)) >= bodyLen;
-	}
+	line = buf.substr(pos, end - pos);
+	pos	 = end + 2;
 	return true;
 }
 
-bool Request::isValidUriChars(const std::string &uri) const {
-	if (uri.empty())
+bool Request::parseRequestLine(const std::string &buf) {
+	std::string line;
+	if (!getLine(buf, _parsePos, line))
 		return false;
-	for (std::size_t i = 0; i < uri.size(); ++i) {
-		unsigned char c = uri[i];
-		if (c < 33 || c == 127)
-			return false;
-	}
-	return true;
-}
-
-void Request::validate() {
-	if (!isValidMethod(_method)) {
-		_error = BAD_REQUEST;
-		return;
-	}
-	if (!isValidUriChars(_uri)) {
-		_error = BAD_REQUEST;
-		return;
-	}
-	if (_version != HTTP_VERSION) {
-		_error = UNSUPPORTED_VERSION;
-		return;
-	}
-	if (getHeader("Host").empty()) {
-		_error = BAD_REQUEST;
-		return;
-	}
-	_error = OK;
-}
-
-bool Request::parse(const std::string &recvBuffer) {
-	if (!checkRequestComplete(recvBuffer))
-		return false;
-	_error					= OK;
-	std::size_t		   pos	= 0;
-	std::string		   line = getLine(recvBuffer, pos);
 	std::istringstream iss(line);
-	if (!(iss >> _method >> _uri >> _version))
+	if (!(iss >> _method >> _uri >> _version)) {
+		_error = BAD_REQUEST;
 		return false;
-	while (pos < recvBuffer.size()) {
-		std::string hline = getLine(recvBuffer, pos);
-		if (hline.empty())
-			break;
-		std::size_t colon = hline.find(':');
-		if (colon == std::string::npos)
-			continue;
-		_headers[trim(hline.substr(0, colon))] = trim(hline.substr(colon + 1));
 	}
-	if (getHeader("Transfer-Encoding") == "chunked") {
-		_body = parseChunkedBody(recvBuffer, pos);
-	} else {
-		std::string clStr = getHeader("Content-Length");
-		if (!clStr.empty()) {
-			std::size_t		   bodyLen = 0;
-			std::istringstream iss2(clStr);
-			if (!(iss2 >> bodyLen))
-				return false;
-			if (pos + bodyLen > recvBuffer.size())
-				return false;
-			_body = recvBuffer.substr(pos, bodyLen);
-		}
+	std::string extra;
+	if (iss >> extra) {
+		_error = BAD_REQUEST;
+		return false;
 	}
+	if (!isValidMethod(_method)) {
+		_error = NOT_IMPLEMENTED;
+		return false;
+	}
+	if (!isValidUri(_uri)) {
+		_error = (_uri.size() > MAX_URI_LENGTH) ? URI_TOO_LONG : BAD_REQUEST;
+		return false;
+	}
+	if (!isValidVersion(_version)) {
+		_error = UNSUPPORTED_VERSION;
+		return false;
+	}
+	_state = PARSE_HEADERS;
 	return true;
 }
 
-std::string Request::parseChunkedBody(const std::string &raw, std::size_t pos) {
+bool Request::parseHeaders(const std::string &buf) {
+	while (true) {
+		std::string line;
+		if (!getLine(buf, _parsePos, line))
+			return false;
+		if (line.empty()) {
+			_state = PARSE_BODY;
+			return true;
+		}
+		std::size_t colon = line.find(':');
+		if (colon == std::string::npos) {
+			_error = BAD_REQUEST;
+			return false;
+		}
+		std::string key	  = trim(line.substr(0, colon));
+		std::string value = trim(line.substr(colon + 1));
+		if (key.empty()) {
+			_error = BAD_REQUEST;
+			return false;
+		}
+		_headers[key] = value;
+	}
+}
+
+bool Request::parseBody(const std::string &buf) {
+	if (getHeader("Transfer-Encoding") == "chunked") {
+		if (buf.find("0\r\n\r\n", _parsePos) == std::string::npos)
+			return false;
+		_body  = decodeChunked(buf, _parsePos);
+		_state = PARSE_COMPLETE;
+		return true;
+	}
+	std::string clStr = getHeader("Content-Length");
+	if (clStr.empty()) {
+		_state = PARSE_COMPLETE;
+		return true;
+	}
+	std::istringstream iss(clStr);
+	if (!(iss >> _bodyExpected) || _bodyExpected == 0) {
+		_error = BAD_REQUEST;
+		return false;
+	}
+	if (buf.size() - _parsePos < _bodyExpected)
+		return false;
+	_body = buf.substr(_parsePos, _bodyExpected);
+	_parsePos += _bodyExpected;
+	_state = PARSE_COMPLETE;
+	return true;
+}
+
+bool Request::parse(const std::string &buf) {
+	if (_error != OK)
+		return false;
+	if (_state == PARSE_REQUEST_LINE && !parseRequestLine(buf))
+		return false;
+	if (_error != OK)
+		return false;
+	if (_state == PARSE_HEADERS && !parseHeaders(buf))
+		return false;
+	if (_error != OK)
+		return false;
+	if (_state == PARSE_BODY && !parseBody(buf))
+		return false;
+	return _state == PARSE_COMPLETE;
+}
+
+std::string Request::decodeChunked(const std::string &buf,
+								   std::size_t		  pos) const {
 	std::string body;
-	while (pos < raw.size()) {
-		std::string line = getLine(raw, pos);
+	while (pos < buf.size()) {
+		std::string line;
+		std::size_t tmp = pos;
+		if (!getLine(buf, tmp, line))
+			break;
 		if (line.empty())
 			break;
+
 		std::size_t		   chunkSize = 0;
 		std::istringstream iss(line);
 		if (!(iss >> std::hex >> chunkSize) || chunkSize == 0)
 			break;
-		if (pos + chunkSize > raw.size())
+
+		pos = tmp;
+		if (pos + chunkSize > buf.size())
 			break;
-		body += raw.substr(pos, chunkSize);
+
+		body += buf.substr(pos, chunkSize);
 		pos += chunkSize;
-		if (pos + 2 <= raw.size())
+
+		if (pos + 2 <= buf.size())
 			pos += 2;
 	}
 	return body;
@@ -137,6 +169,9 @@ Request::HttpError Request::getError() const {
 }
 bool Request::isValid() const {
 	return _error == OK;
+}
+bool Request::isComplete() const {
+	return _state == PARSE_COMPLETE;
 }
 std::string Request::getMethod() const {
 	return _method;
