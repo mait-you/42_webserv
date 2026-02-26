@@ -49,6 +49,7 @@ class Response {
 	void handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig,
 				   const std::string &fullPath);
 	void handleGet(Request &req, ServerConfig &srv, LocationConfig *locConfig);
+	void handleDelete(Request &req, ServerConfig &srv, LocationConfig *locConfig);
 };
 
 #endif

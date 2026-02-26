@@ -40,7 +40,7 @@ std::string Response::build(Request							&request,
 	ServerConfig	srv		  = matchedServer(request, servers);
 	LocationConfig *locConfig = matchedLocation(srv, request);
 
-	if (!request.isValid()) {
+	if (!request.isValid()){
 		Request::HttpError error = request.getError();
 		if (error == 400)
 			errorPage(srv, locConfig, 400, "Bad Request");
@@ -50,16 +50,22 @@ std::string Response::build(Request							&request,
 		errorPage(srv, locConfig, 404, "Not Found");
 	} else if (locConfig->has_redirect) {
 		if (locConfig->redirect_code == 301)
-			errorPage(srv, locConfig, 301, "Moved Permanently");
+			setStatus(301, "Moved Permanently");
 		else
-			errorPage(srv, locConfig, 302, "Found");
+			setStatus(302, "Found");
 		setHeader("Location", locConfig->redirect_url);
 	} else if (!allowedMethods(locConfig, request)) {
 		errorPage(srv, locConfig, 405, "Method Not Allowed");
 	} else if (!bodySize(srv, request)) {
 		errorPage(srv, locConfig, 413, "Payload Too Large");
 	} else if (request.getMethod() == "GET")
+	{
 		handleGet(request, srv, locConfig);
+	}
+	else if (request.getMethod() == "DELETE")
+	{
+		handleDelete(request, srv, locConfig);
+	}
 
 	return buildSendBuffer();
 }

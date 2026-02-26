@@ -29,7 +29,8 @@ void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
 	ss << file.rdbuf();
 	setStatus(200, "OK");
 	Mime mm;
-	setHeader("Content-type", mm.getType(getExtension(fullPath)));
+	std::string extension = getExtension(fullPath);
+	setHeader("Content-type", mm.getType(extension));
 	setBody(ss.str());
 }
 
@@ -44,7 +45,11 @@ void Response::handleDir(Request &req, ServerConfig &srv,
 		return;
 	}
 
-	std::string index = locConfig->index.empty() ? srv.index : locConfig->index;
+	std::string index;
+	if (!locConfig->index.empty())
+		index = locConfig->index;
+	else
+		index = srv.index;
 	if (!index.empty()) {
 		std::string indexPath = fullPath + index;
 		struct stat st;
@@ -70,7 +75,11 @@ void Response::handleDir(Request &req, ServerConfig &srv,
 
 void Response::handleGet(Request &req, ServerConfig &srv,
 						 LocationConfig *locConfig) {
-	std::string root	 = locConfig->root.empty() ? srv.root : locConfig->root;
+	std::string root;
+	if (!locConfig->root.empty())
+		root = locConfig->root;
+	else
+		root= srv.root;
 	std::string fullPath = root + req.getUri();
 
 	struct stat buffer;

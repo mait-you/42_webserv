@@ -32,7 +32,8 @@ SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/http/ResponseHelpers.cpp \
 	$(SRC_DIR)/http/ResponseHandlers.cpp \
 	$(SRC_DIR)/http/Response.cpp \
-	$(SRC_DIR)/http/MimeTypes.cpp
+	$(SRC_DIR)/http/MimeTypes.cpp \
+	$(SRC_DIR)/http/handleDelete.cpp \
 
 OBJS        = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
