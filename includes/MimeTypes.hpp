@@ -10,6 +10,6 @@ class Mime {
   public:
 	Mime();
 	~Mime();
-	std::string getType(const std::string &extension);
+	std::string getType(const std::string& extension);
 };
 #endif

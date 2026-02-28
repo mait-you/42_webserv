@@ -1,25 +1,21 @@
 #include "../../includes/Socket.hpp"
 
-Socket::Socket()
-	: _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
-}
+Socket::Socket() : _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {}
 
-Socket::Socket(int fd)
-	: _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
+Socket::Socket(int fd) : _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
 	if (fd == -1)
 		throwError("Socket: invalid file descriptor");
 	_fd = fd;
 }
 
-Socket::Socket(const std::string &ip, const std::string &port)
-	: _fd(-1), _ip(ip), _port(port), _is_bound(false), _is_listening(false) {
-}
+Socket::Socket(const std::string& ip, const std::string& port)
+		: _fd(-1), _ip(ip), _port(port), _is_bound(false), _is_listening(false) {}
 
-Socket::Socket(const Socket &other) {
+Socket::Socket(const Socket& other) {
 	*this = other;
 }
 
-Socket &Socket::operator=(const Socket &other) {
+Socket& Socket::operator=(const Socket& other) {
 	if (this != &other) {
 		_fd			  = other._fd;
 		_ip			  = other._ip;
@@ -30,21 +26,19 @@ Socket &Socket::operator=(const Socket &other) {
 	return *this;
 }
 
-Socket::~Socket() {
-}
+Socket::~Socket() {}
 
 void Socket::createAndBind() {
 	struct addrinfo	 hints;
-	struct addrinfo *result;
-	struct addrinfo *rp;
+	struct addrinfo* result;
+	struct addrinfo* rp;
 
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family	  = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags	  = AI_PASSIVE;
 
-	int status = getaddrinfo(_ip.empty() ? NULL : _ip.c_str(), _port.c_str(),
-							 &hints, &result);
+	int status = getaddrinfo(_ip.empty() ? NULL : _ip.c_str(), _port.c_str(), &hints, &result);
 	if (status != 0)
 		throwError("getaddrinfo: " + std::string(gai_strerror(status)));
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
@@ -87,7 +81,7 @@ Socket Socket::acceptClient() {
 	struct sockaddr_in client_addr;
 	socklen_t		   addr_len = sizeof(client_addr);
 	std::memset(&client_addr, 0, sizeof(client_addr));
-	int clientFd = ::accept(_fd, (struct sockaddr *) &client_addr, &addr_len);
+	int clientFd = ::accept(_fd, (struct sockaddr*) &client_addr, &addr_len);
 	if (clientFd == -1)
 		throwError("accept: ");
 	Socket s(clientFd);
@@ -103,20 +97,20 @@ void Socket::close() {
 	}
 }
 
-void Socket::setIp(const std::string &ip) {
+void Socket::setIp(const std::string& ip) {
 	_ip = ip;
 }
-void Socket::setPort(const std::string &port) {
+void Socket::setPort(const std::string& port) {
 	_port = port;
 }
 
 int Socket::getFd() const {
 	return _fd;
 }
-const std::string &Socket::getIp() const {
+const std::string& Socket::getIp() const {
 	return _ip;
 }
-const std::string &Socket::getPort() const {
+const std::string& Socket::getPort() const {
 	return _port;
 }
 bool Socket::isBound() const {
@@ -129,7 +123,7 @@ bool Socket::isValid() const {
 	return _fd != -1;
 }
 
-std::ostream &operator<<(std::ostream &out, const Socket &s) {
+std::ostream& operator<<(std::ostream& out, const Socket& s) {
 	out << "Socket(fd=" << s.getFd() << ", " << s.getIp() << ":" << s.getPort();
 	if (s.isBound())
 		out << ", bound";

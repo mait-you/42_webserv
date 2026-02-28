@@ -32,6 +32,7 @@ SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/utils/Utils.cpp \
 	$(SRC_DIR)/http/ResponseHelpers.cpp \
 	$(SRC_DIR)/http/ResponseHandlers.cpp \
+	$(SRC_DIR)/http/HandlePost.cpp \
 	$(SRC_DIR)/http/Response.cpp \
 	$(SRC_DIR)/http/MimeTypes.cpp
 

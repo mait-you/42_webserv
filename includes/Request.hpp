@@ -23,12 +23,7 @@ class Request {
 		NOT_IMPLEMENTED		= 501
 	};
 
-	enum ParseState {
-		PARSE_REQUEST_LINE,
-		PARSE_HEADERS,
-		PARSE_BODY,
-		PARSE_COMPLETE
-	};
+	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_COMPLETE };
 
   private:
 	std::string _method;
@@ -44,11 +39,11 @@ class Request {
 
   public:
 	Request();
-	Request(const Request &other);
-	Request &operator=(const Request &other);
+	Request(const Request& other);
+	Request& operator=(const Request& other);
 	~Request();
 
-	bool parse(const std::string &recvBuffer);
+	bool parse(const std::string& recvBuffer);
 
 	// getters
 	HttpError		 getError() const;
@@ -58,28 +53,27 @@ class Request {
 	std::string		 getUri() const;
 	std::string		 getVersion() const;
 	std::string		 getBody() const;
-	const HeaderMap &getHeaders() const;
-	std::string		 getHeader(const std::string &key) const;
+	const HeaderMap& getHeaders() const;
+	std::string		 getHeader(const std::string& key) const;
 
   private:
-	void parseRequestLine(const std::string &buf);
-	void parseHeaders(const std::string &buf);
-	void parseBody(const std::string &buf);
+	void parseRequestLine(const std::string& buf);
+	void parseHeaders(const std::string& buf);
+	void parseBody(const std::string& buf);
 
-	bool getLine(const std::string &buf, std::size_t &pos,
-				 std::string &line) const;
+	bool getLine(const std::string& buf, std::size_t& pos, std::string& line) const;
 
-	std::string decodeChunked(const std::string &buf, std::size_t &pos) const;
+	std::string decodeChunked(const std::string& buf, std::size_t& pos) const;
 
-	bool isValidMethod(const std::string &method) const;
-	bool isValidUri(const std::string &uri) const;
-	bool isValidVersion(const std::string &version) const;
+	bool isValidMethod(const std::string& method) const;
+	bool isValidUri(const std::string& uri) const;
+	bool isValidVersion(const std::string& version) const;
 	bool isValidHeaders() const;
 
-	void setError(HttpError err); // throws
+	void setError(HttpError err);  // throws
 	void setState(ParseState state);
 };
 
-std::ostream &operator<<(std::ostream &out, const Request &req);
+std::ostream& operator<<(std::ostream& out, const Request& req);
 
 #endif

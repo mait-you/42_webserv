@@ -1,9 +1,6 @@
 #ifndef HEAD_HPP
 #define HEAD_HPP
 
-#include <cerrno>
-#include <cstring>
-#include <ctime>
 #include <dirent.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -14,6 +11,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstring>
+#include <ctime>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -23,7 +23,7 @@
 #include <vector>
 
 #ifndef DEBUGGING
-#define DEBUGGING 0
+	#define DEBUGGING 0
 #endif
 
 #define HTTP_VERSION "HTTP/1.1"
@@ -34,24 +34,24 @@
 #define MAX_BODY_SIZE (1024 * 1024)
 
 typedef struct epoll_event t_ev;
-#define EPOLL_EVENT(name)                                                      \
-	t_ev name;                                                                 \
+#define EPOLL_EVENT(name)                                                                          \
+	t_ev name;                                                                                     \
 	std::memset(&name, 0, sizeof(name));
 
 #define LOG(msg) std::cout << msg << std::endl
-#define LOG_DEBUGG(msg)                                                        \
-	if (DEBUGGING)                                                             \
+#define LOG_DEBUGG(msg)                                                                            \
+	if (DEBUGGING)                                                                                 \
 	std::cout << msg << std::endl
 
-inline void throwError(const std::string &msg) {
+inline void throwError(const std::string& msg) {
 	if (errno)
 		throw std::runtime_error(msg + ": " + std::strerror(errno));
 	throw std::runtime_error(msg);
 }
 
 void		setupSignals();
-bool		isNumber(const std::string &str);
-bool		isValidPort(const std::string &str);
+bool		isNumber(const std::string& str);
+bool		isValidPort(const std::string& str);
 std::string ipv4Tostr(uint32_t ip);
 std::string portTostr(uint16_t port);
 

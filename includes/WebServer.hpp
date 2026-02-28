@@ -17,16 +17,16 @@ class WebServer {
 	Client::Map	  _clients;
 	int			  _epollFd;
 	t_ev		  _events[MAX_EVENTS];
-	const Config &_config;
+	const Config& _config;
 
   public:
-	WebServer(const Config &conf);
+	WebServer(const Config& conf);
 	~WebServer();
 
 	void run();
 
   private:
-	void acceptClient(Socket &serverSock);
+	void acceptClient(Socket& serverSock);
 
 	bool handleRead(int fd);
 
@@ -35,9 +35,8 @@ class WebServer {
 
   private:
 	WebServer();
-	WebServer(const WebServer &other);
-	WebServer &operator=(const WebServer &other);
+	WebServer(const WebServer& other);
+	WebServer& operator=(const WebServer& other);
 };
-
 
 #endif

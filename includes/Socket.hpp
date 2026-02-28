@@ -18,31 +18,31 @@ class Socket {
 
   public:
 	Socket();
-	Socket(int fd); // throws
-	Socket(const std::string &ip, const std::string &port);
-	Socket(const Socket &other);
-	Socket &operator=(const Socket &other);
+	Socket(int fd);	 // throws
+	Socket(const std::string& ip, const std::string& port);
+	Socket(const Socket& other);
+	Socket& operator=(const Socket& other);
 	~Socket();
 
-	void   createAndBind();				// throws
-	void   setNonBlocking();			// throws
-	void   startListening(int backlog); // throws
-	Socket acceptClient();				// throws
+	void   createAndBind();				 // throws
+	void   setNonBlocking();			 // throws
+	void   startListening(int backlog);	 // throws
+	Socket acceptClient();				 // throws
 	void   close();
 
 	// Setters
-	void setIp(const std::string &ip);
-	void setPort(const std::string &port);
+	void setIp(const std::string& ip);
+	void setPort(const std::string& port);
 
 	// Getters
 	int				   getFd() const;
-	const std::string &getIp() const;
-	const std::string &getPort() const;
+	const std::string& getIp() const;
+	const std::string& getPort() const;
 	bool			   isBound() const;
 	bool			   isListening() const;
 	bool			   isValid() const;
 };
 
-std::ostream &operator<<(std::ostream &out, const Socket &socket);
+std::ostream& operator<<(std::ostream& out, const Socket& socket);
 
 #endif

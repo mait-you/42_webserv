@@ -19,36 +19,35 @@ class Response {
 
   public:
 	Response();
-	Response(const Response &other);
-	Response &operator=(const Response &other);
+	Response(const Response& other);
+	Response& operator=(const Response& other);
 	~Response();
 
-	void setStatus(int code, const std::string &message);
-	void setHeader(const std::string &key, const std::string &value);
-	void setBody(const std::string &body);
+	void setStatus(int code, const std::string& message);
+	void setHeader(const std::string& key, const std::string& value);
+	void setBody(const std::string& body);
 
-	std::string build(Request						  &request,
-					  const std::vector<ServerConfig> &servers);
+	std::string build(Request& request, const std::vector<ServerConfig>& servers);
 
   private:
 	std::string buildSendBuffer() const;
 
 	// helpers
-	ServerConfig	matchedServer(Request						  &req,
-								  const std::vector<ServerConfig> &servers);
-	LocationConfig *matchedLocation(ServerConfig &srv, Request &req);
-	bool			allowedMethods(LocationConfig *locConfig, Request &req);
-	bool			bodySize(ServerConfig &srv, Request &req);
-	std::string		getExtension(const std::string &fullPath);
-	std::string getList(const std::string &fullPath, const std::string &uri);
+	ServerConfig	matchedServer(Request& req, const std::vector<ServerConfig>& servers);
+	LocationConfig* matchedLocation(ServerConfig& srv, Request& req);
+	bool			allowedMethods(LocationConfig* locConfig, Request& req);
+	bool			bodySize(ServerConfig& srv, Request& req);
+	std::string		getExtension(const std::string& fullPath);
+	std::string		getList(const std::string& fullPath, const std::string& uri);
 
-	void handleFile(ServerConfig &srv, LocationConfig *locConfig,
-					const std::string &fullPath);
-	void errorPage(ServerConfig &srv, LocationConfig *locConfig, int code,
-				   const std::string &codeMsg);
-	void handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig,
-				   const std::string &fullPath);
-	void handleGet(Request &req, ServerConfig &srv, LocationConfig *locConfig);
+	void handleFile(ServerConfig& srv, LocationConfig* locConfig, const std::string& fullPath);
+	void errorPage(ServerConfig& srv, LocationConfig* locConfig, int code,
+				   const std::string& codeMsg);
+	void handleDir(Request& req, ServerConfig& srv, LocationConfig* locConfig,
+				   const std::string& fullPath);
+
+	void handleGet(Request& req, ServerConfig& srv, LocationConfig* locConfig);
+	void handlePost(Request& req, ServerConfig& srv, LocationConfig* locConfig);
 };
 
 #endif

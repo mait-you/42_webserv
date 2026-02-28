@@ -6,12 +6,12 @@ void parseIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &location)
 	if (i >= tokens.size() || tokens[i].type != word)
 	{
 		throw std::runtime_error("Invalid config: Expected auto index");
-		
+
 	}
 	location.upload_path = tokens[i].value;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected ;");
 	}
 	i++;
@@ -38,7 +38,7 @@ void parseAutoIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &locat
 {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected auto index");
 	}
 	if (tokens[i].value == "on")
@@ -49,12 +49,12 @@ void parseAutoIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &locat
 	{
 		location.autoindex = false;
 	}
-	else{					
+	else{
 		throw std::runtime_error("Invalid config: Expected auto index");
 	}
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected ;");
 	}
 	i++;
@@ -64,7 +64,7 @@ void parseAllowedMethods(size_t &i, std::vector<Token> &tokens, LocationConfig &
 {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected upload allowed methods");
 	}
 	location.allow_methods.clear();
@@ -81,7 +81,7 @@ void parseAllowedMethods(size_t &i, std::vector<Token> &tokens, LocationConfig &
 		}
 		else
 		{
-			// i think should return error code ? when method not found ?						
+			// i think should return error code ? when method not found ?
 			throw std::runtime_error("Invalid config: unexpected upload method");
 		}
 	}
@@ -105,12 +105,12 @@ void parseErrorPage(size_t &i, std::vector<Token> &tokens, LocationConfig &locat
 	std::stringstream ss(tokens[i].value);
 	ss >> errorCode;
 	if (ss.fail() || !ss.eof())
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected error code");
 	}
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected error page path");
 	}
 	location.error_pages[errorCode] = tokens[i].value;
@@ -126,7 +126,7 @@ void parseCgiPass(size_t &i, std::vector<Token> &tokens, LocationConfig &locatio
 {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected upload path");
 	}
 	location.cgi_path = tokens[i].value;
@@ -144,23 +144,23 @@ void parseredirection(size_t &i, std::vector<Token> &tokens, LocationConfig &loc
 {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected redirection status code");
 	}
 	unsigned int statusCode;
 	std::stringstream ss(tokens[i].value);
 	ss >> statusCode;
 	if (ss.fail() || !ss.eof())
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected redirection status code");
 	}
 	if (statusCode != 301 && statusCode != 302)
-	{					
+	{
 		throw std::runtime_error("Invalid config: status code not allowed");
 	}
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word)
-	{					
+	{
 		throw std::runtime_error("Invalid config: Expected redirection url");
 	}
 	if (location.has_redirect == true)
@@ -208,7 +208,7 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 			else if (tokens[i].type == word && tokens[i].value == "return")
 				parseredirection(i, tokens, location);
 			else
-			{		
+			{
 				std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
 				throw std::runtime_error(str);
 			}

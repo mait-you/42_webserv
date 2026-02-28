@@ -2,14 +2,14 @@
 
 bool WebServer::running = true;
 
-WebServer::WebServer(const Config &conf) : _epollFd(-1), _config(conf) {
+WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	std::memset(_events, 0, sizeof(_events));
 	_epollFd = epoll_create(true);
 	if (_epollFd == -1)
 		throwError("epoll_create: ");
-	const std::vector<ServerConfig> &servers = _config.getServers();
+	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
-		const ServerConfig &srv = servers[i];
+		const ServerConfig& srv = servers[i];
 		for (std::size_t j = 0; j < srv.ports.size(); ++j) {
 			Socket sock(srv.host, srv.ports[j]);
 			sock.createAndBind();
@@ -27,8 +27,7 @@ WebServer::WebServer(const Config &conf) : _epollFd(-1), _config(conf) {
 }
 
 WebServer::~WebServer() {
-	for (Socket::It it = _serverSockets.begin(); it != _serverSockets.end();
-		 ++it)
+	for (Socket::It it = _serverSockets.begin(); it != _serverSockets.end(); ++it)
 		it->second.close();
 	for (Client::It it = _clients.begin(); it != _clients.end(); ++it)
 		it->second.getSocket().close();
@@ -48,12 +47,12 @@ void WebServer::removeClient(int fd) {
 	_clients.erase(it);
 }
 
-void WebServer::acceptClient(Socket &serverSock) {
+void WebServer::acceptClient(Socket& serverSock) {
 	Socket newSock;
 	try {
 		newSock = serverSock.acceptClient();
 		newSock.setNonBlocking();
-	} catch (const std::exception &e) {
+	} catch (const std::exception& e) {
 		newSock.close();
 		return;
 	}
@@ -70,7 +69,7 @@ void WebServer::acceptClient(Socket &serverSock) {
 }
 
 bool WebServer::handleRead(int fd) {
-	Client &client = _clients[fd];
+	Client& client = _clients[fd];
 	if (!client.readData())
 		return false;
 	if (!client.isRequestComplete())
@@ -83,7 +82,7 @@ bool WebServer::handleRead(int fd) {
 }
 
 bool WebServer::handleWrite(int fd) {
-	Client &client = _clients[fd];
+	Client& client = _clients[fd];
 	if (!client.sendData())
 		return false;
 	return true;
