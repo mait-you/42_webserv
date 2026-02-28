@@ -26,22 +26,22 @@ class Client {
 
   public:
 	Client();
-	Client(const Socket &socket, const Config &conf);
-	Client(const Client &other);
-	Client &operator=(const Client &other);
+	Client(const Socket& socket, const Config& conf);
+	Client(const Client& other);
+	Client& operator=(const Client& other);
 	~Client();
 
 	bool readData();
 	bool sendData();
 
-	void setResponse(const std::string &response);
+	void setResponse(const std::string& response);
 
-	Socket	&getSocket();
-	Request &getRequest();
+	Socket&	 getSocket();
+	Request& getRequest();
 	bool	 isRequestComplete() const;
 	bool	 isResponseSent() const;
 };
 
-std::ostream &operator<<(std::ostream &out, const Client &client);
+std::ostream& operator<<(std::ostream& out, const Client& client);
 
 #endif

@@ -1,15 +1,14 @@
 #include "../../includes/Response.hpp"
+
 #include "../../includes/MimeTypes.hpp"
 
-Response::Response() : _statusCode(200), _statusMessage("OK") {
-}
+Response::Response() : _statusCode(200), _statusMessage("OK") {}
 
-Response::Response(const Response &other)
-	: _statusCode(other._statusCode), _statusMessage(other._statusMessage),
-	  _headers(other._headers), _body(other._body) {
-}
+Response::Response(const Response& other)
+		: _statusCode(other._statusCode), _statusMessage(other._statusMessage),
+		  _headers(other._headers), _body(other._body) {}
 
-Response &Response::operator=(const Response &other) {
+Response& Response::operator=(const Response& other) {
 	if (this != &other) {
 		_statusCode	   = other._statusCode;
 		_statusMessage = other._statusMessage;
@@ -19,28 +18,26 @@ Response &Response::operator=(const Response &other) {
 	return *this;
 }
 
-Response::~Response() {
-}
+Response::~Response() {}
 
-void Response::setStatus(int code, const std::string &message) {
+void Response::setStatus(int code, const std::string& message) {
 	_statusCode	   = code;
 	_statusMessage = message;
 }
 
-void Response::setHeader(const std::string &key, const std::string &value) {
+void Response::setHeader(const std::string& key, const std::string& value) {
 	_headers[key] = value;
 }
 
-void Response::setBody(const std::string &body) {
+void Response::setBody(const std::string& body) {
 	_body = body;
 }
 
-std::string Response::build(Request							&request,
-							const std::vector<ServerConfig> &servers) {
+std::string Response::build(Request& request, const std::vector<ServerConfig>& servers) {
 	ServerConfig	srv		  = matchedServer(request, servers);
-	LocationConfig *locConfig = matchedLocation(srv, request);
+	LocationConfig* locConfig = matchedLocation(srv, request);
 
-	if (!request.isValid()){
+	if (!request.isValid()) {
 		Request::HttpError error = request.getError();
 		if (error == 400)
 			errorPage(srv, locConfig, 400, "Bad Request");
@@ -58,12 +55,11 @@ std::string Response::build(Request							&request,
 		errorPage(srv, locConfig, 405, "Method Not Allowed");
 	} else if (!bodySize(srv, request)) {
 		errorPage(srv, locConfig, 413, "Payload Too Large");
-	} else if (request.getMethod() == "GET")
-	{
+	} else if (request.getMethod() == "GET") {
 		handleGet(request, srv, locConfig);
-	}
-	else if (request.getMethod() == "DELETE")
-	{
+	} else if (request.getMethod() == "POST") {
+		handlePost(request, srv, locConfig);
+	} else if (request.getMethod() == "DELETE") {
 		handleDelete(request, srv, locConfig);
 	}
 

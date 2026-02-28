@@ -1,6 +1,6 @@
 #include "../includes/WebServer.hpp"
 
-int main(int ac, char **av) {
+int main(int ac, char** av) {
 	if (ac > 2) {
 		std::cerr << "Usage: ./webserv [configuration_file]" << std::endl;
 		return 1;
@@ -10,10 +10,10 @@ int main(int ac, char **av) {
 	setupSignals();
 
 	try {
-		Config config(configFile);
+		Config	  config(configFile);
 		WebServer server(config);
 		server.run();
-	} catch (const std::exception &e) {
+	} catch (const std::exception& e) {
 		std::cerr << "ERROR: " << e.what() << std::endl;
 		return 1;
 	}
