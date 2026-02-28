@@ -20,6 +20,10 @@ void Response::errorPage(ServerConfig &srv, LocationConfig *locConfig, int code,
 
 void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
 						  const std::string &fullPath) {
+	if (access(fullPath.c_str(), F_OK) == -1) {
+		errorPage(srv, locConfig, 404, "Not Found");
+		return;
+	}
 	std::ifstream file(fullPath.c_str());
 	if (!file.is_open()) {
 		errorPage(srv, locConfig, 403, "Forbidden");
@@ -29,7 +33,8 @@ void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
 	ss << file.rdbuf();
 	setStatus(200, "OK");
 	Mime mm;
-	setHeader("Content-type", mm.getType(getExtension(fullPath)));
+	std::string extension = getExtension(fullPath);
+	setHeader("Content-type", mm.getType(extension));
 	setBody(ss.str());
 }
 
@@ -44,7 +49,11 @@ void Response::handleDir(Request &req, ServerConfig &srv,
 		return;
 	}
 
-	std::string index = locConfig->index.empty() ? srv.index : locConfig->index;
+	std::string index;
+	if (!locConfig->index.empty())
+		index = locConfig->index;
+	else
+		index = srv.index;
 	if (!index.empty()) {
 		std::string indexPath = fullPath + index;
 		struct stat st;
@@ -55,7 +64,7 @@ void Response::handleDir(Request &req, ServerConfig &srv,
 	}
 
 	if (locConfig->autoindex) {
-		std::string dirList = getList(fullPath, uri);
+		std::string dirList = getList(fullPath, cleanUri(req.getUri()));
 		if (!dirList.empty()) {
 			setStatus(200, "OK");
 			setHeader("Content-type", "text/html");
@@ -70,8 +79,12 @@ void Response::handleDir(Request &req, ServerConfig &srv,
 
 void Response::handleGet(Request &req, ServerConfig &srv,
 						 LocationConfig *locConfig) {
-	std::string root	 = locConfig->root.empty() ? srv.root : locConfig->root;
-	std::string fullPath = root + req.getUri();
+	std::string root;
+	if (!locConfig->root.empty())
+		root = locConfig->root;
+	else
+		root= srv.root;
+	std::string fullPath = root + cleanUri(req.getUri());
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {

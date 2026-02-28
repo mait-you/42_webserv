@@ -1,7 +1,6 @@
 #ifndef WEBSERVER_HPP
 #define WEBSERVER_HPP
 
-#include "BuildResponse.hpp"
 #include "Client.hpp"
 #include "Config.hpp"
 #include "Request.hpp"

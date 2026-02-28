@@ -47,9 +47,9 @@ std::string Response::build(Request& request, const std::vector<ServerConfig>& s
 		errorPage(srv, locConfig, 404, "Not Found");
 	} else if (locConfig->has_redirect) {
 		if (locConfig->redirect_code == 301)
-			errorPage(srv, locConfig, 301, "Moved Permanently");
+			setStatus(301, "Moved Permanently");
 		else
-			errorPage(srv, locConfig, 302, "Found");
+			setStatus(302, "Found");
 		setHeader("Location", locConfig->redirect_url);
 	} else if (!allowedMethods(locConfig, request)) {
 		errorPage(srv, locConfig, 405, "Method Not Allowed");
@@ -59,6 +59,8 @@ std::string Response::build(Request& request, const std::vector<ServerConfig>& s
 		handleGet(request, srv, locConfig);
 	} else if (request.getMethod() == "POST") {
 		handlePost(request, srv, locConfig);
+	} else if (request.getMethod() == "DELETE") {
+		handleDelete(request, srv, locConfig);
 	}
 
 	return buildSendBuffer();

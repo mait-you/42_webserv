@@ -39,15 +39,17 @@ class Response {
 	bool			bodySize(ServerConfig& srv, Request& req);
 	std::string		getExtension(const std::string& fullPath);
 	std::string		getList(const std::string& fullPath, const std::string& uri);
-
+	std::string		cleanUri(std::string uri);
 	void handleFile(ServerConfig& srv, LocationConfig* locConfig, const std::string& fullPath);
 	void errorPage(ServerConfig& srv, LocationConfig* locConfig, int code,
 				   const std::string& codeMsg);
 	void handleDir(Request& req, ServerConfig& srv, LocationConfig* locConfig,
 				   const std::string& fullPath);
+	void deleteFolder(const std::string& fullPath, ServerConfig& srv, LocationConfig* locConfig);
 
 	void handleGet(Request& req, ServerConfig& srv, LocationConfig* locConfig);
-	void handlePost(Request& req, ServerConfig& srv, LocationConfig* locConfig);
+	void handleDelete(Request& req, ServerConfig& srv, LocationConfig* locConfig);
+	void handlePost(Request&, ServerConfig& srv, LocationConfig* locConfig);
 };
 
 #endif
