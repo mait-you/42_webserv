@@ -41,25 +41,3 @@ std::string ipv4Tostr(uint32_t ip) {
 	return ss.str();
 }
 
-std::string getLine(const std::string &raw, size_t &pos) {
-	std::string line;
-	std::size_t end = raw.find("\r\n", pos);
-	if (end == std::string::npos)
-		end = raw.find("\n", pos);
-	if (end == std::string::npos) {
-		line = raw.substr(pos);
-		pos	 = raw.size();
-		return line;
-	}
-	line = raw.substr(pos, end - pos);
-	pos	 = end + (raw[end] == '\r' ? 2 : 1);
-	return line;
-}
-
-std::string trim(const std::string &s) {
-	std::size_t start = s.find_first_not_of(" \t");
-	if (start == std::string::npos)
-		return "";
-	std::size_t end = s.find_last_not_of(" \t");
-	return s.substr(start, end - start + 1);
-}

@@ -37,39 +37,20 @@ Client &Client::operator=(const Client &other) {
 Client::~Client() {
 }
 
-bool Client::checkRequestComplete() const {
-	std::size_t headerEnd = _recvBuffer.find(END_OF_HEADERS);
-	if (headerEnd == std::string::npos)
-		return false;
-	std::string headers = _recvBuffer.substr(0, headerEnd);
-	if (headers.find("Transfer-Encoding: chunked") != std::string::npos)
-		return _recvBuffer.find("0" END_OF_HEADERS) != std::string::npos;
-	std::size_t clPos = headers.find("Content-Length: ");
-	if (clPos != std::string::npos) {
-		std::size_t		   lineEnd = headers.find("\r\n", clPos + 16);
-		std::size_t		   bodyLen = 0;
-		std::istringstream iss(
-			headers.substr(clPos + 16, lineEnd - (clPos + 16)));
-		iss >> bodyLen;
-		return (_recvBuffer.size() - (headerEnd + 4)) >= bodyLen;
-	}
-	return true;
-}
-
 bool Client::readData() {
-	char	buf[RECV_BUFFER_SIZE];
+	char	buf[RECV_BUFFER_SIZE] = {0};
 	ssize_t n = recv(_socket.getFd(), buf, sizeof(buf), MSG_DONTWAIT);
-	if (n <= 0) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return true;
+	if (n <= 0)
 		return false;
-	}
-	_recvBuffer += std::string(buf, n);
-	if (!_requestComplete && checkRequestComplete()) {
-		_requestComplete = true;
-		_request.parse(_recvBuffer);
-		_request.validate();
+
+	_recvBuffer.append(buf, n);
+
+	try {
+		_requestComplete = _request.parse(_recvBuffer);
 		LOG("Request complete      |\n" << _request);
+	} catch (const std::exception &e) {
+		_requestComplete = true;
+		LOG("Request Parse error: " << e.what());
 	}
 	return true;
 }
@@ -83,12 +64,10 @@ bool Client::sendData() {
 
 	ssize_t n = send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent,
 					 _sendBuffer.size() - _bytesSent, MSG_DONTWAIT);
-	if (n < 0) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return true;
+	if (n < 0)
 		return false;
-	}
-	_bytesSent += n;
+
+	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {
 		_responseSent = true;
 		LOG("Response sent         | " << *this);
