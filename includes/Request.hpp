@@ -18,6 +18,7 @@ class Request {
 		OK					= 0,
 		BAD_REQUEST			= 400,
 		URI_TOO_LONG		= 414,
+		BODY_TOO_LONG		= 413,
 		UNSUPPORTED_VERSION = 505,
 		NOT_IMPLEMENTED		= 501
 	};
@@ -39,6 +40,7 @@ class Request {
 	ParseState	_state;
 	std::size_t _parsePos;
 	std::size_t _bodyExpected;
+	bool		_requestComplete;
 
   public:
 	Request();
@@ -60,18 +62,22 @@ class Request {
 	std::string		 getHeader(const std::string &key) const;
 
   private:
-	bool parseRequestLine(const std::string &buf);
-	bool parseHeaders(const std::string &buf);
-	bool parseBody(const std::string &buf);
+	void parseRequestLine(const std::string &buf);
+	void parseHeaders(const std::string &buf);
+	void parseBody(const std::string &buf);
 
 	bool getLine(const std::string &buf, std::size_t &pos,
 				 std::string &line) const;
 
-	std::string decodeChunked(const std::string &buf, std::size_t pos) const;
+	std::string decodeChunked(const std::string &buf, std::size_t &pos) const;
 
 	bool isValidMethod(const std::string &method) const;
 	bool isValidUri(const std::string &uri) const;
 	bool isValidVersion(const std::string &version) const;
+	bool isValidHeaders() const;
+
+	void setError(HttpError err); // throws
+	void setState(ParseState state);
 };
 
 std::ostream &operator<<(std::ostream &out, const Request &req);

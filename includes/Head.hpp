@@ -54,7 +54,5 @@ bool		isNumber(const std::string &str);
 bool		isValidPort(const std::string &str);
 std::string ipv4Tostr(uint32_t ip);
 std::string portTostr(uint16_t port);
-std::string trim(const std::string &s);
-
 
 #endif

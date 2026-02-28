@@ -41,10 +41,3 @@ std::string ipv4Tostr(uint32_t ip) {
 	return ss.str();
 }
 
-std::string trim(const std::string &s) {
-	std::size_t start = s.find_first_not_of(" \t");
-	if (start == std::string::npos)
-		return "";
-	std::size_t end = s.find_last_not_of(" \t");
-	return s.substr(start, end - start + 1);
-}

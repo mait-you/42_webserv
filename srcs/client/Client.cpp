@@ -38,16 +38,19 @@ Client::~Client() {
 }
 
 bool Client::readData() {
-	char	buf[100];
+	char	buf[RECV_BUFFER_SIZE] = {0};
 	ssize_t n = recv(_socket.getFd(), buf, sizeof(buf), MSG_DONTWAIT);
 	if (n <= 0)
 		return false;
-	_recvBuffer += std::string(buf, n);
-	_requestComplete = _request.parse(_recvBuffer);
-	LOG("Request _recvBuffer   | " << _socket << " Request complete ? "
-								   << _requestComplete << '\n');
-	if (_requestComplete) {
+
+	_recvBuffer.append(buf, n);
+
+	try {
+		_requestComplete = _request.parse(_recvBuffer);
 		LOG("Request complete      |\n" << _request);
+	} catch (const std::exception &e) {
+		_requestComplete = true;
+		LOG("Request Parse error: " << e.what());
 	}
 	return true;
 }
@@ -55,13 +58,16 @@ bool Client::readData() {
 bool Client::sendData() {
 	if (!_requestComplete || _responseSent)
 		return true;
+
 	if (_sendBuffer.empty())
 		_sendBuffer = _response.build(_request, _config.getServers());
+
 	ssize_t n = send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent,
 					 _sendBuffer.size() - _bytesSent, MSG_DONTWAIT);
 	if (n < 0)
 		return false;
-	_bytesSent += n;
+
+	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {
 		_responseSent = true;
 		LOG("Response sent         | " << *this);

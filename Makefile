@@ -6,7 +6,7 @@ OBJ_DIR     = obj
 INC_DIR     = includes
 
 CXX         = c++
-CXXFLAGS    = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS    = -Wall -Wextra -Werror -std=c++98 #-fsanitize=address -g
 
 
 # Headers
