@@ -36,15 +36,13 @@ bool Client::readData() {
 	ssize_t n					  = recv(_socket.getFd(), buf, sizeof(buf), MSG_DONTWAIT);
 	if (n <= 0)
 		return false;
-
 	_recvBuffer.append(buf, n);
-
 	try {
 		_requestComplete = _request.parse(_recvBuffer);
 		LOG("Request complete      |\n" << _request);
 	} catch (const std::exception& e) {
 		_requestComplete = true;
-		LOG("Request Parse error: " << e.what());
+		LOG("Request Parse error   | " << e.what());
 	}
 	return true;
 }
