@@ -2,14 +2,15 @@
 
 #include "../../includes/MimeTypes.hpp"
 
-Response::Response() : _statusCode(200), _statusMessage("OK") {}
+Response::Response() : HttpStatus(HTTP_200_OK, "OK"), _statusCode(200), _statusMessage("OK") {}
 
 Response::Response(const Response& other)
-		: _statusCode(other._statusCode), _statusMessage(other._statusMessage),
+		: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
 		  _headers(other._headers), _body(other._body) {}
 
 Response& Response::operator=(const Response& other) {
 	if (this != &other) {
+		HttpStatus::operator=(other);
 		_statusCode	   = other._statusCode;
 		_statusMessage = other._statusMessage;
 		_headers	   = other._headers;
@@ -38,7 +39,7 @@ std::string Response::build(Request& request, const std::vector<ServerConfig>& s
 	LocationConfig* locConfig = matchedLocation(srv, request);
 
 	if (!request.isValid()) {
-		Request::HttpError error = request.getError();
+		Code error = request.getStatusCode();
 		if (error == 400)
 			errorPage(srv, locConfig, 400, "Bad Request");
 		else if (error == 505)

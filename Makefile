@@ -17,6 +17,7 @@ HEADERS     = $(INC_DIR)/WebServer.hpp \
 	$(INC_DIR)/MimeTypes.hpp \
 	$(INC_DIR)/Request.hpp \
 	$(INC_DIR)/Response.hpp \
+	$(INC_DIR)/HttpStatus.hpp \
 	$(INC_DIR)/Socket.hpp
 
 SRCS        = $(SRC_DIR)/main.cpp \
@@ -35,7 +36,8 @@ SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/http/HandlePost.cpp \
 	$(SRC_DIR)/http/Response.cpp \
 	$(SRC_DIR)/http/MimeTypes.cpp \
-	$(SRC_DIR)/http/handleDelete.cpp \
+	$(SRC_DIR)/http/HttpStatus.cpp \
+	$(SRC_DIR)/http/handleDelete.cpp
 
 OBJS        = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 

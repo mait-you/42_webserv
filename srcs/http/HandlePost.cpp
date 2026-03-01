@@ -27,7 +27,7 @@ void Response::handlePost(Request& req, ServerConfig& srv, LocationConfig* locCo
 
 	std::ofstream file(filePath.c_str(), std::ios::binary);
 	if (!file) {
-		errorPage(srv, locConfig, 500, "Internal Server Error wiiiii");
+		errorPage(srv, locConfig, 500, "Internal Server Error");
 		return;
 	}
 

@@ -3,25 +3,16 @@
 
 #include "Config.hpp"
 #include "Head.hpp"
+#include "HttpStatus.hpp"
 
-#define HTTP_VERSION "HTTP/1.1"
 #define MAX_URI_LENGTH 8192
 #define END_OF_HEADERS "\r\n\r\n"
 
-class Request {
+class Request : public HttpStatus {
   public:
 	typedef std::map<std::string, std::string> HeaderMap;
 	typedef HeaderMap::iterator				   HeaderIt;
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
-
-	enum HttpError {
-		OK					= 0,
-		BAD_REQUEST			= 400,
-		URI_TOO_LONG		= 414,
-		BODY_TOO_LONG		= 413,
-		UNSUPPORTED_VERSION = 505,
-		NOT_IMPLEMENTED		= 501
-	};
 
 	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_COMPLETE };
 
@@ -31,7 +22,7 @@ class Request {
 	std::string _version;
 	HeaderMap	_headers;
 	std::string _body;
-	HttpError	_error;
+
 	ParseState	_state;
 	std::size_t _parsePos;
 	std::size_t _bodyExpected;
@@ -46,7 +37,6 @@ class Request {
 	bool parse(const std::string& recvBuffer);
 
 	// getters
-	HttpError		 getError() const;
 	bool			 isValid() const;
 	bool			 isComplete() const;
 	std::string		 getMethod() const;
@@ -61,16 +51,12 @@ class Request {
 	void parseHeaders(const std::string& buf);
 	void parseBody(const std::string& buf);
 
-	bool getLine(const std::string& buf, std::size_t& pos, std::string& line) const;
-
-	std::string decodeChunked(const std::string& buf, std::size_t& pos) const;
-
 	bool isValidMethod(const std::string& method) const;
 	bool isValidUri(const std::string& uri) const;
 	bool isValidVersion(const std::string& version) const;
 	bool isValidHeaders() const;
 
-	void setError(HttpError err);  // throws
+	void setError(Code code);  // throws
 	void setState(ParseState state);
 };
 

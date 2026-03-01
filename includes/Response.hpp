@@ -5,7 +5,7 @@
 #include "Head.hpp"
 #include "Request.hpp"
 
-class Response {
+class Response : public HttpStatus {
   public:
 	typedef std::map<std::string, std::string> HeaderMap;
 	typedef HeaderMap::iterator				   HeaderIt;

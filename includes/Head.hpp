@@ -27,7 +27,7 @@
 	#define DEBUGGING 0
 #endif
 
-#define HTTP_VERSION "HTTP/1.1"
+#define HTTP_VERSION "HTTP/1.0"
 #define MAX_EVENTS 10
 #define RECV_BUFFER_SIZE 4096
 #define END_OF_HEADERS "\r\n\r\n"
