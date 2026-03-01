@@ -32,9 +32,8 @@ void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
 	std::stringstream ss;
 	ss << file.rdbuf();
 	setStatus(200, "OK");
-	Mime mm;
 	std::string extension = getExtension(fullPath);
-	setHeader("Content-type", mm.getType(extension));
+	setHeader("Content-type", Mime::getType(extension));
 	setBody(ss.str());
 }
 
