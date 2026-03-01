@@ -229,6 +229,17 @@ std::ostream& operator<<(std::ostream& out, const Request& req) {
 		for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
 			out << it->first << ": " << it->second << "\n";
 	out << "--- Body ---\n";
-	out << (req.getBody().empty() ? none : req.getBody()) << "\n";
+	const std::string& body = req.getBody();
+	if (body.empty()) {
+		out << "(empty)\n";
+	} else {
+		out << "[binary " << body.size() << " bytes] ";
+		out << std::hex << std::setfill('0');
+		for (size_t i = 0; i < body.size() && i < 32; ++i)
+			out << std::setw(2) << (unsigned int) (unsigned char) body[i] << " ";
+		if (body.size() > 32)
+			out << "...";
+		out << std::dec << "\n";
+	}
 	return out;
 }
