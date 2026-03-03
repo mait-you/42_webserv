@@ -41,6 +41,7 @@ class Response {
 	std::string		getList(const std::string& fullPath, const std::string& uri);
 	std::string		cleanUri(std::string uri);
 	void handleFile(ServerConfig& srv, LocationConfig* locConfig, const std::string& fullPath);
+	int handleErrorFile(const std::string& fullPath);
 	void errorPage(ServerConfig& srv, LocationConfig* locConfig, int code,
 				   const std::string& codeMsg);
 	void handleDir(Request& req, ServerConfig& srv, LocationConfig* locConfig,

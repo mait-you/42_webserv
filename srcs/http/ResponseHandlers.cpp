@@ -1,21 +1,39 @@
 #include "../../includes/MimeTypes.hpp"
 #include "../../includes/Response.hpp"
 
+int Response::handleErrorFile(const std::string &fullPath) {
+	if (access(fullPath.c_str(), F_OK) == -1)
+		return 0;
+	std::ifstream file(fullPath.c_str());
+	if (!file.is_open())
+		return 0;
+	std::stringstream ss;
+	ss << file.rdbuf();
+	std::string extension = getExtension(fullPath);
+	setHeader("Content-type", Mime::getType(extension));
+	setBody(ss.str());
+	return 1;
+}
+
 void Response::errorPage(ServerConfig &srv, LocationConfig *locConfig, int code,
 						 const std::string &codeMsg) {
-	if (locConfig && locConfig->error_pages.find(code) != locConfig->error_pages.end())
-		handleFile(srv, locConfig, locConfig->error_pages[code]);
-	else if (srv.error_pages.find(code) != srv.error_pages.end())
-		handleFile(srv, locConfig, srv.error_pages[code]);
-	else {
-		setHeader("Content-type", "text/html");
-		std::string defaultErr =
-			"<html><body style='display:flex;justify-content:center;'><h1>";
-		defaultErr += codeMsg;
-		defaultErr += "</h1></body></html>";
-		setBody(defaultErr);
-	}
 	setStatus(code, codeMsg);
+	if (locConfig && locConfig->error_pages.find(code) != locConfig->error_pages.end())
+	{
+		if (handleErrorFile(locConfig->error_pages[code]))
+			return;
+	}
+	else if (srv.error_pages.find(code) != srv.error_pages.end())
+	{
+		if (handleErrorFile(srv.error_pages[code]))
+			return;
+	}
+	setHeader("Content-type", "text/html");
+	std::string defaultErr =
+		"<html><body style='display:flex;justify-content:center;'><h1>";
+	defaultErr += codeMsg;
+	defaultErr += "</h1></body></html>";
+	setBody(defaultErr);
 }
 
 void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
