@@ -25,8 +25,6 @@ bool Request::isValidUri(const std::string& uri) const {
 }
 
 bool Request::isValidHeaders() const {
-	if (getHeader("host").empty())
-		return false;
 	if (getMethod() == "POST" && getHeader("Content-Length").empty())
 		return false;
 	return true;
