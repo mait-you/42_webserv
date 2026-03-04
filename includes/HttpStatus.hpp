@@ -5,7 +5,7 @@
 
 class HttpStatus {
   public:
-	enum Code {
+	enum codeStatus {
 		// 2xx Success
 		HTTP_200_OK			= 200,
 		HTTP_201_CREATED	= 201,
@@ -31,23 +31,23 @@ class HttpStatus {
 	};
 
   protected:
-	Code		_statusCode;
+	codeStatus	_statusCode;
 	std::string _statusMessage;
 
   public:
 	HttpStatus();
-	HttpStatus(Code code, const std::string& message);
-	HttpStatus(const HttpStatus& other);
-	HttpStatus& operator=(const HttpStatus& other);
+	HttpStatus(codeStatus codeStatus, const std::string &message);
+	HttpStatus(const HttpStatus &other);
+	HttpStatus &operator=(const HttpStatus &other);
 	virtual ~HttpStatus();
 
-	Code		getStatusCode() const;
+	codeStatus	getStatusCode() const;
 	std::string getStatusMessage() const;
-	void		setStatus(Code code, const std::string& message);
+	void		setStatus(codeStatus codeStatus, const std::string &message);
 	bool		isError() const;
 	bool		isSuccess() const;
 
-	static std::string defaultMessage(Code code);
+	static std::string defaultMessage(codeStatus codeStatus);
 };
 
 #endif

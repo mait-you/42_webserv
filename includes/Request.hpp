@@ -30,11 +30,11 @@ class Request : public HttpStatus {
 
   public:
 	Request();
-	Request(const Request& other);
-	Request& operator=(const Request& other);
+	Request(const Request &other);
+	Request &operator=(const Request &other);
 	~Request();
 
-	bool parse(const std::string& recvBuffer);
+	bool parse(const std::string &recvBuffer);
 
 	// getters
 	bool			 isValid() const;
@@ -43,23 +43,23 @@ class Request : public HttpStatus {
 	std::string		 getUri() const;
 	std::string		 getVersion() const;
 	std::string		 getBody() const;
-	const HeaderMap& getHeaders() const;
-	std::string		 getHeader(const std::string& key) const;
+	const HeaderMap &getHeaders() const;
+	std::string		 getHeader(const std::string &key) const;
 
   private:
-	void parseRequestLine(const std::string& buf);
-	void parseHeaders(const std::string& buf);
-	void parseBody(const std::string& buf);
+	void parseRequestLine(const std::string &buf);
+	void parseHeaders(const std::string &buf);
+	void parseBody(const std::string &buf);
 
-	bool isValidMethod(const std::string& method) const;
-	bool isValidUri(const std::string& uri) const;
-	bool isValidVersion(const std::string& version) const;
+	bool isValidMethod(const std::string &method) const;
+	bool isValidUri(const std::string &uri) const;
+	bool isValidVersion(const std::string &version) const;
 	bool isValidHeaders() const;
 
-	void setError(Code code);  // throws
+	void setError(codeStatus codeStatus); // throws
 	void setState(ParseState state);
 };
 
-std::ostream& operator<<(std::ostream& out, const Request& req);
+std::ostream &operator<<(std::ostream &out, const Request &req);
 
 #endif

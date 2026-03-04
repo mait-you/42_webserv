@@ -1,16 +1,18 @@
 #include "../../includes/Request.hpp"
 
 Request::Request()
-		: HttpStatus(HTTP_200_OK, "OK"), _state(PARSE_REQUEST_LINE), _parsePos(0),
-		  _bodyExpected(0), _requestComplete(false) {}
+	: HttpStatus(HTTP_200_OK, "OK"), _state(PARSE_REQUEST_LINE), _parsePos(0), _bodyExpected(0),
+	  _requestComplete(false) {
+}
 
-Request::Request(const Request& other)
-		: HttpStatus(other), _method(other._method), _uri(other._uri), _version(other._version),
-		  _headers(other._headers), _body(other._body), _state(other._state),
-		  _parsePos(other._parsePos), _bodyExpected(other._bodyExpected),
-		  _requestComplete(other._requestComplete) {}
+Request::Request(const Request &other)
+	: HttpStatus(other), _method(other._method), _uri(other._uri), _version(other._version),
+	  _headers(other._headers), _body(other._body), _state(other._state),
+	  _parsePos(other._parsePos), _bodyExpected(other._bodyExpected),
+	  _requestComplete(other._requestComplete) {
+}
 
-Request& Request::operator=(const Request& other) {
+Request &Request::operator=(const Request &other) {
 	if (this != &other) {
 		HttpStatus::operator=(other);
 		_method			 = other._method;
@@ -26,16 +28,17 @@ Request& Request::operator=(const Request& other) {
 	return *this;
 }
 
-Request::~Request() {}
+Request::~Request() {
+}
 
-static std::string toLower(const std::string& s) {
+static std::string toLower(const std::string &s) {
 	std::string r = s;
 	for (std::size_t i = 0; i < r.size(); ++i)
 		r[i] = static_cast<char>(std::tolower(r[i]));
 	return r;
 }
 
-static std::string trimStr(const std::string& s) {
+static std::string trimStr(const std::string &s) {
 	std::size_t start = s.find_first_not_of(" \t\r\n");
 	if (start == std::string::npos)
 		return "";
@@ -43,7 +46,7 @@ static std::string trimStr(const std::string& s) {
 	return s.substr(start, end - start + 1);
 }
 
-static bool getLine(const std::string& buf, std::size_t& pos, std::string& line) {
+static bool getLine(const std::string &buf, std::size_t &pos, std::string &line) {
 	std::size_t end = buf.find("\r\n", pos);
 	if (end == std::string::npos)
 		return false;
@@ -51,7 +54,7 @@ static bool getLine(const std::string& buf, std::size_t& pos, std::string& line)
 	pos	 = end + 2;
 	return true;
 }
-void Request::parseRequestLine(const std::string& buf) {
+void Request::parseRequestLine(const std::string &buf) {
 	std::string line;
 	if (!getLine(buf, _parsePos, line))
 		return;
@@ -70,7 +73,7 @@ void Request::parseRequestLine(const std::string& buf) {
 	setState(PARSE_HEADERS);
 }
 
-void Request::parseHeaders(const std::string& buf) {
+void Request::parseHeaders(const std::string &buf) {
 	while (true) {
 		std::string line;
 		if (!getLine(buf, _parsePos, line))
@@ -93,7 +96,7 @@ void Request::parseHeaders(const std::string& buf) {
 	}
 }
 
-void Request::parseBody(const std::string& buf) {
+void Request::parseBody(const std::string &buf) {
 	std::string clStr = getHeader("content-length");
 	if (clStr.empty())
 		return setState(PARSE_COMPLETE);
@@ -112,7 +115,7 @@ void Request::parseBody(const std::string& buf) {
 	setState(PARSE_COMPLETE);
 }
 
-bool Request::parse(const std::string& buf) {
+bool Request::parse(const std::string &buf) {
 	if (_state == PARSE_COMPLETE)
 		return true;
 	if (_state == PARSE_REQUEST_LINE)
@@ -125,7 +128,7 @@ bool Request::parse(const std::string& buf) {
 }
 
 bool Request::isValid() const {
-	return _statusCode == 200;
+	return _statusCode == HTTP_200_OK;
 }
 bool Request::isComplete() const {
 	return _state == PARSE_COMPLETE;
@@ -147,19 +150,19 @@ std::string Request::getBody() const {
 	return _body;
 }
 
-const Request::HeaderMap& Request::getHeaders() const {
+const Request::HeaderMap &Request::getHeaders() const {
 	return _headers;
 }
 
-std::string Request::getHeader(const std::string& key) const {
+std::string Request::getHeader(const std::string &key) const {
 	ConstHeaderIt it = _headers.find(toLower(key));
 	return (it != _headers.end()) ? it->second : "";
 }
 
-void Request::setError(Code code) {
-	setStatus(code, HttpStatus::defaultMessage(code));
+void Request::setError(codeStatus codeStatus) {
+	setStatus(codeStatus, HttpStatus::defaultMessage(codeStatus));
 	std::stringstream ss;
-	ss << code;
+	ss << codeStatus;
 	throw std::runtime_error(ss.str());
 }
 
@@ -167,20 +170,20 @@ void Request::setState(ParseState state) {
 	_state = state;
 }
 
-std::ostream& operator<<(std::ostream& out, const Request& req) {
+std::ostream &operator<<(std::ostream &out, const Request &req) {
 	const std::string none = "(empty)";
 	out << "Method:  " << (req.getMethod().empty() ? none : req.getMethod()) << "\n";
 	out << "URI:     " << (req.getUri().empty() ? none : req.getUri()) << "\n";
 	out << "Version: " << (req.getVersion().empty() ? none : req.getVersion()) << "\n";
 	out << "--- Headers ---\n";
-	const Request::HeaderMap& hdrs = req.getHeaders();
+	const Request::HeaderMap &hdrs = req.getHeaders();
 	if (hdrs.empty())
 		out << none << "\n";
 	else
 		for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
 			out << it->first << ": " << it->second << "\n";
 	out << "--- Body ---\n";
-	const std::string& body = req.getBody();
+	const std::string &body = req.getBody();
 	if (body.empty()) {
 		out << "(empty)\n";
 	} else {

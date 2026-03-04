@@ -1,15 +1,15 @@
 #include "../../includes/MimeTypes.hpp"
 #include "../../includes/Response.hpp"
 
-void Response::handlePost(Request& req, ServerConfig& srv, LocationConfig* locConfig) {
+void Response::handlePost(Request &req, ServerConfig &srv, LocationConfig *locConfig) {
 	if (!locConfig || !locConfig->upload || locConfig->upload_path.empty()) {
-		errorPage(srv, locConfig, 403, "Forbidden");
+		errorPage(srv, locConfig, HTTP_403_FORBIDDEN);
 		return;
 	}
 
 	std::string body = req.getBody();
 	if (body.empty()) {
-		errorPage(srv, locConfig, 400, "Bad Request");
+		errorPage(srv, locConfig, HTTP_400_BAD_REQUEST);
 		return;
 	}
 
@@ -27,7 +27,7 @@ void Response::handlePost(Request& req, ServerConfig& srv, LocationConfig* locCo
 
 	std::ofstream file(filePath.c_str(), std::ios::binary);
 	if (!file) {
-		errorPage(srv, locConfig, 500, "Internal Server Error");
+		errorPage(srv, locConfig, HTTP_500_INTERNAL_SERVER_ERROR);
 		return;
 	}
 
@@ -35,7 +35,7 @@ void Response::handlePost(Request& req, ServerConfig& srv, LocationConfig* locCo
 	file << body;
 	file.close();
 
-	setStatus(201, "Created");
+	setStatus(HTTP_201_CREATED, "Created");
 	setHeader("Content-Type", "text/plain");
 	std::string responseBody = "File uploaded: " + filePath + "\r\n";
 	setBody(responseBody);
