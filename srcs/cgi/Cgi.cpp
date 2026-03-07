@@ -55,11 +55,16 @@ std::vector<std::string> Cgi::createEnv() const
 	envVec.push_back("CONTENT_TYPE=" + _req.getHeader("Content-Type"));
 	envVec.push_back("CONTENT_LENGTH=" + _req.getHeader("Content-Length"));
 
+	std::string extension;
+	size_t dotPos = _scriptPath.rfind('.');
+	if (dotPos != std::string::npos)
+		extension = _scriptPath.substr(dotPos);
+
 	std::string pathInfo;
-	size_t extPos = uri.find(_loc->cgi_extension);
-	if (extPos != std::string::npos)
+	size_t extPos = uri.find(extension);
+	if (!extension.empty() && extPos != std::string::npos)
 	{
-		size_t afterPos = extPos + _loc->cgi_extension.length();
+		size_t afterPos = extPos + extension.length();
 		if (afterPos < uri.length())
 			pathInfo = uri.substr(afterPos);
 	}
@@ -92,7 +97,6 @@ std::vector<std::string> Cgi::createEnv() const
 	return envVec;
 }
 
-
 std::string Cgi::run()
 {
 	std::vector<std::string> envVec = createEnv();
@@ -104,9 +108,21 @@ std::string Cgi::run()
 	}
 	envp.push_back(NULL);
 
+	std::string extension;
+	size_t pos = _scriptPath.rfind('.');
+	if (pos != std::string::npos)
+		extension = _scriptPath.substr(pos);
+
+	std::map<std::string, std::string>::const_iterator it = _loc->cgi.find(extension);
+	if (it == _loc->cgi.end())
+		return "";
+	const std::string& cgiPath = it->second;
+
 	char *argv[3];
-	argv[0] = const_cast<char*>(_loc->cgi_path.c_str());
+	argv[0] = const_cast<char*>(cgiPath.c_str());
 	argv[1] = const_cast<char*>(_scriptPath.c_str());
 	argv[2] = NULL;
 	// create pipe and fork and wait in the parent process to return response
+	(void)argv;
+	return "Content-Type: text/html\r\n\r\n<html><body><h1>CGI response</h1></body></html>";
 }

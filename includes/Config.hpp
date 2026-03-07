@@ -22,10 +22,8 @@ struct LocationConfig {
 	std::string				   redirect_url;
 	int						   redirect_code;
 	std::map<int, std::string> error_pages;
-
 	bool		has_cgi;
-	std::string cgi_extension;
-	std::string cgi_path;
+	std::map<std::string, std::string> cgi;
 	LocationConfig();
 };
 

@@ -4,6 +4,7 @@
 #include "Config.hpp"
 #include "Head.hpp"
 #include "Request.hpp"
+#include "Cgi.hpp"
 
 class Response : public HttpStatus {
   public:

@@ -95,14 +95,19 @@ void parseErrorPage(size_t &i, std::vector<Token> &tokens, LocationConfig &locat
 	i++;
 }
 
-void parseCgiPass(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseCgi(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
-		throw std::runtime_error("Invalid config: Expected upload path");
+		throw std::runtime_error("Invalid config: Expected cgi extension");
 	}
-	location.cgi_path	   = tokens[i].value;
-	location.has_cgi	   = true;
-	location.cgi_extension = location.path;
+	// i think should protect from cgi dup?
+	std::string extension = tokens[i].value;
+	i++;
+	if (i >= tokens.size() || tokens[i].type != word) {
+		throw std::runtime_error("Invalid config: Expected cgi interpreter path");
+	}
+	location.cgi[extension] = tokens[i].value;
+	location.has_cgi = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -162,7 +167,7 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 			parseErrorPage(i, tokens, location);
 
 		else if (tokens[i].type == word && tokens[i].value == "cgi_pass")
-			parseCgiPass(i, tokens, location);
+			parseCgi(i, tokens, location);
 		else if (tokens[i].type == word && tokens[i].value == "return")
 			parseredirection(i, tokens, location);
 		else {

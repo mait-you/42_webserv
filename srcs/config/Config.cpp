@@ -107,9 +107,8 @@ std::ostream &operator<<(std::ostream &out, const LocationConfig &loc) {
 	}
 
 	out << "      has_cgi: " << (loc.has_cgi ? "on" : "off") << std::endl;
-	out << "      has_cgi: " << loc.has_cgi<< std::endl;
-	out << "      cgi_pass: " << loc.cgi_path << std::endl;
-	out << "      cgi_extension: " << loc.cgi_extension  << std::endl;
+	for (std::map<std::string, std::string>::const_iterator it = loc.cgi.begin(); it != loc.cgi.end(); ++it)
+		out << "      cgi_pass: " << it->first << " " << it->second << std::endl;
 	return out;
 }
 
