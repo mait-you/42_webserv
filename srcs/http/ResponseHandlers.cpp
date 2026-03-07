@@ -1,7 +1,7 @@
 #include "../../includes/MimeTypes.hpp"
 #include "../../includes/Response.hpp"
 
-int Response::handleErrorFile(const std::string &fullPath) {
+int Response::handleErrorFile(const std::string& fullPath) {
 	if (access(fullPath.c_str(), F_OK) == -1)
 		return 0;
 	std::ifstream file(fullPath.c_str());
@@ -15,7 +15,7 @@ int Response::handleErrorFile(const std::string &fullPath) {
 	return 1;
 }
 
-void Response::errorPage(ServerConfig &srv, LocationConfig *locConfig, codeStatus code) {
+void Response::errorPage(ServerConfig& srv, LocationConfig* locConfig, codeStatus code) {
 	setStatus(code);
 	if (locConfig && locConfig->error_pages.find(code) != locConfig->error_pages.end()) {
 		if (handleErrorFile(locConfig->error_pages[code]))
@@ -31,8 +31,8 @@ void Response::errorPage(ServerConfig &srv, LocationConfig *locConfig, codeStatu
 	setBody(defaultErr);
 }
 
-void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
-						  const std::string &fullPath) {
+void Response::handleFile(ServerConfig& srv, LocationConfig* locConfig,
+						  const std::string& fullPath) {
 	if (access(fullPath.c_str(), F_OK) == -1) {
 		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
 		return;
@@ -50,8 +50,8 @@ void Response::handleFile(ServerConfig &srv, LocationConfig *locConfig,
 	setBody(ss.str());
 }
 
-void Response::handleDir(Request &req, ServerConfig &srv, LocationConfig *locConfig,
-						 const std::string &fullPath) {
+void Response::handleDir(const Request& req, ServerConfig& srv, LocationConfig* locConfig,
+						 const std::string& fullPath) {
 	std::string uri = req.getUri();
 
 	if (uri.empty() || uri[uri.size() - 1] != '/') {
@@ -86,25 +86,4 @@ void Response::handleDir(Request &req, ServerConfig &srv, LocationConfig *locCon
 	} else {
 		errorPage(srv, locConfig, HTTP_403_FORBIDDEN);
 	}
-}
-
-void Response::handleGet(Request &req, ServerConfig &srv, LocationConfig *locConfig) {
-	std::string root;
-	if (!locConfig->root.empty())
-		root = locConfig->root;
-	else
-		root = srv.root;
-	std::string fullPath = root + cleanUri(req.getUri());
-
-	struct stat buffer;
-	if (stat(fullPath.c_str(), &buffer) != 0) {
-		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
-		return;
-	}
-	if (S_ISREG(buffer.st_mode))
-		handleFile(srv, locConfig, fullPath);
-	else if (S_ISDIR(buffer.st_mode))
-		handleDir(req, srv, locConfig, fullPath);
-	else
-		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
 }

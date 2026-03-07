@@ -16,13 +16,11 @@ class Client {
 	std::string _recvBuffer;
 	std::string _sendBuffer;
 	std::size_t _bytesSent;
+	Config		_config;
 	Request		_request;
 	Response	_response;
-	Config		_config;
 	bool		_requestComplete;
 	bool		_responseSent;
-
-	bool checkRequestComplete() const;
 
   public:
 	Client();

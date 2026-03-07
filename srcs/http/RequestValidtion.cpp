@@ -11,8 +11,6 @@ bool Request::isValidMethod(const std::string& method) const {
 bool Request::isValidUri(const std::string& uri) const {
 	if (uri.empty() || uri.size() > MAX_URI_LENGTH)
 		return false;
-	// if (uri[0] != '/' && uri.substr(0, 7) != "http://")
-	// 	return false;
 	for (std::size_t i = 0; i < uri.size(); ++i) {
 		unsigned char c = uri[i];
 		if (c < 33 || c == 127)
@@ -21,6 +19,7 @@ bool Request::isValidUri(const std::string& uri) const {
 			|| c == '}' || c == '|')
 			return false;
 	}
+	
 	return true;
 }
 

@@ -10,11 +10,12 @@ class Socket {
 	typedef Map::const_iterator	  ConstIt;
 
   private:
-	int			_fd;
-	std::string _ip;
-	std::string _port;
-	bool		_is_bound;
-	bool		_is_listening;
+	int					_fd;
+	std::string			_ip;
+	std::string			_port;
+	bool				_is_bound;
+	bool				_is_listening;
+	// const ServerConfig* config;
 
   public:
 	Socket();

@@ -2,7 +2,6 @@
 #define REQUEST_HPP
 
 #include "Config.hpp"
-#include "Head.hpp"
 #include "HttpStatus.hpp"
 
 #define MAX_URI_LENGTH 8192
@@ -17,6 +16,7 @@ class Request : public HttpStatus {
 	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_COMPLETE };
 
   private:
+	Config		_config;
 	std::string _method;
 	std::string _uri;
 	std::string _version;
@@ -27,14 +27,15 @@ class Request : public HttpStatus {
 	std::size_t _parsePos;
 	std::size_t _bodyExpected;
 	bool		_requestComplete;
+	bool		_hasCgi;
 
   public:
-	Request();
-	Request(const Request &other);
-	Request &operator=(const Request &other);
+	Request(const Config& config);
+	Request(const Request& other);
+	Request& operator=(const Request& other);
 	~Request();
 
-	bool parse(const std::string &recvBuffer);
+	bool parse(const std::string& recvBuffer);
 
 	// getters
 	bool			 isValid() const;
@@ -43,23 +44,23 @@ class Request : public HttpStatus {
 	std::string		 getUri() const;
 	std::string		 getVersion() const;
 	std::string		 getBody() const;
-	const HeaderMap &getHeaders() const;
-	std::string		 getHeader(const std::string &key) const;
+	const HeaderMap& getHeaders() const;
+	std::string		 getHeader(const std::string& key) const;
 
   private:
-	void parseRequestLine(const std::string &buf);
-	void parseHeaders(const std::string &buf);
-	void parseBody(const std::string &buf);
+	void parseRequestLine(const std::string& buf);
+	void parseHeaders(const std::string& buf);
+	void parseBody(const std::string& buf);
 
-	bool isValidMethod(const std::string &method) const;
-	bool isValidUri(const std::string &uri) const;
-	bool isValidVersion(const std::string &version) const;
+	bool isValidMethod(const std::string& method) const;
+	bool isValidUri(const std::string& uri) const;
+	bool isValidVersion(const std::string& version) const;
 	bool isValidHeaders() const;
 
-	void setError(codeStatus codeStatus); // throws
+	void setError(codeStatus codeStatus);  // throws
 	void setState(ParseState state);
 };
 
-std::ostream &operator<<(std::ostream &out, const Request &req);
+std::ostream& operator<<(std::ostream& out, const Request& req);
 
 #endif

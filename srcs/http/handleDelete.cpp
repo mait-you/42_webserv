@@ -47,7 +47,7 @@ void Response::deleteFolder(const std::string &fullPath, ServerConfig &srv,
 	return (errorPage(srv, locConfig, HTTP_204_NO_CONTENT));
 }
 
-void Response::handleDelete(Request &req, ServerConfig &srv, LocationConfig *locConfig) {
+void Response::handleDelete(const Request &req, ServerConfig &srv, LocationConfig *locConfig) {
 	struct stat info;
 	std::string root;
 

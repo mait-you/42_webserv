@@ -1,11 +1,10 @@
 #include "../../includes/Response.hpp"
 
-ServerConfig Response::matchedServer(Request						 &req,
-									 const std::vector<ServerConfig> &servers) {
+ServerConfig Response::matchedServer(const Request& req, const std::vector<ServerConfig>& servers) {
 	std::string			port = "8080";
 	std::string			server_name;
 	std::string			host		= req.getHeader("Host");
-	const ServerConfig *matchedPort = NULL;
+	const ServerConfig* matchedPort = NULL;
 
 	size_t pos = host.find(':');
 	if (pos != std::string::npos) {
@@ -28,13 +27,13 @@ ServerConfig Response::matchedServer(Request						 &req,
 	return servers[0];
 }
 
-LocationConfig *Response::matchedLocation(ServerConfig &srv, Request &req) {
-	LocationConfig	  *matched	  = NULL;
-	const std::string &uri		  = cleanUri(req.getUri());
+LocationConfig* Response::matchedLocation(ServerConfig& srv, const Request& req) {
+	LocationConfig*	   matched	  = NULL;
+	const std::string& uri		  = cleanUri(req.getUri());
 	size_t			   matchedLen = 0;
 
 	for (size_t i = 0; i < srv.locations.size(); i++) {
-		std::string &path = srv.locations[i].path;
+		std::string& path = srv.locations[i].path;
 		if (uri.compare(0, path.size(), path) == 0) {
 			if (path.size() > matchedLen) {
 				matchedLen = path.size();
@@ -45,7 +44,7 @@ LocationConfig *Response::matchedLocation(ServerConfig &srv, Request &req) {
 	return matched;
 }
 
-bool Response::allowedMethods(LocationConfig *locConfig, Request &req) {
+bool Response::allowedMethods(LocationConfig* locConfig, const Request& req) {
 	for (size_t i = 0; i < locConfig->allow_methods.size(); i++) {
 		if (req.getMethod() == locConfig->allow_methods[i])
 			return true;
@@ -53,7 +52,7 @@ bool Response::allowedMethods(LocationConfig *locConfig, Request &req) {
 	return false;
 }
 
-bool Response::bodySize(ServerConfig &srv, Request &req) {
+bool Response::bodySize(ServerConfig& srv, const Request& req) {
 	std::string maxStr = req.getHeader("Content-Length");
 	if (maxStr.empty())
 		return true;
@@ -65,7 +64,7 @@ bool Response::bodySize(ServerConfig &srv, Request &req) {
 	return bodyLen <= srv.client_max_body_size;
 }
 
-std::string Response::getExtension(const std::string &fullPath) {
+std::string Response::getExtension(const std::string& fullPath) {
 	std::string name	  = fullPath;
 	size_t		lastSlash = name.find_last_of('/');
 	if (lastSlash != std::string::npos)
@@ -76,19 +75,17 @@ std::string Response::getExtension(const std::string &fullPath) {
 	return "";
 }
 
-std::string Response::getList(const std::string &fullPath,
-							  const std::string &uri) {
+std::string Response::getList(const std::string& fullPath, const std::string& uri) {
 	std::string res;
-	DIR		   *dir = opendir(fullPath.c_str());
+	DIR*		dir = opendir(fullPath.c_str());
 	if (!dir)
 		return res;
 
 	res += "<html><body><h1>Index of ";
 	res += uri;
-	res +=
-		"</h1><hr><pre style='display:flex;flex-direction:column;gap:10px;'>";
+	res += "</h1><hr><pre style='display:flex;flex-direction:column;gap:10px;'>";
 
-	struct dirent *entry;
+	struct dirent* entry;
 	struct stat	   st;
 	while ((entry = readdir(dir)) != NULL) {
 		std::string name = entry->d_name;
@@ -105,35 +102,29 @@ std::string Response::getList(const std::string &fullPath,
 }
 
 // localhost:8080/test/
-std::string Response::cleanUri(std::string uri)
-{
-	std::string segment;
+std::string Response::cleanUri(std::string uri) {
+	std::string				 segment;
 	std::vector<std::string> cleanPath;
-	std::stringstream ss(uri);
+	std::stringstream		 ss(uri);
 
-	while (std::getline(ss, segment, '/'))
-	{
+	while (std::getline(ss, segment, '/')) {
 		if (segment.empty() || segment == ".")
 			continue;
-		if (segment == "..")
-		{
+		if (segment == "..") {
 			if (!cleanPath.empty())
 				cleanPath.pop_back();
-		}
-		else
-		{
+		} else {
 			cleanPath.push_back(segment);
 		}
 	}
 
 	std::string buffer;
-	for (size_t i = 0; i < cleanPath.size(); i++)
-	{
+	for (size_t i = 0; i < cleanPath.size(); i++) {
 		buffer += "/";
 		buffer += cleanPath[i];
 	}
 	if (cleanPath.empty() || uri[uri.size() - 1] == '/')
 		buffer += "/";
-	
+
 	return buffer;
 }

@@ -40,8 +40,6 @@ void WebServer::removeClient(int fd) {
 	Client::It it = _clients.find(fd);
 	if (it == _clients.end())
 		return;
-	// if (it->second.getRequest().getHeader("Connection") != "close")
-	// 	return;
 	epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 	it->second.getSocket().close();
 	_clients.erase(it);

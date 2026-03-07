@@ -11,18 +11,18 @@ struct Token {
 };
 
 struct LocationConfig {
-	std::string				   path;
-	std::vector<std::string>   allow_methods;
-	bool					   autoindex;
-	bool					   upload;
-	std::string				   upload_path;
-	std::string				   root;
-	std::string				   index;
-	bool					   has_redirect;
-	std::string				   redirect_url;
-	int						   redirect_code;
-	std::map<int, std::string> error_pages;
-	bool		has_cgi;
+	std::string						   path;
+	std::vector<std::string>		   allow_methods;
+	bool							   autoindex;
+	bool							   upload;
+	std::string						   upload_path;
+	std::string						   root;
+	std::string						   index;
+	bool							   has_redirect;
+	std::string						   redirect_url;
+	int								   redirect_code;
+	std::map<int, std::string>		   error_pages;
+	bool							   has_cgi;
 	std::map<std::string, std::string> cgi;
 	LocationConfig();
 };

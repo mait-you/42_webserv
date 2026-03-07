@@ -1,7 +1,7 @@
 #include "../../includes/MimeTypes.hpp"
 #include "../../includes/Response.hpp"
 
-void Response::handlePost(Request &req, ServerConfig &srv, LocationConfig *locConfig) {
+void Response::handlePost(const Request &req, ServerConfig &srv, LocationConfig *locConfig) {
 	if (!locConfig || !locConfig->upload || locConfig->upload_path.empty()) {
 		errorPage(srv, locConfig, HTTP_403_FORBIDDEN);
 		return;

@@ -1,17 +1,17 @@
 #include "../../includes/Client.hpp"
 
 Client::Client()
-		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response(),
-		  _config(), _requestComplete(false), _responseSent(false) {}
+		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _config(), _request(_config),
+		  _response(), _requestComplete(false), _responseSent(false) {}
 
 Client::Client(const Socket& socket, const Config& conf)
-		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response(),
-		  _config(conf), _requestComplete(false), _responseSent(false) {}
+		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _config(conf),
+		  _request(_config), _response(), _requestComplete(false), _responseSent(false) {}
 
 Client::Client(const Client& other)
 		: _socket(other._socket), _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),
-		  _bytesSent(other._bytesSent), _request(other._request), _response(other._response),
-		  _config(other._config), _requestComplete(other._requestComplete),
+		  _bytesSent(other._bytesSent), _config(other._config), _request(other._request),
+		  _response(other._response), _requestComplete(other._requestComplete),
 		  _responseSent(other._responseSent) {}
 
 Client& Client::operator=(const Client& other) {
@@ -20,9 +20,9 @@ Client& Client::operator=(const Client& other) {
 		_recvBuffer		 = other._recvBuffer;
 		_sendBuffer		 = other._sendBuffer;
 		_bytesSent		 = other._bytesSent;
+		_config			 = other._config;
 		_request		 = other._request;
 		_response		 = other._response;
-		_config			 = other._config;
 		_requestComplete = other._requestComplete;
 		_responseSent	 = other._responseSent;
 	}
