@@ -122,7 +122,68 @@ std::string Cgi::run()
 	argv[0] = const_cast<char*>(cgiPath.c_str());
 	argv[1] = const_cast<char*>(_scriptPath.c_str());
 	argv[2] = NULL;
-	// create pipe and fork and wait in the parent process to return response
-	(void)argv;
-	return "Content-Type: text/html\r\n\r\n<html><body><h1>CGI response</h1></body></html>";
+
+	size_t slashPos = _scriptPath.rfind('/');
+	std::string path = _scriptPath.substr(0, slashPos);
+
+	int pipeBody[2];
+	int pipeResponse[2];
+
+	pipe(pipeBody);
+	pipe(pipeResponse);
+
+	pid_t pid = fork();
+	if (pid == -1)
+	{
+		close(pipeBody[0]);
+		close(pipeBody[1]);
+		close(pipeResponse[0]);
+		close(pipeResponse[1]);
+		return "";
+	}
+	if (pid == 0) {
+		close(pipeBody[1]);
+		close(pipeResponse[0]);
+		if (dup2(pipeBody[0], STDIN_FILENO) == -1)
+		{
+			close(pipeBody[0]);
+			close(pipeResponse[1]);
+			_exit(1);
+		}
+		if (dup2(pipeResponse[1], STDOUT_FILENO) == -1)
+		{
+			close(pipeBody[0]);
+			close(pipeResponse[1]);
+			_exit(1);
+		}
+		close(pipeBody[0]);
+		close(pipeResponse[1]);
+		if (chdir(path.c_str()) == -1)
+		{
+			_exit(1);
+		}
+		execve(cgiPath.c_str(), argv, &envp[0]);
+		_exit(1);
+	}
+	close(pipeBody[0]);
+	close(pipeResponse[1]);
+	if (_req.getMethod() == "POST")
+	{
+		write(pipeBody[1], _req.getBody().c_str(), _req.getBody().size());
+	}
+	close(pipeBody[1]);
+
+	std::string output;
+	char buf[4096];
+	ssize_t n;
+	while ((n = read(pipeResponse[0], buf, sizeof(buf))) > 0)
+	{
+		output.append(buf, n);
+	}
+
+	close(pipeResponse[0]);
+	int status;
+	waitpid(pid, &status, 0);
+	return output;
+	// return "Content-Type: text/html\r\n\r\n<html><body><h1>CGI response</h1></body></html>";
 }

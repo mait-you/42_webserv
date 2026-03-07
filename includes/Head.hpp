@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <sys/wait.h>
 
 #ifndef DEBUGGING
 	#define DEBUGGING 0
