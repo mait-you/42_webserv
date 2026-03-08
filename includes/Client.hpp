@@ -12,19 +12,18 @@ class Client {
 	typedef Map::const_iterator	  ConstIt;
 
   private:
-	Socket		_socket;
-	std::string _recvBuffer;
-	std::string _sendBuffer;
-	std::size_t _bytesSent;
-	Config		_config;
-	Request		_request;
-	Response	_response;
-	bool		_requestComplete;
-	bool		_responseSent;
+	Socket				_socket;
+	std::string			_recvBuffer;
+	std::string			_sendBuffer;
+	std::size_t			_bytesSent;
+	Request				_request;
+	Response			_response;
+	bool				_requestComplete;
+	bool				_responseSent;
 
   public:
 	Client();
-	Client(const Socket& socket, const Config& conf);
+	Client(const Socket& socket, const ServerConfig* config);
 	Client(const Client& other);
 	Client& operator=(const Client& other);
 	~Client();

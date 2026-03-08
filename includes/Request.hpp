@@ -16,21 +16,22 @@ class Request : public HttpStatus {
 	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_COMPLETE };
 
   private:
-	Config		_config;
-	std::string _method;
-	std::string _uri;
-	std::string _version;
-	HeaderMap	_headers;
-	std::string _body;
+	const ServerConfig*	  _srvConf;
+	const LocationConfig* _locConf;
+	std::string			  _method;
+	std::string			  _uri;
+	std::string			  _version;
+	HeaderMap			  _headers;
+	std::string			  _body;
 
 	ParseState	_state;
 	std::size_t _parsePos;
-	std::size_t _bodyExpected;
 	bool		_requestComplete;
 	bool		_hasCgi;
 
   public:
-	Request(const Config& config);
+	Request();
+	Request(const ServerConfig* serverConfig);
 	Request(const Request& other);
 	Request& operator=(const Request& other);
 	~Request();
@@ -38,14 +39,16 @@ class Request : public HttpStatus {
 	bool parse(const std::string& recvBuffer);
 
 	// getters
-	bool			 isValid() const;
-	bool			 isComplete() const;
-	std::string		 getMethod() const;
-	std::string		 getUri() const;
-	std::string		 getVersion() const;
-	std::string		 getBody() const;
-	const HeaderMap& getHeaders() const;
-	std::string		 getHeader(const std::string& key) const;
+	bool				  isValid() const;
+	bool				  isComplete() const;
+	std::string			  getMethod() const;
+	std::string			  getUri() const;
+	std::string			  getVersion() const;
+	std::string			  getBody() const;
+	const HeaderMap&	  getHeaders() const;
+	std::string			  getHeader(const std::string& key) const;
+	const LocationConfig* getLocationConf() const;
+	const ServerConfig*	  getServerConf() const;
 
   private:
 	void parseRequestLine(const std::string& buf);
@@ -59,6 +62,8 @@ class Request : public HttpStatus {
 
 	void setError(codeStatus codeStatus);  // throws
 	void setState(ParseState state);
+
+	void matchedLocation();
 };
 
 std::ostream& operator<<(std::ostream& out, const Request& req);

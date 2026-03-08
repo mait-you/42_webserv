@@ -1,12 +1,14 @@
 #include "../../includes/Response.hpp"
+
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
-		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK") {}
+		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK),
+		  _statusMessage("OK") {}
 
 Response::Response(const Response& other)
-		: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
-		  _headers(other._headers), _body(other._body) {}
+		: HttpStatus(other), _statusCode(other._statusCode),
+		  _statusMessage(other._statusMessage), _headers(other._headers), _body(other._body) {}
 
 Response& Response::operator=(const Response& other) {
 	if (this != &other) {
@@ -39,34 +41,32 @@ void Response::setBody(const std::string& body) {
 	_body = body;
 }
 
-std::string Response::build(const Request& request, const std::vector<ServerConfig>& servers) {
-	ServerConfig	srv		  = matchedServer(request, servers);
-	LocationConfig* locConfig = matchedLocation(srv, request);
+std::string Response::build(const Request& request) {
+	// ServerConfig	srv		  = matchedServer(request, servers);
+	// LocationConfig* locConfig = matchedLocation(srv, request);
 
 	if (!request.isValid()) {
 		codeStatus error = request.getStatusCode();
 		if (error == HTTP_400_BAD_REQUEST)
-			errorPage(srv, locConfig, HTTP_400_BAD_REQUEST);
-		// else if (error == 505)
-		// 	errorPage(srv, locConfig, 505);
-	} else if (!locConfig) {
-		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
-	} else if (locConfig->has_redirect) {
-		if (locConfig->redirect_code == HTTP_301_MOVED_PERMANENTLY)
+			errorPage(request, HTTP_400_BAD_REQUEST);
+	} else if (!request.getLocationConf()) {
+		errorPage(request, HTTP_404_NOT_FOUND);
+	} else if (request.getLocationConf()->has_redirect) {
+		if (request.getLocationConf()->redirect_code == HTTP_301_MOVED_PERMANENTLY)
 			setStatus(HTTP_301_MOVED_PERMANENTLY);
 		else
-			setStatus(HTTP_302_FOUND, "Found");
-		setHeader("Location", locConfig->redirect_url);
+			setStatus(HTTP_302_FOUND);
+		setHeader("Location", request.getLocationConf()->redirect_url);
 		// } else if (!allowedMethods(locConfig, request)) {
 		// 	errorPage(srv, locConfig, 405);
 		// } else if (!bodySize(srv, request)) {
 		// 	errorPage(srv, locConfig, 413);
 	} else if (request.getMethod() == "GET") {
-		handleGet(request, srv, locConfig);
+		handleGet(request);
 	} else if (request.getMethod() == "POST") {
-		handlePost(request, srv, locConfig);
+		handlePost(request);
 	} else if (request.getMethod() == "DELETE") {
-		handleDelete(request, srv, locConfig);
+		handleDelete(request);
 	}
 
 	return buildSendBuffer();

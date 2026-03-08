@@ -1,23 +1,25 @@
 #include "../../includes/MimeTypes.hpp"
 #include "../../includes/Response.hpp"
 
-void Response::handleGet(const Request& req, ServerConfig& srv, LocationConfig* locConfig) {
+void Response::handleGet(const Request& request) {
+	const LocationConfig* locConf = request.getLocationConf();
+
 	std::string root;
-	if (!locConfig->root.empty())
-		root = locConfig->root;
+	if (locConf && !locConf->root.empty())
+		root = locConf->root;
 	else
-		root = srv.root;
-	std::string fullPath = root + cleanUri(req.getUri());
+		root = request.getServerConf()->root;
+	std::string fullPath = root + cleanUri(request.getUri());
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {
-		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
+		errorPage(request, HTTP_404_NOT_FOUND);
 		return;
 	}
 	if (S_ISREG(buffer.st_mode))
-		handleFile(srv, locConfig, fullPath);
+		handleFile(request, fullPath);
 	else if (S_ISDIR(buffer.st_mode))
-		handleDir(req, srv, locConfig, fullPath);
+		handleDir(request, fullPath);
 	else
-		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
+		errorPage(request, HTTP_404_NOT_FOUND);
 }

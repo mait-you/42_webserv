@@ -11,7 +11,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
 		for (std::size_t j = 0; j < srv.ports.size(); ++j) {
-			Socket sock(srv.host, srv.ports[j]);
+			Socket sock(srv.host, srv.ports[j], &srv);
 			sock.createAndBind();
 			sock.setNonBlocking();
 			sock.startListening(128);
@@ -24,6 +24,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 			LOG("Listening             | " << sock);
 		}
 	}
+	// std::cout << conf << std::endl;
 }
 
 WebServer::~WebServer() {
@@ -31,7 +32,6 @@ WebServer::~WebServer() {
 		it->second.close();
 	for (Client::It it = _clients.begin(); it != _clients.end(); ++it)
 		it->second.getSocket().close();
-
 	if (_epollFd != -1)
 		::close(_epollFd);
 }
@@ -48,7 +48,7 @@ void WebServer::removeClient(int fd) {
 void WebServer::acceptClient(Socket& serverSock) {
 	Socket newSock;
 	try {
-		newSock = serverSock.acceptClient();
+		newSock = serverSock.accept();
 		newSock.setNonBlocking();
 	} catch (const std::exception& e) {
 		newSock.close();
@@ -62,7 +62,7 @@ void WebServer::acceptClient(Socket& serverSock) {
 		newSock.close();
 		return;
 	}
-	_clients[newSock.getFd()] = Client(newSock, _config);
+	_clients[newSock.getFd()] = Client(newSock, serverSock.getServerConf());
 	LOG("New client            | " << newSock);
 }
 

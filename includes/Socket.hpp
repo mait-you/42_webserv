@@ -1,6 +1,7 @@
 #ifndef SOCKET_HPP
 #define SOCKET_HPP
 
+#include "Config.hpp"
 #include "Head.hpp"
 
 class Socket {
@@ -15,12 +16,12 @@ class Socket {
 	std::string			_port;
 	bool				_is_bound;
 	bool				_is_listening;
-	// const ServerConfig* config;
+	const ServerConfig* _serverConfig;
 
   public:
 	Socket();
 	Socket(int fd);	 // throws
-	Socket(const std::string& ip, const std::string& port);
+	Socket(const std::string& ip, const std::string& port, const ServerConfig* serverConfig);
 	Socket(const Socket& other);
 	Socket& operator=(const Socket& other);
 	~Socket();
@@ -28,7 +29,7 @@ class Socket {
 	void   createAndBind();				 // throws
 	void   setNonBlocking();			 // throws
 	void   startListening(int backlog);	 // throws
-	Socket acceptClient();				 // throws
+	Socket accept();					 // throws
 	void   close();
 
 	// Setters
@@ -36,12 +37,13 @@ class Socket {
 	void setPort(const std::string& port);
 
 	// Getters
-	int				   getFd() const;
-	const std::string& getIp() const;
-	const std::string& getPort() const;
-	bool			   isBound() const;
-	bool			   isListening() const;
-	bool			   isValid() const;
+	int					getFd() const;
+	const std::string&	getIp() const;
+	const std::string&	getPort() const;
+	bool				isBound() const;
+	bool				isListening() const;
+	bool				isValid() const;
+	const ServerConfig* getServerConf() const;
 };
 
 std::ostream& operator<<(std::ostream& out, const Socket& socket);

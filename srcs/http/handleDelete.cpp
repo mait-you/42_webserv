@@ -1,13 +1,12 @@
 #include "../../includes/Response.hpp"
 
-void Response::deleteFolder(const std::string &fullPath, ServerConfig &srv,
-							LocationConfig *locConfig) {
+void Response::deleteFolder(const Request& request, const std::string& fullPath) {
 	std::cout << "fullPath " << fullPath << std::endl;
-	DIR *dir = opendir(fullPath.c_str());
+	DIR* dir = opendir(fullPath.c_str());
 	if (!dir)
-		return (errorPage(srv, locConfig, HTTP_403_FORBIDDEN));
+		return (errorPage(request, HTTP_403_FORBIDDEN));
 
-	struct dirent *entry;
+	struct dirent* entry;
 	while ((entry = readdir(dir)) != NULL) {
 		if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..")
 			continue;
@@ -17,22 +16,21 @@ void Response::deleteFolder(const std::string &fullPath, ServerConfig &srv,
 		struct stat info;
 		if (stat(entryPath.c_str(), &info) != 0) {
 			closedir(dir);
-			return (
-				errorPage(srv, locConfig, HTTP_500_INTERNAL_SERVER_ERROR));
+			return (errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR));
 		}
 
 		if (S_ISREG(info.st_mode)) {
 			if (access(entryPath.c_str(), W_OK) == -1) {
 				closedir(dir);
-				return (errorPage(srv, locConfig, HTTP_403_FORBIDDEN));
+				return (errorPage(request, HTTP_403_FORBIDDEN));
 			}
 			if (std::remove(entryPath.c_str()) != 0) {
 				closedir(dir);
-				return (errorPage(srv, locConfig, HTTP_500_INTERNAL_SERVER_ERROR));
+				return (errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR));
 			}
 		} else if (S_ISDIR(info.st_mode)) {
 			entryPath += "/";
-			deleteFolder(entryPath, srv, locConfig);
+			deleteFolder(request, entryPath);
 			if (_statusCode != HTTP_204_NO_CONTENT) {
 				closedir(dir);
 				return;
@@ -41,34 +39,36 @@ void Response::deleteFolder(const std::string &fullPath, ServerConfig &srv,
 	}
 	if (std::remove(fullPath.c_str()) != 0) {
 		closedir(dir);
-		return (errorPage(srv, locConfig, HTTP_500_INTERNAL_SERVER_ERROR));
+		return (errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR));
 	}
 	closedir(dir);
-	return (errorPage(srv, locConfig, HTTP_204_NO_CONTENT));
+	return (errorPage(request, HTTP_204_NO_CONTENT));
 }
 
-void Response::handleDelete(const Request &req, ServerConfig &srv, LocationConfig *locConfig) {
-	struct stat info;
-	std::string root;
+void Response::handleDelete(const Request& request) {
+	const LocationConfig* locConf = request.getLocationConf();
+	const ServerConfig*	  srvConf = request.getServerConf();
+	struct stat			  info;
+	std::string			  root;
 
-	if (!locConfig->root.empty())
-		root = locConfig->root;
+	if (locConf && !locConf->root.empty())
+		root = locConf->root;
 	else
-		root = srv.root;
-	std::string fullPath = root + cleanUri(req.getUri());
-	std::cout << "uri conflect " << req.getUri() << std::endl;
+		root = srvConf->root;
+	std::string fullPath = root + cleanUri(request.getUri());
+	std::cout << "uri conflect " << request.getUri() << std::endl;
 	if (stat(fullPath.c_str(), &info) == -1)
-		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
+		errorPage(request, HTTP_404_NOT_FOUND);
 	else if (S_ISDIR(info.st_mode)) {
 		std::cout << "fullPath conflect " << fullPath << std::endl;
 		if (fullPath[fullPath.size() - 1] == '/')
-			deleteFolder(fullPath, srv, locConfig);
+			deleteFolder(request, fullPath);
 		// else
 		// 	errorPage(srv, locConfig, 409);
 	} else if (access(fullPath.c_str(), W_OK) == -1)
-		errorPage(srv, locConfig, HTTP_403_FORBIDDEN);
+		errorPage(request, HTTP_403_FORBIDDEN);
 	else if (std::remove(fullPath.c_str()) != 0)
-		errorPage(srv, locConfig, HTTP_500_INTERNAL_SERVER_ERROR);
+		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 	else
 		setStatus(HTTP_204_NO_CONTENT, "No Content");
 	setBody("");

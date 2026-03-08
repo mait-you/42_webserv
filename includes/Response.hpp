@@ -27,31 +27,28 @@ class Response : public HttpStatus {
 	void setHeader(const std::string& key, const std::string& value);
 	void setBody(const std::string& body);
 
-	std::string build(const Request& request, const std::vector<ServerConfig>& servers);
+	std::string build(const Request& request);
 
   private:
 	std::string buildSendBuffer() const;
 
 	// helpers
-	ServerConfig	matchedServer(const Request& req, const std::vector<ServerConfig>& servers);
-	LocationConfig* matchedLocation(ServerConfig& srv, const Request& req);
-	bool			allowedMethods(LocationConfig* locConfig, const Request& req);
-	bool			bodySize(ServerConfig& srv, const Request& req);
-	std::string		getExtension(const std::string& fullPath);
-	std::string		getList(const std::string& fullPath, const std::string& uri);
-	std::string		cleanUri(std::string uri);
+	// ServerConfig	matchedServer(const Request& req, const std::vector<ServerConfig>& servers);
+	// const LocationConfig* matchedLocation(const ServerConfig& srv, const Request& req);
+	bool		allowedMethods(const Request& request);
+	bool		bodySize(const Request& request);
+	std::string getList(const std::string& fullPath, const std::string& uri);
 
-	void handleFile(ServerConfig& srv, LocationConfig* locConfig, const std::string& fullPath);
+	void handleFile(const Request& request, const std::string& fullPath);
 	int	 handleErrorFile(const std::string& fullPath);
-	void handleDir(const Request& req, ServerConfig& srv, LocationConfig* locConfig,
-				   const std::string& fullPath);
+	void handleDir(const Request& request, const std::string& fullPath);
 
-	void deleteFolder(const std::string& fullPath, ServerConfig& srv, LocationConfig* locConfig);
-	void errorPage(ServerConfig& srv, LocationConfig* locConfig, codeStatus codeStatus);
+	void deleteFolder(const Request& request, const std::string& fullPath);
+	void errorPage(const Request& request, codeStatus codeStatus);
 
-	void handleGet(const Request& req, ServerConfig& srv, LocationConfig* locConfig);
-	void handleDelete(const Request& req, ServerConfig& srv, LocationConfig* locConfig);
-	void handlePost(const Request& req, ServerConfig& srv, LocationConfig* locConfig);
+	void handleGet(const Request& request);
+	void handleDelete(const Request& request);
+	void handlePost(const Request& request);
 };
 
 #endif

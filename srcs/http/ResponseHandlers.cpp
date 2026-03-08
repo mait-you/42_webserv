@@ -9,37 +9,21 @@ int Response::handleErrorFile(const std::string& fullPath) {
 		return 0;
 	std::stringstream ss;
 	ss << file.rdbuf();
+	// ! file.close(); // zt lik hadi
 	std::string extension = getExtension(fullPath);
 	setHeader("Content-type", Mime::getType(extension));
 	setBody(ss.str());
 	return 1;
 }
 
-void Response::errorPage(ServerConfig& srv, LocationConfig* locConfig, codeStatus code) {
-	setStatus(code);
-	if (locConfig && locConfig->error_pages.find(code) != locConfig->error_pages.end()) {
-		if (handleErrorFile(locConfig->error_pages[code]))
-			return;
-	} else if (srv.error_pages.find(code) != srv.error_pages.end()) {
-		if (handleErrorFile(srv.error_pages[code]))
-			return;
-	}
-	setHeader("Content-type", "text/html");
-	std::string defaultErr = "<html><body style='display:flex;justify-content:center;'><h1>";
-	defaultErr += defaultMessage(code);
-	defaultErr += "</h1></body></html>";
-	setBody(defaultErr);
-}
-
-void Response::handleFile(ServerConfig& srv, LocationConfig* locConfig,
-						  const std::string& fullPath) {
+void Response::handleFile(const Request& request, const std::string& fullPath) {
 	if (access(fullPath.c_str(), F_OK) == -1) {
-		errorPage(srv, locConfig, HTTP_404_NOT_FOUND);
+		errorPage(request, HTTP_404_NOT_FOUND);
 		return;
 	}
 	std::ifstream file(fullPath.c_str());
 	if (!file.is_open()) {
-		errorPage(srv, locConfig, HTTP_403_FORBIDDEN);
+		errorPage(request, HTTP_403_FORBIDDEN);
 		return;
 	}
 	std::stringstream ss;
@@ -50,9 +34,9 @@ void Response::handleFile(ServerConfig& srv, LocationConfig* locConfig,
 	setBody(ss.str());
 }
 
-void Response::handleDir(const Request& req, ServerConfig& srv, LocationConfig* locConfig,
-						 const std::string& fullPath) {
-	std::string uri = req.getUri();
+void Response::handleDir(const Request& request, const std::string& fullPath) {
+	const LocationConfig* locConf = request.getLocationConf();
+	const std::string&	  uri	  = request.getUri();
 
 	if (uri.empty() || uri[uri.size() - 1] != '/') {
 		setStatus(HTTP_301_MOVED_PERMANENTLY);
@@ -61,29 +45,29 @@ void Response::handleDir(const Request& req, ServerConfig& srv, LocationConfig* 
 	}
 
 	std::string index;
-	if (!locConfig->index.empty())
-		index = locConfig->index;
+	if (locConf && !locConf->index.empty())
+		index = locConf->index;
 	else
-		index = srv.index;
+		index = request.getServerConf()->index;
 	if (!index.empty()) {
 		std::string indexPath = fullPath + index;
 		struct stat st;
 		if (stat(indexPath.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
-			handleFile(srv, locConfig, indexPath);
+			handleFile(request, indexPath);
 			return;
 		}
 	}
 
-	if (locConfig->autoindex) {
-		std::string dirList = getList(fullPath, cleanUri(req.getUri()));
+	if (locConf->autoindex) {
+		std::string dirList = getList(fullPath, cleanUri(request.getUri()));
 		if (!dirList.empty()) {
 			setStatus(HTTP_200_OK, "OK");
 			setHeader("Content-type", "text/html");
 			setBody(dirList);
 		} else {
-			errorPage(srv, locConfig, HTTP_403_FORBIDDEN);
+			errorPage(request, HTTP_403_FORBIDDEN);
 		}
 	} else {
-		errorPage(srv, locConfig, HTTP_403_FORBIDDEN);
+		errorPage(request, HTTP_403_FORBIDDEN);
 	}
 }

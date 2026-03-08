@@ -1,59 +1,80 @@
 #include "../../includes/Response.hpp"
 
-ServerConfig Response::matchedServer(const Request& req, const std::vector<ServerConfig>& servers) {
-	std::string			port = "8080";
-	std::string			server_name;
-	std::string			host		= req.getHeader("Host");
-	const ServerConfig* matchedPort = NULL;
+// ServerConfig Response::matchedServer(const Request& req, const std::vector<ServerConfig>&
+// servers) { 	std::string			port = "8080"; 	std::string			server_name; 	std::string
+// host		= req.getHeader("Host"); 	const ServerConfig* matchedPort = NULL;
 
-	size_t pos = host.find(':');
-	if (pos != std::string::npos) {
-		server_name = host.substr(0, pos);
-		port		= host.substr(pos + 1);
-	}
+// 	size_t pos = host.find(':');
+// 	if (pos != std::string::npos) {
+// 		server_name = host.substr(0, pos);
+// 		port		= host.substr(pos + 1);
+// 	}
 
-	for (size_t i = 0; i < servers.size(); i++) {
-		for (size_t j = 0; j < servers[i].ports.size(); j++) {
-			if (servers[i].ports[j] == port) {
-				if (!matchedPort)
-					matchedPort = &servers[i];
-				if (servers[i].server_name == server_name)
-					return servers[i];
-			}
-		}
+// 	for (size_t i = 0; i < servers.size(); i++) {
+// 		for (size_t j = 0; j < servers[i].ports.size(); j++) {
+// 			if (servers[i].ports[j] == port) {
+// 				if (!matchedPort)
+// 					matchedPort = &servers[i];
+// 				if (servers[i].server_name == server_name)
+// 					return servers[i];
+// 			}
+// 		}
+// 	}
+// 	if (matchedPort)
+// 		return *matchedPort;
+// 	return servers[0];
+// }
+
+// const LocationConfig* Response::matchedLocation(const ServerConfig& srv, const Request& req) {
+// 	const  LocationConfig*	   matched	  = NULL;
+// 	const std::string& uri		  = cleanUri(req.getUri());
+// 	size_t			   matchedLen = 0;
+
+// 	for (size_t i = 0; i < srv.locations.size(); i++) {
+// 		const std::string& path = srv.locations[i].path;
+// 		if (uri.compare(0, path.size(), path) == 0) {
+// 			if (path.size() > matchedLen) {
+// 				matchedLen = path.size();
+// 				matched	   = &srv.locations[i];
+// 			}
+// 		}
+// 	}
+// 	return matched;
+// }
+
+void Response::errorPage(const Request& request, codeStatus code) {
+	const LocationConfig* locConf = request.getLocationConf();
+	const ServerConfig*	  srvConf = request.getServerConf();
+
+	setStatus(code);
+	if (locConf) {
+		std::map<int, std::string>::const_iterator it = locConf->error_pages.find(code);
+		if (it != locConf->error_pages.end() && handleErrorFile(it->second))
+			return;
+	} else if (srvConf) {
+		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(code);
+		if (it != srvConf->error_pages.end() && handleErrorFile(it->second))
+			return;
 	}
-	if (matchedPort)
-		return *matchedPort;
-	return servers[0];
+	setHeader("Content-type", "text/html");
+	std::string defaultErr = "<html><body style='display:flex;justify-content:center;'><h1>";
+	defaultErr += defaultMessage(code);
+	defaultErr += "</h1></body></html>";
+	setBody(defaultErr);
 }
 
-LocationConfig* Response::matchedLocation(ServerConfig& srv, const Request& req) {
-	LocationConfig*	   matched	  = NULL;
-	const std::string& uri		  = cleanUri(req.getUri());
-	size_t			   matchedLen = 0;
-
-	for (size_t i = 0; i < srv.locations.size(); i++) {
-		std::string& path = srv.locations[i].path;
-		if (uri.compare(0, path.size(), path) == 0) {
-			if (path.size() > matchedLen) {
-				matchedLen = path.size();
-				matched	   = &srv.locations[i];
-			}
-		}
-	}
-	return matched;
-}
-
-bool Response::allowedMethods(LocationConfig* locConfig, const Request& req) {
-	for (size_t i = 0; i < locConfig->allow_methods.size(); i++) {
-		if (req.getMethod() == locConfig->allow_methods[i])
+bool Response::allowedMethods(const Request& request) {
+	if (!request.getLocationConf())
+		return false;
+	for (size_t i = 0; i < request.getLocationConf()->allow_methods.size(); i++) {
+		if (request.getMethod() == request.getLocationConf()->allow_methods[i])
 			return true;
 	}
 	return false;
 }
 
-bool Response::bodySize(ServerConfig& srv, const Request& req) {
-	std::string maxStr = req.getHeader("Content-Length");
+bool Response::bodySize(const Request& request) {
+	std::string maxStr = request.getHeader("Content-Length");
 	if (maxStr.empty())
 		return true;
 	unsigned long	  bodyLen = 0;
@@ -61,18 +82,7 @@ bool Response::bodySize(ServerConfig& srv, const Request& req) {
 	ss >> bodyLen;
 	if (ss.fail() || !ss.eof())
 		return false;
-	return bodyLen <= srv.client_max_body_size;
-}
-
-std::string Response::getExtension(const std::string& fullPath) {
-	std::string name	  = fullPath;
-	size_t		lastSlash = name.find_last_of('/');
-	if (lastSlash != std::string::npos)
-		name = name.substr(lastSlash + 1);
-	size_t pos = name.find_last_of('.');
-	if (pos != std::string::npos)
-		return name.substr(pos + 1);
-	return "";
+	return bodyLen <= request.getServerConf()->client_max_body_size;
 }
 
 std::string Response::getList(const std::string& fullPath, const std::string& uri) {
@@ -101,30 +111,3 @@ std::string Response::getList(const std::string& fullPath, const std::string& ur
 	return res;
 }
 
-// localhost:8080/test/
-std::string Response::cleanUri(std::string uri) {
-	std::string				 segment;
-	std::vector<std::string> cleanPath;
-	std::stringstream		 ss(uri);
-
-	while (std::getline(ss, segment, '/')) {
-		if (segment.empty() || segment == ".")
-			continue;
-		if (segment == "..") {
-			if (!cleanPath.empty())
-				cleanPath.pop_back();
-		} else {
-			cleanPath.push_back(segment);
-		}
-	}
-
-	std::string buffer;
-	for (size_t i = 0; i < cleanPath.size(); i++) {
-		buffer += "/";
-		buffer += cleanPath[i];
-	}
-	if (cleanPath.empty() || uri[uri.size() - 1] == '/')
-		buffer += "/";
-
-	return buffer;
-}

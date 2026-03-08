@@ -1,5 +1,26 @@
 #include "../../includes/Request.hpp"
 
+void Request::matchedLocation() {
+	if (!_srvConf)
+		return;
+
+	_locConf = NULL;
+
+	const std::string& uri		  = cleanUri(_uri);
+	std::size_t		   matchedLen = 0;
+
+	for (size_t i = 0; i < _srvConf->locations.size(); i++) {
+		const std::string& path = _srvConf->locations[i].path;
+
+		if (uri.compare(0, path.size(), path) == 0) {
+			if (path.size() > matchedLen) {
+				matchedLen = path.size();
+				_locConf   = &_srvConf->locations[i];
+			}
+		}
+	}
+}
+
 bool Request::isValidVersion(const std::string& version) const {
 	return version == HTTP_VERSION;
 }
@@ -19,7 +40,6 @@ bool Request::isValidUri(const std::string& uri) const {
 			|| c == '}' || c == '|')
 			return false;
 	}
-	
 	return true;
 }
 

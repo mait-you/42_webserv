@@ -8,8 +8,9 @@ Socket::Socket(int fd) : _fd(-1), _ip(""), _port(""), _is_bound(false), _is_list
 	_fd = fd;
 }
 
-Socket::Socket(const std::string& ip, const std::string& port)
-		: _fd(-1), _ip(ip), _port(port), _is_bound(false), _is_listening(false) {}
+Socket::Socket(const std::string& ip, const std::string& port, const ServerConfig* serverConfig)
+		: _fd(-1), _ip(ip), _port(port), _is_bound(false), _is_listening(false),
+		  _serverConfig(serverConfig) {}
 
 Socket::Socket(const Socket& other) {
 	*this = other;
@@ -22,6 +23,7 @@ Socket& Socket::operator=(const Socket& other) {
 		_port		  = other._port;
 		_is_bound	  = other._is_bound;
 		_is_listening = other._is_listening;
+		_serverConfig = other._serverConfig;
 	}
 	return *this;
 }
@@ -77,7 +79,7 @@ void Socket::startListening(int backlog) {
 	_is_listening = true;
 }
 
-Socket Socket::acceptClient() {
+Socket Socket::accept() {
 	struct sockaddr_in client_addr;
 	socklen_t		   addr_len = sizeof(client_addr);
 	std::memset(&client_addr, 0, sizeof(client_addr));
@@ -112,6 +114,9 @@ const std::string& Socket::getIp() const {
 }
 const std::string& Socket::getPort() const {
 	return _port;
+}
+const ServerConfig* Socket::getServerConf() const {
+	return _serverConfig;
 }
 bool Socket::isBound() const {
 	return _is_bound;

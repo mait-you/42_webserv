@@ -1,18 +1,24 @@
 #include "../../includes/Request.hpp"
 
-Request::Request(const Config& config)
-		: HttpStatus(HTTP_200_OK, "OK"), _config(config), _state(PARSE_REQUEST_LINE), _parsePos(0),
-		  _bodyExpected(0), _requestComplete(false) {}
+Request::Request()
+		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(NULL), _locConf(NULL), _state(PARSE_REQUEST_LINE),
+		  _parsePos(0), _requestComplete(false) {}
+
+Request::Request(const ServerConfig* serverConfig)
+		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(serverConfig), _locConf(NULL),
+		  _state(PARSE_REQUEST_LINE), _parsePos(0), _requestComplete(false) {}
 
 Request::Request(const Request& other)
-		: HttpStatus(other), _method(other._method), _uri(other._uri), _version(other._version),
+		: HttpStatus(other), _srvConf(other._srvConf), _locConf(other._locConf),
+		  _method(other._method), _uri(other._uri), _version(other._version),
 		  _headers(other._headers), _body(other._body), _state(other._state),
-		  _parsePos(other._parsePos), _bodyExpected(other._bodyExpected),
-		  _requestComplete(other._requestComplete) {}
+		  _parsePos(other._parsePos), _requestComplete(other._requestComplete) {}
 
 Request& Request::operator=(const Request& other) {
 	if (this != &other) {
 		HttpStatus::operator=(other);
+		_srvConf		 = other._srvConf;
+		_locConf		 = other._locConf;
 		_method			 = other._method;
 		_uri			 = other._uri;
 		_version		 = other._version;
@@ -20,7 +26,6 @@ Request& Request::operator=(const Request& other) {
 		_body			 = other._body;
 		_state			 = other._state;
 		_parsePos		 = other._parsePos;
-		_bodyExpected	 = other._bodyExpected;
 		_requestComplete = other._requestComplete;
 	}
 	return *this;
@@ -28,45 +33,23 @@ Request& Request::operator=(const Request& other) {
 
 Request::~Request() {}
 
-static std::string toLower(const std::string& s) {
-	std::string r = s;
-	for (std::size_t i = 0; i < r.size(); ++i)
-		r[i] = static_cast<char>(std::tolower(r[i]));
-	return r;
-}
-
-static std::string trimStr(const std::string& s) {
-	std::size_t start = s.find_first_not_of(" \t\r\n");
-	if (start == std::string::npos)
-		return "";
-	std::size_t end = s.find_last_not_of(" \t\r\n");
-	return s.substr(start, end - start + 1);
-}
-
-static bool getLine(const std::string& buf, std::size_t& pos, std::string& line) {
-	std::size_t end = buf.find("\r\n", pos);
-	if (end == std::string::npos)
-		return false;
-	line = buf.substr(pos, end - pos);
-	pos	 = end + 2;
-	return true;
-}
 void Request::parseRequestLine(const std::string& buf) {
 	std::string line;
 	if (!getLine(buf, _parsePos, line))
 		return;
 	std::istringstream iss(line);
 	if (!(iss >> _method >> _uri >> _version))
-		setError(HTTP_400_BAD_REQUEST);
+		return setError(HTTP_400_BAD_REQUEST);
 	std::string extra;
 	if (iss >> extra)
-		setError(HTTP_400_BAD_REQUEST);
+		return setError(HTTP_400_BAD_REQUEST);
 	if (!isValidMethod(_method))
-		setError(HTTP_501_NOT_IMPLEMENTED);
+		return setError(HTTP_501_NOT_IMPLEMENTED);
 	if (!isValidUri(_uri))
-		setError(HTTP_400_BAD_REQUEST);
+		return setError(HTTP_400_BAD_REQUEST);
 	// if (!isValidVersion(_version))
 	// 	setError(UNSUPPORTED_VERSION);
+	matchedLocation();
 	setState(PARSE_HEADERS);
 }
 
@@ -78,17 +61,17 @@ void Request::parseHeaders(const std::string& buf) {
 		if (line.empty()) {
 			if (isValidHeaders())
 				return setState(PARSE_BODY);
-			setError(HTTP_400_BAD_REQUEST);
+			return setError(HTTP_400_BAD_REQUEST);
 		}
 		std::size_t colon = line.find(':');
 		if (colon == std::string::npos)
-			setError(HTTP_400_BAD_REQUEST);
+			return setError(HTTP_400_BAD_REQUEST);
 		std::string key	  = toLower(trimStr(line.substr(0, colon)));
 		std::string value = trimStr(line.substr(colon + 1));
 		if (key.empty())
-			setError(HTTP_400_BAD_REQUEST);
+			return setError(HTTP_400_BAD_REQUEST);
 		if (key == "content-length" && _headers.count(key))
-			setError(HTTP_400_BAD_REQUEST);
+			return setError(HTTP_400_BAD_REQUEST);
 		_headers[key] = value;
 	}
 }
@@ -97,12 +80,13 @@ void Request::parseBody(const std::string& buf) {
 	std::string clStr = getHeader("content-length");
 	if (clStr.empty())
 		return setState(PARSE_COMPLETE);
-	long long		   cl = 0;
+	std::size_t		   cl = 0;
 	std::istringstream iss(clStr);
-	if (!(iss >> cl) || cl < 0)
-		setError(HTTP_400_BAD_REQUEST);
-	// if (cl > _config.getServers())
-	_bodyExpected = static_cast<std::size_t>(cl);
+	if (!(iss >> cl))
+		return setError(HTTP_400_BAD_REQUEST);
+	if (cl > _srvConf->client_max_body_size)
+		return setError(HTTP_400_BAD_REQUEST);
+	std::size_t _bodyExpected = static_cast<std::size_t>(cl);
 	if (_bodyExpected == 0)
 		return setState(PARSE_COMPLETE);
 	if (buf.size() - _parsePos < _bodyExpected)
@@ -154,6 +138,14 @@ const Request::HeaderMap& Request::getHeaders() const {
 std::string Request::getHeader(const std::string& key) const {
 	ConstHeaderIt it = _headers.find(toLower(key));
 	return (it != _headers.end()) ? it->second : "";
+}
+
+const LocationConfig* Request::getLocationConf() const {
+	return _locConf;
+}
+
+const ServerConfig* Request::getServerConf() const {
+	return _srvConf;
 }
 
 void Request::setError(codeStatus codeStatus) {
