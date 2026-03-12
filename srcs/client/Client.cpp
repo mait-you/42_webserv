@@ -50,7 +50,7 @@ bool Client::sendData() {
 		return true;
 
 	if (_sendBuffer.empty())
-		_sendBuffer = _response.build(_request);
+		_sendBuffer = _response.build(_request, _socket.getFd());
 
 	ssize_t n = send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent,
 					 _sendBuffer.size() - _bytesSent, MSG_DONTWAIT);

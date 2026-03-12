@@ -27,7 +27,18 @@ Cgi::Cgi(const Request& req, const ServerConfig& srv, const LocationConfig* loc,
 
 Cgi::~Cgi() {}
 
+<<<<<<< HEAD
 std::vector<std::string> Cgi::createEnv() const {
+=======
+}
+
+CgiInfo::CgiInfo() : pid(-1), clientFd(-1)
+{
+}
+
+std::vector<std::string> Cgi::createEnv() const
+{
+>>>>>>> monir
 	std::vector<std::string> envVec;
 
 	std::string query;
@@ -83,6 +94,7 @@ std::vector<std::string> Cgi::createEnv() const {
 	return envVec;
 }
 
+<<<<<<< HEAD
 std::string Cgi::run() {
 	std::vector<std::string> envVec = createEnv();
 
@@ -92,6 +104,10 @@ std::string Cgi::run() {
 	}
 	envp.push_back(NULL);
 
+=======
+CgiInfo Cgi::start(int clientFd)
+{
+>>>>>>> monir
 	std::string extension;
 	size_t		pos = _scriptPath.rfind('.');
 	if (pos != std::string::npos)
@@ -99,14 +115,87 @@ std::string Cgi::run() {
 
 	std::map<std::string, std::string>::const_iterator it = _loc->cgi.find(extension);
 	if (it == _loc->cgi.end())
-		return "";
+		return CgiInfo();
 	const std::string& cgiPath = it->second;
 
 	char* argv[3];
 	argv[0] = const_cast<char*>(cgiPath.c_str());
 	argv[1] = const_cast<char*>(_scriptPath.c_str());
 	argv[2] = NULL;
+<<<<<<< HEAD
 	// create pipe and fork and wait in the parent process to return response
 	(void) argv;
 	return "Content-Type: text/html\r\n\r\n<html><body><h1>CGI response</h1></body></html>";
+=======
+
+	size_t slashPos = _scriptPath.rfind('/');
+	std::string scriptDir = _scriptPath.substr(0, slashPos);
+
+	std::vector<std::string> envVec = createEnv();
+	std::vector<char *> envp;
+	for (size_t i = 0; i < envVec.size(); i++)
+		envp.push_back(const_cast<char*>(envVec[i].c_str()));
+	envp.push_back(NULL);
+
+	static int counter = 0;
+	std::ostringstream bodyOss, resOss;
+	bodyOss << "/tmp/cgi_body_" << time(NULL) << "_" << counter;
+	resOss << "/tmp/cgi_res_" << time(NULL) << "_" << counter;
+	counter++;
+
+	std::string bodyPath = bodyOss.str();
+	std::string resPath = resOss.str();
+
+	std::ofstream bodyFile(bodyPath.c_str());
+	if (!bodyFile.is_open())
+		return CgiInfo();
+	bodyFile << _req.getBody();
+	bodyFile.close();
+
+	std::ofstream responseFile(resPath.c_str());
+	if (!responseFile.is_open())
+	{
+		unlink(bodyPath.c_str());
+		return CgiInfo();
+	}
+	responseFile.close();
+
+	pid_t pid = fork();
+	if (pid == -1)
+	{
+		unlink(bodyPath.c_str());
+		unlink(resPath.c_str());
+		return CgiInfo();
+	}
+
+	if (pid == 0)
+	{
+		int bodyFd = open(bodyPath.c_str(), O_RDONLY);
+		if (bodyFd == -1)
+			_exit(1);
+		if (dup2(bodyFd, STDIN_FILENO) == -1)
+			_exit(1);
+		close(bodyFd);
+
+		int resFd = open(resPath.c_str(), O_WRONLY);
+		if (resFd == -1)
+			_exit(1);
+		if (dup2(resFd, STDOUT_FILENO) == -1)
+			_exit(1);
+		close(resFd);
+
+		if (chdir(scriptDir.c_str()) == -1)
+			_exit(1);
+
+		execve(cgiPath.c_str(), argv, &envp[0]);
+		_exit(1);
+	}
+
+	CgiInfo info;
+	info.pid = pid;
+	info.clientFd = clientFd;
+	info.resPath = resPath;
+	info.bodyPath = bodyPath;
+	return info;
+>>>>>>> monir
 }

@@ -1,7 +1,7 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
-// #include "Cgi.hpp"
+#include "Cgi.hpp"
 #include "Request.hpp"
 
 class Response : public HttpStatus {
@@ -16,6 +16,11 @@ class Response : public HttpStatus {
 	std::map<std::string, std::string> _headers;
 	std::string						   _body;
 
+	bool		_hasCgiRunning;
+	CgiInfo		_runningCgi;
+	int			_clientFd;
+	Request*	_currentRequest;
+
   public:
 	Response();
 	Response(const Response& other);
@@ -27,7 +32,9 @@ class Response : public HttpStatus {
 	void setHeader(const std::string& key, const std::string& value);
 	void setBody(const std::string& body);
 
-	std::string build(const Request& request);
+	bool	hasCgiRunning() const;
+
+	std::string build(Request &request, int clientFd);
 
   private:
 	std::string buildSendBuffer() const;

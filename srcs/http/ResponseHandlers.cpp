@@ -26,6 +26,21 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 		errorPage(request, HTTP_403_FORBIDDEN);
 		return;
 	}
+	const LocationConfig* locConfig = request.getLocationConf();
+	if (locConfig && locConfig->has_cgi)
+	{
+		std::string ext = getExtension(fullPath);
+		if (locConfig->cgi.find(ext) != locConfig->cgi.end())
+		{
+			Cgi cgi(*_currentRequest, *request.getServerConf(), locConfig, fullPath);
+			_runningCgi = cgi.start(_clientFd);
+			if (_runningCgi.pid == -1)
+				errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
+			else
+				_hasCgiRunning = true;
+			return;
+		}
+	}
 	std::stringstream ss;
 	ss << file.rdbuf();
 	setStatus(HTTP_200_OK);

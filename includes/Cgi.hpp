@@ -5,18 +5,30 @@
 #include "Head.hpp"
 #include "Request.hpp"
 
-class Cgi {
-  private:
-	const Request&		  _req;
-	ServerConfig		  _srv;
-	const LocationConfig* _loc;
-	std::string			  _scriptPath;
+struct CgiInfo
+{
+	pid_t pid;
+	int clientFd;
+	std::string resPath;
+	std::string bodyPath;
+	CgiInfo();
+};
 
-  public:
-	Cgi(const Request& req, const ServerConfig& srv, const LocationConfig* loc,
-		const std::string& path);
-	~Cgi();
-	std::string run();
+class Cgi
+{
+	private:
+		Request					_req;
+		ServerConfig			_srv;
+		const LocationConfig*	_loc;
+		std::string				_scriptPath;
+
+	public:
+		Cgi();
+		Cgi(const Request& req, const ServerConfig& srv, const LocationConfig* loc, const std::string& path);
+		Cgi(const Cgi &other);
+		Cgi &operator=(const Cgi &other);
+		~Cgi();
+		CgiInfo start(int clientFd);
 
   private:
 	std::vector<std::string> createEnv() const;
