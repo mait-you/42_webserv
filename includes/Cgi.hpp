@@ -5,6 +5,15 @@
 #include "Head.hpp"
 #include "Request.hpp"
 
+struct CgiInfo
+{
+	pid_t pid;
+	int clientFd;
+	std::string resPath;
+	std::string bodyPath;
+	CgiInfo();
+};
+
 class Cgi
 {
 	private:
@@ -19,7 +28,7 @@ class Cgi
 		Cgi(const Cgi &other);
 		Cgi &operator=(const Cgi &other);
 		~Cgi();
-		std::string run();
+		CgiInfo start(int clientFd);
 
 	private:
 		std::vector<std::string> createEnv() const;

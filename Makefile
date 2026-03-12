@@ -11,6 +11,7 @@ CXXFLAGS    = -Wall -Wextra -Werror -std=c++98 #-fsanitize=address -g
 
 # Headers
 HEADERS     = $(INC_DIR)/WebServer.hpp \
+	$(INC_DIR)/Cgi.hpp \
 	$(INC_DIR)/Client.hpp \
 	$(INC_DIR)/Config.hpp \
 	$(INC_DIR)/Head.hpp \
@@ -37,7 +38,8 @@ SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/http/Response.cpp \
 	$(SRC_DIR)/http/MimeTypes.cpp \
 	$(SRC_DIR)/http/HttpStatus.cpp \
-	$(SRC_DIR)/http/handleDelete.cpp
+	$(SRC_DIR)/http/handleDelete.cpp \
+	$(SRC_DIR)/cgi/Cgi.cpp
 
 OBJS        = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 

@@ -3,21 +3,28 @@
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
-	: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK") {
+	: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
+	  _hasCgiRunning(false), _clientFd(-1), _currentRequest(NULL) {
 }
 
 Response::Response(const Response &other)
 	: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
-	  _headers(other._headers), _body(other._body) {
+	_headers(other._headers), _body(other._body),
+	_hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
+	_clientFd(other._clientFd), _currentRequest(other._currentRequest) {
 }
 
 Response &Response::operator=(const Response &other) {
 	if (this != &other) {
 		HttpStatus::operator=(other);
-		_statusCode	   = other._statusCode;
-		_statusMessage = other._statusMessage;
-		_headers	   = other._headers;
-		_body		   = other._body;
+		_statusCode		= other._statusCode;
+		_statusMessage	= other._statusMessage;
+		_headers		= other._headers;
+		_body			= other._body;
+		_hasCgiRunning	= other._hasCgiRunning;
+		_runningCgi		= other._runningCgi;
+		_clientFd		= other._clientFd;
+		_currentRequest	= other._currentRequest;
 	}
 	return *this;
 }
@@ -43,7 +50,14 @@ void Response::setBody(const std::string &body) {
 	_body = body;
 }
 
-std::string Response::build(Request &request, const std::vector<ServerConfig> &servers) {
+bool Response::hasCgiRunning() const {
+	return _hasCgiRunning;
+}
+
+std::string Response::build(Request &request, const std::vector<ServerConfig> &servers, int clientFd) {
+	_clientFd = clientFd;
+	_currentRequest = &request;
+
 	ServerConfig	srv		  = matchedServer(request, servers);
 	LocationConfig *locConfig = matchedLocation(srv, request);
 
@@ -73,6 +87,8 @@ std::string Response::build(Request &request, const std::vector<ServerConfig> &s
 		handleDelete(request, srv, locConfig);
 	}
 
+	if (_hasCgiRunning)
+		return "";
 	return buildSendBuffer();
 }
 

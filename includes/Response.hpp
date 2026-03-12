@@ -18,6 +18,11 @@ class Response : public HttpStatus {
 	std::map<std::string, std::string> _headers;
 	std::string						   _body;
 
+	bool		_hasCgiRunning;
+	CgiInfo		_runningCgi;
+	int			_clientFd;
+	Request*	_currentRequest;
+
   public:
 	Response();
 	Response(const Response &other);
@@ -29,7 +34,9 @@ class Response : public HttpStatus {
 	void setHeader(const std::string &key, const std::string &value);
 	void setBody(const std::string &body);
 
-	std::string build(Request &request, const std::vector<ServerConfig> &servers);
+	bool	hasCgiRunning() const;
+
+	std::string build(Request &request, const std::vector<ServerConfig> &servers, int clientFd);
 
   private:
 	std::string buildSendBuffer() const;
