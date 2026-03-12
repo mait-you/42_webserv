@@ -1,36 +1,32 @@
 #include "../../includes/Cgi.hpp"
 
-// Cgi::Cgi() {
-// 	_loc = NULL;
-// }
+Cgi::Cgi() {
+	_loc = NULL;
+}
 
 Cgi::Cgi(const Request& req, const ServerConfig& srv, const LocationConfig* loc,
 		 const std::string& path)
 		: _req(req), _srv(srv), _loc(loc), _scriptPath(path) {}
 
-// Cgi::Cgi(const Cgi& other) {
-// 	_req		= other._req;
-// 	_srv		= other._srv;
-// 	_loc		= other._loc;
-// 	_scriptPath = other._scriptPath;
-// }
+Cgi::Cgi(const Cgi& other) {
+	_req		= other._req;
+	_srv		= other._srv;
+	_loc		= other._loc;
+	_scriptPath = other._scriptPath;
+}
 
-// Cgi& Cgi::operator=(const Cgi& other) {
-// 	if (this != &other) {
-// 		_req		= other._req;
-// 		_srv		= other._srv;
-// 		_loc		= other._loc;
-// 		_scriptPath = other._scriptPath;
-// 	}
-// 	return *this;
-// }
+Cgi& Cgi::operator=(const Cgi& other) {
+	if (this != &other) {
+		_req		= other._req;
+		_srv		= other._srv;
+		_loc		= other._loc;
+		_scriptPath = other._scriptPath;
+	}
+	return *this;
+}
 
 Cgi::~Cgi() {}
 
-<<<<<<< HEAD
-std::vector<std::string> Cgi::createEnv() const {
-=======
-}
 
 CgiInfo::CgiInfo() : pid(-1), clientFd(-1)
 {
@@ -38,7 +34,6 @@ CgiInfo::CgiInfo() : pid(-1), clientFd(-1)
 
 std::vector<std::string> Cgi::createEnv() const
 {
->>>>>>> monir
 	std::vector<std::string> envVec;
 
 	std::string query;
@@ -94,20 +89,8 @@ std::vector<std::string> Cgi::createEnv() const
 	return envVec;
 }
 
-<<<<<<< HEAD
-std::string Cgi::run() {
-	std::vector<std::string> envVec = createEnv();
-
-	std::vector<char*> envp;
-	for (size_t i = 0; i < envVec.size(); i++) {
-		envp.push_back(const_cast<char*>(envVec[i].c_str()));
-	}
-	envp.push_back(NULL);
-
-=======
 CgiInfo Cgi::start(int clientFd)
 {
->>>>>>> monir
 	std::string extension;
 	size_t		pos = _scriptPath.rfind('.');
 	if (pos != std::string::npos)
@@ -122,11 +105,6 @@ CgiInfo Cgi::start(int clientFd)
 	argv[0] = const_cast<char*>(cgiPath.c_str());
 	argv[1] = const_cast<char*>(_scriptPath.c_str());
 	argv[2] = NULL;
-<<<<<<< HEAD
-	// create pipe and fork and wait in the parent process to return response
-	(void) argv;
-	return "Content-Type: text/html\r\n\r\n<html><body><h1>CGI response</h1></body></html>";
-=======
 
 	size_t slashPos = _scriptPath.rfind('/');
 	std::string scriptDir = _scriptPath.substr(0, slashPos);
@@ -197,5 +175,4 @@ CgiInfo Cgi::start(int clientFd)
 	info.resPath = resPath;
 	info.bodyPath = bodyPath;
 	return info;
->>>>>>> monir
 }
