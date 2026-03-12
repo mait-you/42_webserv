@@ -3,9 +3,22 @@
 void parseIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
-		throw std::runtime_error("Invalid config: Expected auto index");
+		throw std::runtime_error("Invalid config: Expected index");
 	}
-	location.upload_path = tokens[i].value;
+	location.index = tokens[i].value;
+	i++;
+	if (i >= tokens.size() || tokens[i].type != semiColone) {
+		throw std::runtime_error("Invalid config: Expected ;");
+	}
+	i++;
+}
+
+void parseRoot(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+	i++;
+	if (i >= tokens.size() || tokens[i].type != word) {
+		throw std::runtime_error("Invalid config: Expected root");
+	}
+	location.root = tokens[i].value;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -170,6 +183,8 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 			parseCgi(i, tokens, location);
 		else if (tokens[i].type == word && tokens[i].value == "return")
 			parseredirection(i, tokens, location);
+		else if (tokens[i].type == word && tokens[i].value == "root")
+			parseRoot(i, tokens, location);
 		else {
 			std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
 			throw std::runtime_error(str);
