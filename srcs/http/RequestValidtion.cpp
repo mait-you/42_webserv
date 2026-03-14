@@ -1,10 +1,13 @@
 #include "../../includes/Request.hpp"
 
+void Request::detectCgi() {
+	if (_locConf && _locConf->has_cgi && _locConf->cgi.count(getExtension(_uri)))
+		_hasCgi = true;
+}
+
 void Request::matchedLocation() {
 	if (!_srvConf)
 		return;
-
-	_locConf = NULL;
 
 	const std::string& uri		  = cleanUri(_uri);
 	std::size_t		   matchedLen = 0;

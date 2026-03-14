@@ -33,9 +33,9 @@ class Cgi
   private:
 	std::vector<std::string> createEnv() const;
 
-	Cgi();
-	Cgi(const Cgi& other);
-	Cgi& operator=(const Cgi& other);
+	// Cgi();
+	// Cgi(const Cgi& other);
+	// Cgi& operator=(const Cgi& other);
 };
 
 #endif

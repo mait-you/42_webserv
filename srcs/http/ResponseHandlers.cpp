@@ -17,6 +17,9 @@ int Response::handleErrorFile(const std::string& fullPath) {
 }
 
 void Response::handleFile(const Request& request, const std::string& fullPath) {
+	// if (request.hasCgi()) {
+	// 	return;
+	// }
 	if (access(fullPath.c_str(), F_OK) == -1) {
 		errorPage(request, HTTP_404_NOT_FOUND);
 		return;

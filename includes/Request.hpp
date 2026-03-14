@@ -49,6 +49,7 @@ class Request : public HttpStatus {
 	std::string			  getHeader(const std::string& key) const;
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getServerConf() const;
+	bool				  hasCgi() const;
 
   private:
 	void parseRequestLine(const std::string& buf);
@@ -59,6 +60,8 @@ class Request : public HttpStatus {
 	bool isValidUri(const std::string& uri) const;
 	bool isValidVersion(const std::string& version) const;
 	bool isValidHeaders() const;
+
+	void detectCgi();
 
 	void setError(codeStatus codeStatus);  // throws
 	void setState(ParseState state);
