@@ -65,36 +65,9 @@ bool getLine(const std::string& buf, std::size_t& pos, std::string& line) {
 	return true;
 }
 
-std::string cleanUri(const std::string& uri) {
-	std::string				 segment;
-	std::vector<std::string> cleanPath;
-	std::stringstream		 ss(uri);
-
-	while (std::getline(ss, segment, '/')) {
-		if (segment.empty() || segment == ".")
-			continue;
-		if (segment == "..") {
-			if (!cleanPath.empty())
-				cleanPath.pop_back();
-		} else {
-			cleanPath.push_back(segment);
-		}
-	}
-
-	std::string buffer;
-	for (size_t i = 0; i < cleanPath.size(); i++) {
-		buffer += "/";
-		buffer += cleanPath[i];
-	}
-	if (cleanPath.empty() || uri[uri.size() - 1] == '/')
-		buffer += "/";
-
-	return buffer;
-}
-
 std::string getExtension(const std::string& fullPath) {
 	std::string name	  = fullPath;
-	std::size_t		lastSlash = name.find_last_of('/');
+	std::size_t lastSlash = name.find_last_of('/');
 	if (lastSlash != std::string::npos)
 		name = name.substr(lastSlash + 1);
 	std::size_t pos = name.find_last_of('.');

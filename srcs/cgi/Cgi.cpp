@@ -1,35 +1,39 @@
 #include "../../includes/Cgi.hpp"
 
-// Cgi::Cgi() {
-// 	_loc = NULL;
-// }
+Cgi::Cgi() {
+	_loc = NULL;
+}
 
 Cgi::Cgi(const Request& req, const ServerConfig& srv, const LocationConfig* loc,
 		 const std::string& path)
 		: _req(req), _srv(srv), _loc(loc), _scriptPath(path) {}
 
-// Cgi::Cgi(const Cgi& other) {
-// 	_req		= other._req;
-// 	_srv		= other._srv;
-// 	_loc		= other._loc;
-// 	_scriptPath = other._scriptPath;
-// }
+Cgi::Cgi(const Cgi& other) {
+	_req		= other._req;
+	_srv		= other._srv;
+	_loc		= other._loc;
+	_scriptPath = other._scriptPath;
+}
 
-// Cgi& Cgi::operator=(const Cgi& other) {
-// 	if (this != &other) {
-// 		_req		= other._req;
-// 		_srv		= other._srv;
-// 		_loc		= other._loc;
-// 		_scriptPath = other._scriptPath;
-// 	}
-// 	return *this;
-// }
+Cgi& Cgi::operator=(const Cgi& other) {
+	if (this != &other) {
+		_req		= other._req;
+		_srv		= other._srv;
+		_loc		= other._loc;
+		_scriptPath = other._scriptPath;
+	}
+	return *this;
+}
 
 Cgi::~Cgi() {}
 
-CgiInfo::CgiInfo() : pid(-1), clientFd(-1) {}
 
-std::vector<std::string> Cgi::createEnv() const {
+CgiInfo::CgiInfo() : pid(-1), clientFd(-1)
+{
+}
+
+std::vector<std::string> Cgi::createEnv() const
+{
 	std::vector<std::string> envVec;
 
 	std::string query;

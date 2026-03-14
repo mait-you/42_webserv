@@ -46,16 +46,9 @@ void Response::deleteFolder(const Request& request, const std::string& fullPath)
 }
 
 void Response::handleDelete(const Request& request) {
-	const LocationConfig* locConf = request.getLocationConf();
-	const ServerConfig*	  srvConf = request.getServerConf();
 	struct stat			  info;
-	std::string			  root;
 
-	if (locConf && !locConf->root.empty())
-		root = locConf->root;
-	else
-		root = srvConf->root;
-	std::string fullPath = root + cleanUri(request.getUri());
+	std::string fullPath = request.resolveFullPath();
 	std::cout << "uri conflect " << request.getUri() << std::endl;
 	if (stat(fullPath.c_str(), &info) == -1)
 		errorPage(request, HTTP_404_NOT_FOUND);

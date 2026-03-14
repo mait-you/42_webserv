@@ -155,6 +155,36 @@ bool Request::hasCgi() const {
 	return _hasCgi;
 }
 
+std::string Request::resolveFullPath() const {
+	std::string root = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
+	// std::string rest = resolvePath().substr(_locConf->path.length());
+	std::string rest = resolvePath();
+	return root + rest;
+}
+
+std::string Request::resolvePath() const {
+	std::string				 segment;
+	std::vector<std::string> cleanPath;
+	std::stringstream		 ss(_uri);
+
+	while (std::getline(ss, segment, '/')) {
+		if (segment.empty() || segment == ".")
+			continue;
+		if (segment == ".." && !cleanPath.empty())
+			cleanPath.pop_back();
+		else
+			cleanPath.push_back(segment);
+	}
+
+	std::string buffer;
+	for (size_t i = 0; i < cleanPath.size(); i++)
+		buffer += "/" + cleanPath[i];
+	if (cleanPath.empty() || _uri[_uri.size() - 1] == '/')
+		buffer += "/";
+
+	return buffer;
+}
+
 void Request::setError(codeStatus codeStatus) {
 	setStatus(codeStatus, HttpStatus::defaultMessage(codeStatus));
 	std::stringstream ss;

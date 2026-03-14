@@ -50,6 +50,8 @@ class Request : public HttpStatus {
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getServerConf() const;
 	bool				  hasCgi() const;
+	std::string			  resolvePath() const;
+	std::string			  resolveFullPath() const;
 
   private:
 	void parseRequestLine(const std::string& buf);
