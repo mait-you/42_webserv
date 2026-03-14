@@ -4,6 +4,7 @@
 #include "Cgi.hpp"
 #include "Request.hpp"
 
+
 class Response : public HttpStatus {
   public:
 	typedef std::map<std::string, std::string> HeaderMap;
@@ -18,7 +19,6 @@ class Response : public HttpStatus {
 
 	bool		_hasCgiRunning;
 	CgiInfo		_runningCgi;
-	int			_clientFd;
 	Request*	_currentRequest;
 
   public:
@@ -34,7 +34,7 @@ class Response : public HttpStatus {
 
 	bool	hasCgiRunning() const;
 
-	std::string build(Request &request, int clientFd);
+	std::string build(Request &request);
 
   private:
 	std::string buildSendBuffer() const;

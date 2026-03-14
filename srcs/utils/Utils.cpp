@@ -66,9 +66,16 @@ bool getLine(const std::string& buf, std::size_t& pos, std::string& line) {
 }
 
 std::string cleanUri(const std::string& uri) {
+	if (uri.empty())
+		return "";
+	std::string str = uri;
+	std::size_t qpos = str.find('?');
+	if (qpos != std::string::npos)
+		str = str.substr(0, qpos);
+
 	std::string				 segment;
 	std::vector<std::string> cleanPath;
-	std::stringstream		 ss(uri);
+	std::stringstream		 ss(str);
 
 	while (std::getline(ss, segment, '/')) {
 		if (segment.empty() || segment == ".")

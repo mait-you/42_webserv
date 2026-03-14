@@ -28,7 +28,7 @@ Cgi& Cgi::operator=(const Cgi& other) {
 Cgi::~Cgi() {}
 
 
-CgiInfo::CgiInfo() : pid(-1), clientFd(-1)
+CgiInfo::CgiInfo() : pid(-1)
 {
 }
 
@@ -89,25 +89,30 @@ std::vector<std::string> Cgi::createEnv() const
 	return envVec;
 }
 
-CgiInfo Cgi::start(int clientFd)
+CgiInfo Cgi::start()
 {
 	std::string extension;
 	size_t		pos = _scriptPath.rfind('.');
 	if (pos != std::string::npos)
-		extension = _scriptPath.substr(pos);
+		extension = _scriptPath.substr(pos + 1);
 
 	std::map<std::string, std::string>::const_iterator it = _loc->cgi.find(extension);
+	if (it == _loc->cgi.end()) {
+		std::string dotExt = "." + extension;
+		it = _loc->cgi.find(dotExt);
+	}
 	if (it == _loc->cgi.end())
 		return CgiInfo();
 	const std::string& cgiPath = it->second;
 
 	char* argv[3];
 	argv[0] = const_cast<char*>(cgiPath.c_str());
-	argv[1] = const_cast<char*>(_scriptPath.c_str());
-	argv[2] = NULL;
 
 	size_t slashPos = _scriptPath.rfind('/');
 	std::string scriptDir = _scriptPath.substr(0, slashPos);
+	std::string scriptName = _scriptPath.substr(slashPos + 1);
+	argv[1] = const_cast<char*>(scriptName.c_str());
+	argv[2] = NULL;
 
 	std::vector<std::string> envVec = createEnv();
 	std::vector<char *> envp;
@@ -171,7 +176,6 @@ CgiInfo Cgi::start(int clientFd)
 
 	CgiInfo info;
 	info.pid = pid;
-	info.clientFd = clientFd;
 	info.resPath = resPath;
 	info.bodyPath = bodyPath;
 	return info;

@@ -1,17 +1,16 @@
 #include "../../includes/Response.hpp"
-
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
 	: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-	  _hasCgiRunning(false), _clientFd(-1), _currentRequest(NULL) {
+	  _hasCgiRunning(false), _currentRequest(NULL) {
 }
 
 Response::Response(const Response &other)
 	: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
 	_headers(other._headers), _body(other._body),
 	_hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
-	_clientFd(other._clientFd), _currentRequest(other._currentRequest) {
+	_currentRequest(other._currentRequest) {
 }
 
 Response& Response::operator=(const Response& other) {
@@ -23,7 +22,6 @@ Response& Response::operator=(const Response& other) {
 		_body			= other._body;
 		_hasCgiRunning	= other._hasCgiRunning;
 		_runningCgi		= other._runningCgi;
-		_clientFd		= other._clientFd;
 		_currentRequest	= other._currentRequest;
 	}
 	return *this;
@@ -53,8 +51,7 @@ bool Response::hasCgiRunning() const {
 	return _hasCgiRunning;
 }
 
-std::string Response::build(Request &request, int clientFd) {
-	_clientFd = clientFd;
+std::string Response::build(Request &request) {
 	_currentRequest = &request;
 
 	// ServerConfig	srv		  = matchedServer(request, servers);

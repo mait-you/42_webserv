@@ -30,10 +30,11 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 	if (locConfig && locConfig->has_cgi)
 	{
 		std::string ext = getExtension(fullPath);
-		if (locConfig->cgi.find(ext) != locConfig->cgi.end())
+		if (locConfig->cgi.find(ext) != locConfig->cgi.end()
+			|| locConfig->cgi.find("." + ext) != locConfig->cgi.end())
 		{
-			Cgi cgi(*_currentRequest, *request.getServerConf(), locConfig, fullPath);
-			_runningCgi = cgi.start(_clientFd);
+			Cgi cgi(request, *request.getServerConf(), locConfig, fullPath);
+			_runningCgi = cgi.start();
 			if (_runningCgi.pid == -1)
 				errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 			else
