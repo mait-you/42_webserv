@@ -163,9 +163,9 @@ std::string Request::resolveFullPath() const {
 }
 
 std::string Request::resolvePath() const {
-	if (uri.empty())
+	if (_uri.empty())
 		return "";
-	std::string str = uri;
+	std::string str = _uri;
 	std::size_t qpos = str.find('?');
 	if (qpos != std::string::npos)
 		str = str.substr(0, qpos);
@@ -190,7 +190,7 @@ std::string Request::resolvePath() const {
 		buffer += "/";
 		buffer += cleanPath[i];
 	}
-	if (cleanPath.empty() || uri[uri.size() - 1] == '/')
+	if (cleanPath.empty() || _uri[_uri.size() - 1] == '/')
 		buffer += "/";
 
 	return buffer;
