@@ -59,7 +59,6 @@ std::string portTostr(uint16_t port);
 std::string toLower(const std::string& s);
 std::string trimStr(const std::string& s);
 bool		getLine(const std::string& buf, std::size_t& pos, std::string& line);
-std::string cleanUri(const std::string& uri);
 std::string getExtension(const std::string& fullPath);
 
 #endif

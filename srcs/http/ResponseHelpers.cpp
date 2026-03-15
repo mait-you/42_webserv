@@ -1,47 +1,5 @@
 #include "../../includes/Response.hpp"
 
-// ServerConfig Response::matchedServer(const Request& req, const std::vector<ServerConfig>&
-// servers) { 	std::string			port = "8080"; 	std::string			server_name; 	std::string
-// host		= req.getHeader("Host"); 	const ServerConfig* matchedPort = NULL;
-
-// 	size_t pos = host.find(':');
-// 	if (pos != std::string::npos) {
-// 		server_name = host.substr(0, pos);
-// 		port		= host.substr(pos + 1);
-// 	}
-
-// 	for (size_t i = 0; i < servers.size(); i++) {
-// 		for (size_t j = 0; j < servers[i].ports.size(); j++) {
-// 			if (servers[i].ports[j] == port) {
-// 				if (!matchedPort)
-// 					matchedPort = &servers[i];
-// 				if (servers[i].server_name == server_name)
-// 					return servers[i];
-// 			}
-// 		}
-// 	}
-// 	if (matchedPort)
-// 		return *matchedPort;
-// 	return servers[0];
-// }
-
-// const LocationConfig* Response::matchedLocation(const ServerConfig& srv, const Request& req) {
-// 	const  LocationConfig*	   matched	  = NULL;
-// 	const std::string& uri		  = cleanUri(req.getUri());
-// 	size_t			   matchedLen = 0;
-
-// 	for (size_t i = 0; i < srv.locations.size(); i++) {
-// 		const std::string& path = srv.locations[i].path;
-// 		if (uri.compare(0, path.size(), path) == 0) {
-// 			if (path.size() > matchedLen) {
-// 				matchedLen = path.size();
-// 				matched	   = &srv.locations[i];
-// 			}
-// 		}
-// 	}
-// 	return matched;
-// }
-
 void Response::errorPage(const Request& request, codeStatus code) {
 	const LocationConfig* locConf = request.getLocationConf();
 	const ServerConfig*	  srvConf = request.getServerConf();
@@ -110,4 +68,3 @@ std::string Response::getList(const std::string& fullPath, const std::string& ur
 	closedir(dir);
 	return res;
 }
-

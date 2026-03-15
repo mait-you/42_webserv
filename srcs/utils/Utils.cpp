@@ -101,7 +101,7 @@ std::string cleanUri(const std::string& uri) {
 
 std::string getExtension(const std::string& fullPath) {
 	std::string name	  = fullPath;
-	std::size_t		lastSlash = name.find_last_of('/');
+	std::size_t lastSlash = name.find_last_of('/');
 	if (lastSlash != std::string::npos)
 		name = name.substr(lastSlash + 1);
 	std::size_t pos = name.find_last_of('.');

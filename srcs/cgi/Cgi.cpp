@@ -27,13 +27,9 @@ Cgi& Cgi::operator=(const Cgi& other) {
 
 Cgi::~Cgi() {}
 
+CgiInfo::CgiInfo() : pid(-1) {}
 
-CgiInfo::CgiInfo() : pid(-1)
-{
-}
-
-std::vector<std::string> Cgi::createEnv() const
-{
+std::vector<std::string> Cgi::createEnv() const {
 	std::vector<std::string> envVec;
 
 	std::string query;
@@ -89,8 +85,7 @@ std::vector<std::string> Cgi::createEnv() const
 	return envVec;
 }
 
-CgiInfo Cgi::start()
-{
+CgiInfo Cgi::start() {
 	std::string extension;
 	size_t		pos = _scriptPath.rfind('.');
 	if (pos != std::string::npos)
@@ -99,7 +94,7 @@ CgiInfo Cgi::start()
 	std::map<std::string, std::string>::const_iterator it = _loc->cgi.find(extension);
 	if (it == _loc->cgi.end()) {
 		std::string dotExt = "." + extension;
-		it = _loc->cgi.find(dotExt);
+		it				   = _loc->cgi.find(dotExt);
 	}
 	if (it == _loc->cgi.end())
 		return CgiInfo();
@@ -108,26 +103,26 @@ CgiInfo Cgi::start()
 	char* argv[3];
 	argv[0] = const_cast<char*>(cgiPath.c_str());
 
-	size_t slashPos = _scriptPath.rfind('/');
-	std::string scriptDir = _scriptPath.substr(0, slashPos);
+	size_t		slashPos   = _scriptPath.rfind('/');
+	std::string scriptDir  = _scriptPath.substr(0, slashPos);
 	std::string scriptName = _scriptPath.substr(slashPos + 1);
-	argv[1] = const_cast<char*>(scriptName.c_str());
-	argv[2] = NULL;
+	argv[1]				   = const_cast<char*>(scriptName.c_str());
+	argv[2]				   = NULL;
 
 	std::vector<std::string> envVec = createEnv();
-	std::vector<char *> envp;
+	std::vector<char*>		 envp;
 	for (size_t i = 0; i < envVec.size(); i++)
 		envp.push_back(const_cast<char*>(envVec[i].c_str()));
 	envp.push_back(NULL);
 
-	static int counter = 0;
+	static int		   counter = 0;
 	std::ostringstream bodyOss, resOss;
 	bodyOss << "/tmp/cgi_body_" << time(NULL) << "_" << counter;
 	resOss << "/tmp/cgi_res_" << time(NULL) << "_" << counter;
 	counter++;
 
 	std::string bodyPath = bodyOss.str();
-	std::string resPath = resOss.str();
+	std::string resPath	 = resOss.str();
 
 	std::ofstream bodyFile(bodyPath.c_str());
 	if (!bodyFile.is_open())
@@ -136,23 +131,20 @@ CgiInfo Cgi::start()
 	bodyFile.close();
 
 	std::ofstream responseFile(resPath.c_str());
-	if (!responseFile.is_open())
-	{
+	if (!responseFile.is_open()) {
 		unlink(bodyPath.c_str());
 		return CgiInfo();
 	}
 	responseFile.close();
 
 	pid_t pid = fork();
-	if (pid == -1)
-	{
+	if (pid == -1) {
 		unlink(bodyPath.c_str());
 		unlink(resPath.c_str());
 		return CgiInfo();
 	}
 
-	if (pid == 0)
-	{
+	if (pid == 0) {
 		int bodyFd = open(bodyPath.c_str(), O_RDONLY);
 		if (bodyFd == -1)
 			_exit(1);
@@ -175,8 +167,8 @@ CgiInfo Cgi::start()
 	}
 
 	CgiInfo info;
-	info.pid = pid;
-	info.resPath = resPath;
+	info.pid	  = pid;
+	info.resPath  = resPath;
 	info.bodyPath = bodyPath;
 	return info;
 }

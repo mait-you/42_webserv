@@ -2,17 +2,18 @@
 
 Request::Request()
 		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(NULL), _locConf(NULL), _state(PARSE_REQUEST_LINE),
-		  _parsePos(0), _requestComplete(false) {}
+		  _parsePos(0), _requestComplete(false), _hasCgi(false) {}
 
 Request::Request(const ServerConfig* serverConfig)
 		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(serverConfig), _locConf(NULL),
-		  _state(PARSE_REQUEST_LINE), _parsePos(0), _requestComplete(false) {}
+		  _state(PARSE_REQUEST_LINE), _parsePos(0), _requestComplete(false), _hasCgi(false) {}
 
 Request::Request(const Request& other)
 		: HttpStatus(other), _srvConf(other._srvConf), _locConf(other._locConf),
 		  _method(other._method), _uri(other._uri), _version(other._version),
 		  _headers(other._headers), _body(other._body), _state(other._state),
-		  _parsePos(other._parsePos), _requestComplete(other._requestComplete) {}
+		  _parsePos(other._parsePos), _requestComplete(other._requestComplete),
+		  _hasCgi(other._hasCgi) {}
 
 Request& Request::operator=(const Request& other) {
 	if (this != &other) {
@@ -27,6 +28,7 @@ Request& Request::operator=(const Request& other) {
 		_state			 = other._state;
 		_parsePos		 = other._parsePos;
 		_requestComplete = other._requestComplete;
+		_hasCgi			 = other._hasCgi;
 	}
 	return *this;
 }
@@ -50,6 +52,7 @@ void Request::parseRequestLine(const std::string& buf) {
 	// if (!isValidVersion(_version))
 	// 	setError(UNSUPPORTED_VERSION);
 	matchedLocation();
+	detectCgi();
 	setState(PARSE_HEADERS);
 }
 
@@ -148,6 +151,40 @@ const ServerConfig* Request::getServerConf() const {
 	return _srvConf;
 }
 
+bool Request::hasCgi() const {
+	return _hasCgi;
+}
+
+std::string Request::resolveFullPath() const {
+	std::string root = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
+	// std::string rest = resolvePath().substr(_locConf->path.length());
+	std::string rest = resolvePath();
+	return root + rest;
+}
+
+std::string Request::resolvePath() const {
+	std::string				 segment;
+	std::vector<std::string> cleanPath;
+	std::stringstream		 ss(_uri);
+
+	while (std::getline(ss, segment, '/')) {
+		if (segment.empty() || segment == ".")
+			continue;
+		if (segment == ".." && !cleanPath.empty())
+			cleanPath.pop_back();
+		else
+			cleanPath.push_back(segment);
+	}
+
+	std::string buffer;
+	for (size_t i = 0; i < cleanPath.size(); i++)
+		buffer += "/" + cleanPath[i];
+	if (cleanPath.empty() || _uri[_uri.size() - 1] == '/')
+		buffer += "/";
+
+	return buffer;
+}
+
 void Request::setError(codeStatus codeStatus) {
 	setStatus(codeStatus, HttpStatus::defaultMessage(codeStatus));
 	std::stringstream ss;
@@ -183,6 +220,8 @@ std::ostream& operator<<(std::ostream& out, const Request& req) {
 		if (body.size() > 32)
 			out << "...";
 		out << std::dec << "\n";
+		out << "--- Type ---\n";
+		out << "  " << (req.hasCgi() ? "Dynamic" : "Static") << "\n";
 	}
 	return out;
 }

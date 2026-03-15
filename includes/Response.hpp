@@ -19,7 +19,6 @@ class Response : public HttpStatus {
 
 	bool		_hasCgiRunning;
 	CgiInfo		_runningCgi;
-	Request*	_currentRequest;
 
   public:
 	Response();
@@ -32,7 +31,7 @@ class Response : public HttpStatus {
 	void setHeader(const std::string& key, const std::string& value);
 	void setBody(const std::string& body);
 
-	bool	hasCgiRunning() const;
+	bool hasCgiRunning() const;
 
 	std::string build(Request &request);
 
@@ -40,15 +39,13 @@ class Response : public HttpStatus {
 	std::string buildSendBuffer() const;
 
 	// helpers
-	// ServerConfig	matchedServer(const Request& req, const std::vector<ServerConfig>& servers);
-	// const LocationConfig* matchedLocation(const ServerConfig& srv, const Request& req);
 	bool		allowedMethods(const Request& request);
 	bool		bodySize(const Request& request);
 	std::string getList(const std::string& fullPath, const std::string& uri);
 
 	void handleFile(const Request& request, const std::string& fullPath);
-	int	 handleErrorFile(const std::string& fullPath);
 	void handleDir(const Request& request, const std::string& fullPath);
+	int	 handleErrorFile(const std::string& fullPath);
 
 	void deleteFolder(const Request& request, const std::string& fullPath);
 	void errorPage(const Request& request, codeStatus codeStatus);

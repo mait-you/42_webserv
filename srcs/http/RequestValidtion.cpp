@@ -1,17 +1,17 @@
 #include "../../includes/Request.hpp"
 
+void Request::detectCgi() {
+	if (_locConf && _locConf->has_cgi && _locConf->cgi.count(getExtension(_uri)))
+		_hasCgi = true;
+}
+
 void Request::matchedLocation() {
 	if (!_srvConf)
 		return;
-
-	_locConf = NULL;
-
-	const std::string& uri		  = cleanUri(_uri);
+	const std::string& uri		  = resolvePath();
 	std::size_t		   matchedLen = 0;
-
 	for (size_t i = 0; i < _srvConf->locations.size(); i++) {
 		const std::string& path = _srvConf->locations[i].path;
-
 		if (uri.compare(0, path.size(), path) == 0) {
 			if (path.size() > matchedLen) {
 				matchedLen = path.size();
@@ -19,6 +19,8 @@ void Request::matchedLocation() {
 			}
 		}
 	}
+	if (!_locConf)
+		return setError(HTTP_400_BAD_REQUEST);
 }
 
 bool Request::isValidVersion(const std::string& version) const {

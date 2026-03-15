@@ -3,14 +3,13 @@
 
 Response::Response()
 	: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-	  _hasCgiRunning(false), _currentRequest(NULL) {
+	  _hasCgiRunning(false) {
 }
 
 Response::Response(const Response &other)
 	: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
 	_headers(other._headers), _body(other._body),
-	_hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
-	_currentRequest(other._currentRequest) {
+	_hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi) {
 }
 
 Response& Response::operator=(const Response& other) {
@@ -22,7 +21,6 @@ Response& Response::operator=(const Response& other) {
 		_body			= other._body;
 		_hasCgiRunning	= other._hasCgiRunning;
 		_runningCgi		= other._runningCgi;
-		_currentRequest	= other._currentRequest;
 	}
 	return *this;
 }
@@ -52,10 +50,6 @@ bool Response::hasCgiRunning() const {
 }
 
 std::string Response::build(Request &request) {
-	_currentRequest = &request;
-
-	// ServerConfig	srv		  = matchedServer(request, servers);
-	// LocationConfig *locConfig = matchedLocation(srv, request);
 
 	if (!request.isValid()) {
 		codeStatus error = request.getStatusCode();
