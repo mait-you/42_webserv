@@ -9,9 +9,7 @@ void Response::handlePost(const Request& request) {
 	}
 
 	if (request.hasCgi()) {
-		const std::string root =
-			(locConf && !locConf->root.empty()) ? locConf->root : request.getServerConf()->root;
-		const std::string fullPath = root + (request.getUri());
+		const std::string fullPath = request.resolveFullPath();
 
 		Cgi cgi(*_currentRequest, *request.getServerConf(), locConf, fullPath);
 		_runningCgi = cgi.start(_clientFd);

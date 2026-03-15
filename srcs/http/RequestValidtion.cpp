@@ -8,7 +8,6 @@ void Request::detectCgi() {
 void Request::matchedLocation() {
 	if (!_srvConf)
 		return;
-
 	const std::string& uri		  = resolvePath();
 	std::size_t		   matchedLen = 0;
 	for (size_t i = 0; i < _srvConf->locations.size(); i++) {
