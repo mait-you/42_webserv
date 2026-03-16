@@ -26,14 +26,12 @@ void parselisten(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
 		if (server.host.empty() || !isNumber(port) || !isValidPort(port)) {
 			throw std::runtime_error("Invalid config: invalid port");
 		}
-		server.ports.clear();
 		server.ports.push_back(port);
 	} else {
 		if (tokens[i].value.empty() || !isNumber(tokens[i].value) ||
 			!isValidPort(tokens[i].value)) {
 			throw std::runtime_error("Invalid config: invalid port");
 		}
-		server.ports.clear();
 		server.ports.push_back(tokens[i].value);
 	}
 	i++;

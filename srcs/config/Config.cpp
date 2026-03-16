@@ -3,8 +3,8 @@
 Config::Config() {
 }
 
-Config::Config(const std::string &confFIle) {
-	parse(confFIle);
+Config::Config(const std::string &confFile) {
+	parse(confFile);
 }
 
 Config::Config(const Config &other) : _servers(other._servers) {
@@ -26,7 +26,7 @@ ServerConfig::ServerConfig()
 	host = "0.0.0.0";
 	root = "./www";
 	index = "index.html";
-	client_max_body_size = 1 * 1080 * 1080;
+	client_max_body_size = 1 * 1024 * 1024;
 }
 
 LocationConfig::LocationConfig()
@@ -39,16 +39,20 @@ LocationConfig::LocationConfig()
 	has_cgi = false;
 }
 
+bool hasSamePort(const ServerConfig &a, const ServerConfig &b) {
+	for (size_t i = 0; i < a.ports.size(); i++) {
+		for (size_t j = 0; j < b.ports.size(); j++) {
+			if (a.ports[i] == b.ports[j])
+				return true;
+		}
+	}
+	return false;
+}
+
 void Config::parse(const std::string &filename) {
-
 	std::vector<Token> tokens = tokenize(filename);
-	// for (size_t i = 0; i < tokens.size(); i++)
-	// {
-	// 	std::cout << tokens[i].value << " | " << tokens[i].type << std::endl;
-	// }
-	// return;
-	size_t i = 0;
 
+	size_t i = 0;
 	while ( i < tokens.size())
 	{
 		if (tokens[i].type == word && tokens[i].value == "server")
@@ -61,13 +65,17 @@ void Config::parse(const std::string &filename) {
 			i++;
 			ServerConfig server;
 			parseServer(tokens, i, server);
-			if (_servers.size() != 0 && server.ports == _servers.back().ports)
-			{
-				if (server.server_name == _servers.back().server_name || server.host == _servers.back().host)
-				{
-					throw std::runtime_error("Invalid config: Invalid server config");
+		
+			for (size_t s = 0; s < _servers.size(); s++) {
+				ServerConfig &current = _servers[s];
+				if (hasSamePort(server, current)) {
+					if (server.server_name == current.server_name ||
+						server.host == current.host) {
+						throw std::runtime_error("Invalid config: Invalid server config");
+					}
 				}
 			}
+			
 			_servers.push_back(server);
 		}
 		else
