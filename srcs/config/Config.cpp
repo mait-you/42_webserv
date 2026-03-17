@@ -69,10 +69,11 @@ void Config::parse(const std::string &filename) {
 			for (size_t s = 0; s < _servers.size(); s++) {
 				ServerConfig &current = _servers[s];
 				if (hasSamePort(server, current)) {
-					if (server.server_name == current.server_name ||
-						server.host == current.host) {
+					if (server.host == current.host) {
 						throw std::runtime_error("Invalid config: Invalid server config");
 					}
+					if (server.host == "0.0.0.0" || current.host == "0.0.0.0")
+						throw std::runtime_error("Invalid config: Invalid server config");
 				}
 			}
 			
