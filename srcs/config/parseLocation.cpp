@@ -73,7 +73,6 @@ void parseAllowedMethods(size_t &i, std::vector<Token> &tokens, LocationConfig &
 		} else if (tokens[i].type == semiColone && j != 1) {
 			break;
 		} else {
-			// i think should return error codeStatus ? when method not found ?
 			throw std::runtime_error("Invalid config: unexpected upload method");
 		}
 	}
@@ -84,8 +83,6 @@ void parseAllowedMethods(size_t &i, std::vector<Token> &tokens, LocationConfig &
 }
 
 void parseErrorPage(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
-	// add this later: muti errors codes can share same error page
-	// error_page HTTP_500_INTERNAL_SERVER_ERROR 502 503 /50x.html;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected error page");
@@ -166,7 +163,6 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 	}
 	while (i < tokenSize) {
 		if (tokens[i].type == closeBrace) {
-			i++;
 			return;
 		} else if (tokens[i].type == word && tokens[i].value == "index")
 			parseIndex(i, tokens, location);

@@ -66,7 +66,12 @@ void Config::parse(const std::string &filename) {
 			parseServer(tokens, i, server);
 			if (server.ports.empty())
 				server.ports.push_back("8080");
-		
+			if (server.locations.empty())
+			{
+				LocationConfig location;
+				location.path = "/";
+				server.locations.push_back(location);
+			}
 			for (size_t s = 0; s < _servers.size(); s++) {
 				ServerConfig &current = _servers[s];
 				if (hasSamePort(server, current)) {
@@ -77,7 +82,11 @@ void Config::parse(const std::string &filename) {
 						throw std::runtime_error("Invalid config: Invalid server config");
 				}
 			}
-			
+			if (i>= tokens.size() || tokens[i].type != closeBrace)
+			{
+				throw std::runtime_error("Invalid config: expected } in server block");
+			}
+			i++;
 			_servers.push_back(server);
 		}
 		else

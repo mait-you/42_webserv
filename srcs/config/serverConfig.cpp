@@ -81,8 +81,6 @@ void parseServerIndex(size_t &i, std::vector<Token> &tokens, ServerConfig &serve
 }
 
 void parseErrorPage(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
-	// add this later: muti erros codes can share same error page
-	// error_page HTTP_500_INTERNAL_SERVER_ERROR 502 503 /50x.html;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected error page");
@@ -110,9 +108,9 @@ void parseMaxSize(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected client max body size");
 	}
-	unsigned long	  value;
-	std::string		  remaining;
-	std::stringstream ss(tokens[i].value);
+	unsigned long		value;
+	std::string			remaining;
+	std::stringstream	ss(tokens[i].value);
 	ss >> value;
 	if (ss.fail()) {
 		throw std::runtime_error("Invalid config: client max body size not valid");
@@ -143,24 +141,24 @@ void parseLocation(size_t &i, std::vector<Token> &tokens, ServerConfig &server) 
 		throw std::runtime_error("Invalid config: unexpected location path");
 	}
 	LocationConfig location;
-	location.autoindex	  = false;
-	location.upload		  = false;
-	location.has_redirect = false;
-	location.has_cgi	  = false;
 
 	if (dupLocation(server.locations, tokens[i].value)) {
-		std::string dupPath = "Invalid config: duplicate location " + tokens[i].value;
+		std::string dupPath = "Invalid config: duplicated location " + tokens[i].value;
 		throw std::runtime_error(dupPath);
 	}
 
 	location.path = tokens[i].value;
-	// std::cout << "location path: " << location.path << std::endl;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != openBrace) {
 		throw std::runtime_error("Invalid config: expected { after location");
 	}
 	i++;
 	parseLocation(tokens, i, location);
+	if (i>= tokens.size() || tokens[i].type != closeBrace)
+	{
+		throw std::runtime_error("Invalid config: expected } in location");
+	}
+	i++;
 	server.locations.push_back(location);
 }
 
@@ -171,7 +169,6 @@ void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server) {
 	}
 	while (i < tokenSize) {
 		if (tokens[i].type == closeBrace) {
-			i++;
 			return;
 		}
 		if (tokens[i].type == word && tokens[i].value == "listen")
