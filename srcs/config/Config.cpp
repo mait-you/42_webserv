@@ -22,7 +22,6 @@ Config::~Config() {
 
 ServerConfig::ServerConfig()
 {
-	ports.push_back("8080");
 	host = "0.0.0.0";
 	root = "./www";
 	index = "index.html";
@@ -65,6 +64,8 @@ void Config::parse(const std::string &filename) {
 			i++;
 			ServerConfig server;
 			parseServer(tokens, i, server);
+			if (server.ports.empty())
+				server.ports.push_back("8080");
 		
 			for (size_t s = 0; s < _servers.size(); s++) {
 				ServerConfig &current = _servers[s];
