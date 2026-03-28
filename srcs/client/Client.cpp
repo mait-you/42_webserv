@@ -4,9 +4,9 @@ Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response(),
 		  _requestComplete(false), _responseSent(false) {}
 
-Client::Client(const Socket& socket, const ServerConfig* serverConfig)
+Client::Client(const Socket& socket, const ServerConfig* serverConfig, std::map<std::string, SessionInfo>* session)
 		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(serverConfig),
-		  _response(), _requestComplete(false), _responseSent(false) {}
+		  _response(session), _requestComplete(false), _responseSent(false) {}
 
 Client::Client(const Client& other)
 		: _socket(other._socket), _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),

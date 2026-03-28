@@ -6,6 +6,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Socket.hpp"
+#include "SessionInfo.hpp"
 
 class WebServer {
   public:
@@ -17,6 +18,7 @@ class WebServer {
 	int			  _epollFd;
 	t_ev		  _events[MAX_EVENTS];
 	const Config& _config;
+	std::map<std::string, SessionInfo> sessions;
 
   public:
 	WebServer(const Config& conf);

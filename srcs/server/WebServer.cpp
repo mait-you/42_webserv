@@ -62,7 +62,7 @@ void WebServer::acceptClient(Socket& serverSock) {
 		newSock.close();
 		return;
 	}
-	_clients[newSock.getFd()] = Client(newSock, serverSock.getServerConf());
+	_clients[newSock.getFd()] = Client(newSock, serverSock.getServerConf(), &sessions);
 	LOG("New client            | " << newSock);
 }
 

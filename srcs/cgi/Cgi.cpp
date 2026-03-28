@@ -117,8 +117,8 @@ CgiInfo Cgi::start() {
 
 	static int		   counter = 0;
 	std::ostringstream bodyOss, resOss;
-	bodyOss << "/tmp/cgi_body_" << time(NULL) << "_" << counter;
-	resOss << "/tmp/cgi_res_" << time(NULL) << "_" << counter;
+	bodyOss << "/tmp/cgi_body_" << std::time(0) << "_" << counter;
+	resOss << "/tmp/cgi_res_" << std::time(0) << "_" << counter;
 	counter++;
 
 	std::string bodyPath = bodyOss.str();

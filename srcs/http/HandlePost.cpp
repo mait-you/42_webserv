@@ -1,12 +1,16 @@
 #include "../../includes/MimeTypes.hpp"
 #include "../../includes/Response.hpp"
 
+std::string randomSessionId()
+{
+	static unsigned long idCounter = 0;
+	std::stringstream ss;
+	ss << "id_" << std::time(0) << "_" << idCounter++;
+	return ss.str();
+}
+
 void Response::handlePost(const Request& request) {
 	const LocationConfig* locConf = request.getLocationConf();
-	if (!locConf || !locConf->upload || locConf->upload_path.empty()) {
-		errorPage(request, HTTP_403_FORBIDDEN);
-		return;
-	}
 
 	if (request.hasCgi()) {
 		const std::string fullPath = request.resolveFullPath();
@@ -20,6 +24,54 @@ void Response::handlePost(const Request& request) {
 		return;
 	}
 
+if (request.getUri() == "/login") {
+	std::string body = request.getBody();
+	std::string username;
+	size_t pos = body.find("username=");
+	if (pos != std::string::npos)
+		username = body.substr(pos + 9);
+	bool existUser = false;
+	std::string sessionId;
+	std::string cookie = request.getHeader("Cookie");
+	if (!cookie.empty())
+	{
+		size_t pos = cookie.find("session_id=");
+		if (pos != std::string::npos)
+		{
+			sessionId = cookie.substr(pos + 11);
+			std::map<std::string, SessionInfo>::iterator it;
+			for (it = _sessions->begin(); it != _sessions->end(); it++)
+			{
+				if (it->first == sessionId)
+				{
+					it->second.isLogged = true;
+					it->second.username = username;
+					existUser = true;
+					break;
+				}
+			}
+			
+		}
+	}
+	if (existUser == false)
+	{
+		sessionId = randomSessionId();
+		SessionInfo info;
+		info.username = username;
+		info.isLogged = true;
+		(*_sessions)[sessionId] = info;
+		setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly");
+	}
+	setStatus(HTTP_302_FOUND, "Found");
+	setHeader("Location", "/dashboard.html");
+	return;
+}
+
+	if (!locConf || !locConf->upload || locConf->upload_path.empty()) {
+		errorPage(request, HTTP_403_FORBIDDEN);
+		return;
+	}
+	
 	std::string uploadDir = locConf->upload_path;
 	if (!uploadDir.empty() && uploadDir[uploadDir.size() - 1] != '/')
 		uploadDir += '/';

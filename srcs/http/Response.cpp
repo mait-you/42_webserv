@@ -3,13 +3,18 @@
 
 Response::Response()
 	: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-	  _hasCgiRunning(false) {
+	  _hasCgiRunning(false), _sessions(NULL) {
+}
+
+Response::Response(std::map<std::string, SessionInfo>* session)
+	: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
+	  _hasCgiRunning(false), _sessions(session) {
 }
 
 Response::Response(const Response &other)
 	: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
 	_headers(other._headers), _body(other._body),
-	_hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi) {
+	_hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi), _sessions(other._sessions) {
 }
 
 Response& Response::operator=(const Response& other) {
@@ -21,6 +26,7 @@ Response& Response::operator=(const Response& other) {
 		_body			= other._body;
 		_hasCgiRunning	= other._hasCgiRunning;
 		_runningCgi		= other._runningCgi;
+		_sessions		= other._sessions;
 	}
 	return *this;
 }

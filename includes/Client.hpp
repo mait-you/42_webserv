@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Socket.hpp"
+#include "SessionInfo.hpp"
 
 class Client {
   public:
@@ -23,7 +24,7 @@ class Client {
 
   public:
 	Client();
-	Client(const Socket& socket, const ServerConfig* config);
+	Client(const Socket& socket, const ServerConfig* config, std::map<std::string, SessionInfo>* _session);
 	Client(const Client& other);
 	Client& operator=(const Client& other);
 	~Client();

@@ -3,7 +3,7 @@
 
 #include "Cgi.hpp"
 #include "Request.hpp"
-
+#include "SessionInfo.hpp"
 
 class Response : public HttpStatus {
   public:
@@ -19,9 +19,11 @@ class Response : public HttpStatus {
 
 	bool		_hasCgiRunning;
 	CgiInfo		_runningCgi;
+	std::map<std::string, SessionInfo>* _sessions;
 
   public:
 	Response();
+	Response(std::map<std::string, SessionInfo>* session);
 	Response(const Response& other);
 	Response& operator=(const Response& other);
 	~Response();

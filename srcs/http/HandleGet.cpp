@@ -22,7 +22,58 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 		return;
 	}
 	std::stringstream ss;
-	ss << file.rdbuf();
+	int flag = 0;
+	if (request.getUri() == "/dashboard.html") {
+		std::string cookie = request.getHeader("Cookie");
+		if (!cookie.empty())
+		{
+			size_t pos = cookie.find("session_id=");
+			if (pos != std::string::npos)
+			{
+				std::string sessionId = cookie.substr(pos + 11);
+				std::map<std::string, SessionInfo>::iterator it;
+				for (it = _sessions->begin(); it != _sessions->end(); it++)
+				{
+					if (it->first == sessionId)
+					{
+						if (it->second.isLogged == true)
+						{
+							ss << "<html><body style='display:flex;justify-content:center;'><h1> Welcome, " + it->second.username + "</h1> <a href='/logout.html'>logout</a></body></html>";
+							flag = 1;
+						}
+						break;
+					}
+				}
+				
+			}
+		}
+	}
+	else if (request.getUri() == "/logout.html")
+	{
+		std::string cookie = request.getHeader("Cookie");
+		if (!cookie.empty())
+		{
+			size_t pos = cookie.find("session_id=");
+			if (pos != std::string::npos)
+			{
+				std::string sessionId = cookie.substr(pos + 11);
+				std::map<std::string, SessionInfo>::iterator it;
+				for (it = _sessions->begin(); it != _sessions->end(); it++)
+				{
+					if (it->first == sessionId)
+					{
+						it->second.isLogged = false;
+						setStatus(HTTP_302_FOUND, "Found");
+						setHeader("Location", "/login.html");
+						return;
+					}
+				}
+				
+			}
+		}
+	}
+	if (flag == 0)
+		ss << file.rdbuf();
 	setStatus(HTTP_200_OK);
 	std::string extension = getExtension(fullPath);
 	setHeader("Content-type", Mime::getType(extension));

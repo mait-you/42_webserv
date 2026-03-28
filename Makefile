@@ -19,7 +19,8 @@ HEADERS     = $(INC_DIR)/WebServer.hpp \
 	$(INC_DIR)/Request.hpp \
 	$(INC_DIR)/Response.hpp \
 	$(INC_DIR)/HttpStatus.hpp \
-	$(INC_DIR)/Socket.hpp
+	$(INC_DIR)/Socket.hpp \
+	$(INC_DIR)/SessionInfo.hpp
 
 SRCS        = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/server/WebServer.cpp \
