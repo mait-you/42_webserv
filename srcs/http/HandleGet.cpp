@@ -38,7 +38,11 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 					{
 						if (it->second.isLogged == true)
 						{
-							ss << "<html><body style='display:flex;justify-content:center;'><h1> Welcome, " + it->second.username + "</h1> <a href='/logout.html'>logout</a></body></html>";
+							ss << "<html> <head><title>Webserv - Dashboard</title>"
+								<< "<link rel='stylesheet' href='css/style.css'></head> <body>"
+								<< "<a href='/logout.html'>logout</a>"
+								<< "<h1> Welcome, " << it->second.username << "</h1>"
+								<< "<a href='/'>Back to Home</a></body></html>";
 							flag = 1;
 						}
 						break;
