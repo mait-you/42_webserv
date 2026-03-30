@@ -1,76 +1,75 @@
-# 42_webserv
-HTTP server in C++98
+*This project has been created as part of the 42 curriculum by mofouzi, mait-you.*
 
-## Split Strategy
+# Description
 
-### **Person 1: Core Server & I/O**
-- **Socket Management & Event Loop**
-  - Setup listening sockets (`socket()`, `bind()`, `listen()`)
-  - Implement `epoll()` event loop
-  - Handle accept new connections
-  - Non-blocking I/O operations
-  - Client connection management (timeouts, disconnections)
+Webserv is an HTTP server implemented in C++98, inspired by the NGINX web server. The goal of this project is to build a fully functional HTTP/1.0 server, handling multiple clients efficiently using non-blocking I/O and `epoll` (Linux only). The server supports static file serving, CGI execution, file uploads, and basic session management.
 
-- **HTTP Request Parser**
-  - Parse HTTP request line (method, URI, version)
-  - Parse headers
-  - Handle chunked encoding
-  - Handle request body
-  - Validate HTTP format
+# Instructions
 
-### **Person 2: Config & HTTP Response**
-- **Configuration File Parser**
-  - Read and parse config file (NGINX-style)
-  - Store server settings (ports, error pages, max body size)
-  - Store route configurations
-  - Validate configuration
+## Requirements
 
-- **HTTP Response Builder**
-  - Generate response headers
-  - Handle status codes (200, 404, 500, etc.)
-  - Serve static files (GET)
-  - Default error pages
-  - Content-Type detection
-  - Response formatting
+- Linux operating system (`epoll` is used for event handling)
+- C++98 compatible compiler
 
-### **Shared/Collaborative Work**
+## Compilation
 
-**Both work together on:**
-1. **HTTP Methods Implementation**
-   - Person 1: POST (file upload handling)
-   - Person 2: DELETE (file deletion)
-   - Both: GET integration
+1. Clone the repository.
+2. Run `make` to build the server.
 
-2. **CGI Execution**
-   - Person 1: Process management (`fork()`, `pipe()`, `waitpid()`)
-   - Person 2: Environment variables, CGI request/response parsing
-   - Both: Integration with main server loop
+## Running the Server
 
-3. **Integration & Testing**
-   - Combine both parts
-   - Test with browsers
-   - Stress testing
-   - Memory leak checking
-
-## Recommended Architecture
-
-```
-Person 1 Focus:          Person 2 Focus:
-┌──────────────┐         ┌──────────────┐
-│ Event Loop   │<────────┤ Config       │
-│ (poll/select)│         │ Parser       │
-└──────┬───────┘         └──────────────┘
-       │
-       ↓
-┌──────────────┐         ┌──────────────┐
-│ Request      │────────>│ Response     │
-│ Parser       │         │ Builder      │
-└──────────────┘         └──────────────┘
-       │                        │
-       ↓                        ↓
-┌───────────────────────────────────────┐
-│             CGI Handler               │
-│         (Both work together)          │
-└───────────────────────────────────────┘
+```bash
+./webserv [configuration file]
 ```
 
+- If no configuration file is provided, the server uses the default configuration at `config/default.conf`.
+- You can customize the server by editing or providing your own configuration file (see the `config/` directory for examples).
+
+## Usage
+
+- By default, the server listens on `localhost:8080`.
+- You can change the port, IP, and other settings in the configuration file.
+- The server supports `GET`, `POST`, and `DELETE` HTTP methods.
+- CGI scripts are supported.
+- File uploads and session management (via cookies) are implemented.
+
+### Example Usage
+
+1. Start the server:
+```bash
+./webserv config/default.conf
+```
+2. Open your browser at http://localhost:8080 or use `curl`:
+```bash
+curl http://localhost:8080
+```
+
+You can test the server using a standard web browser or command-line tools like `curl`.
+
+# Resources
+
+## Documentation & References
+
+- [CGI Environment Variables](https://www.cgi101.com/book/ch3/text.html)
+- [Understanding HTTP Responses](https://www.tutorialspoint.com/http/http_responses.htm)
+- [What is HTTP? How the Internet Works\! (YouTube)](https://www.youtube.com/watch?v=wW2A5SZ3GkI)
+- [How an HTTP Request Gets Served (YouTube)](https://www.youtube.com/watch?v=hWyBeEF3CqQ)
+- [HTTP/1.0 RFC Reference](https://datatracker.ietf.org/doc/html/rfc1945#section-6.1.1)
+- [MDN HTTP Overview](http://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview)
+- [curl Tutorial](https://curl.se/docs/tutorial.html)
+- [Uniform Resource Identifier (URI)](https://http.dev/uri)
+- [CGI Example: Read Data](https://www.infor.uva.es/~jvegas/cursos/web/cgi-bin/fuentes/readdata.html)
+- [RFC 3875: CGI](https://datatracker.ietf.org/doc/html/rfc3875#section-4.1.4)
+- [HTTP Cookies Crash Course (YouTube)](https://www.youtube.com/watch?v=sovAIX4doOE&list=PLQnljOFTspQU6zO0drAYHFtkkyfNJw1IO&index=12)
+- [HTTP Cookies](https://http.dev/cookies)
+
+## Acknowledgments
+
+Thanks to the incredibly helpful READMEs from the following repositories, which helped a lot in finding resources and understanding the project:
+
+- [Toufa7/WebServer](https://github.com/Toufa7/WebServer)
+- [zelhajou/ft\_net\_webserv](https://github.com/zelhajou/ft_net_webserv)
+
+## AI Usage
+
+AI was used to help understand the core concepts of HTTP servers, assist with understanding some useful utility functions, and proofread/fix the grammar when writing this README.
