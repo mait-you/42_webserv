@@ -1,18 +1,18 @@
 #include "../../includes/Cgi.hpp"
 
-Cgi::Cgi() {
-	_loc = NULL;
-}
+Cgi::Cgi() : _req(), _srv(), _loc(NULL), _scriptPath(""), _resPath(""), _bodyPath("") {}
 
 Cgi::Cgi(const Request& req, const ServerConfig& srv, const LocationConfig* loc,
-		 const std::string& path)
-		: _req(req), _srv(srv), _loc(loc), _scriptPath(path) {}
+		const std::string& path)
+		: _req(req), _srv(srv), _loc(loc), _scriptPath(path), _resPath(""), _bodyPath("") {}
 
 Cgi::Cgi(const Cgi& other) {
 	_req		= other._req;
 	_srv		= other._srv;
 	_loc		= other._loc;
-	_scriptPath = other._scriptPath;
+	_scriptPath	= other._scriptPath;
+	_resPath	= other._resPath;
+	_bodyPath	= other._bodyPath;
 }
 
 Cgi& Cgi::operator=(const Cgi& other) {
@@ -21,6 +21,8 @@ Cgi& Cgi::operator=(const Cgi& other) {
 		_srv		= other._srv;
 		_loc		= other._loc;
 		_scriptPath = other._scriptPath;
+		_resPath	= other._resPath;
+		_bodyPath	= other._bodyPath;
 	}
 	return *this;
 }
@@ -34,12 +36,15 @@ std::vector<std::string> Cgi::createEnv() const {
 
 	std::string query;
 	std::string uri = _req.getUri();
+	envVec.push_back("REQUEST_URI=" + uri);
 	size_t		pos = uri.find('?');
 	if (pos != std::string::npos) {
 		query = uri.substr(pos + 1);
-		uri	  = uri.substr(0, pos);
+		uri = uri.substr(0, pos);
 	}
-
+	envVec.push_back("DOCUMENT_ROOT=" + _srv.root);
+	// envVec.push_back("REMOTE_ADDR=" + _req.getClientIp());
+	
 	envVec.push_back("REQUEST_METHOD=" + _req.getMethod());
 	envVec.push_back("QUERY_STRING=" + query);
 	envVec.push_back("CONTENT_TYPE=" + _req.getHeader("Content-Type"));
@@ -55,17 +60,23 @@ std::vector<std::string> Cgi::createEnv() const {
 	if (!extension.empty() && extPos != std::string::npos) {
 		size_t afterPos = extPos + extension.length();
 		if (afterPos < uri.length())
+		{
 			pathInfo = uri.substr(afterPos);
+			uri = uri.substr(0, afterPos);
+		}
 	}
 
 	envVec.push_back("SCRIPT_NAME=" + uri);
 	envVec.push_back("SCRIPT_FILENAME=" + _scriptPath);
 	envVec.push_back("PATH_INFO=" + pathInfo);
+	if (!pathInfo.empty())
+		envVec.push_back("PATH_TRANSLATED=" + _srv.root + pathInfo);
 	envVec.push_back("SERVER_NAME=" + _srv.host);
 	envVec.push_back("SERVER_PORT=" + _srv.ports[0]);
 	envVec.push_back("SERVER_PROTOCOL=" + _req.getVersion());
 	envVec.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	envVec.push_back("REDIRECT_STATUS=200");
+	envVec.push_back("SERVER_SOFTWARE=webserv/1.0");
 
 	std::map<std::string, std::string> myHeaders = _req.getHeaders();
 	for (std::map<std::string, std::string>::const_iterator it = myHeaders.begin();
@@ -85,90 +96,97 @@ std::vector<std::string> Cgi::createEnv() const {
 	return envVec;
 }
 
-CgiInfo Cgi::start() {
-	std::string extension;
+const std::string Cgi::findCgiPath() const
+{
+	std::string	extension;
 	size_t		pos = _scriptPath.rfind('.');
 	if (pos != std::string::npos)
 		extension = _scriptPath.substr(pos + 1);
-
+	else
+		return "";
 	std::map<std::string, std::string>::const_iterator it = _loc->cgi.find(extension);
 	if (it == _loc->cgi.end()) {
-		std::string dotExt = "." + extension;
-		it				   = _loc->cgi.find(dotExt);
+		std::string dotExt	= "." + extension;
+		it				 	= _loc->cgi.find(dotExt);
 	}
 	if (it == _loc->cgi.end())
-		return CgiInfo();
-	const std::string& cgiPath = it->second;
+		return "";
+	return it->second;
+}
 
-	char* argv[3];
-	argv[0] = const_cast<char*>(cgiPath.c_str());
-
-	size_t		slashPos   = _scriptPath.rfind('/');
-	std::string scriptDir  = _scriptPath.substr(0, slashPos);
-	std::string scriptName = _scriptPath.substr(slashPos + 1);
-	argv[1]				   = const_cast<char*>(scriptName.c_str());
-	argv[2]				   = NULL;
-
-	std::vector<std::string> envVec = createEnv();
-	std::vector<char*>		 envp;
-	for (size_t i = 0; i < envVec.size(); i++)
-		envp.push_back(const_cast<char*>(envVec[i].c_str()));
-	envp.push_back(NULL);
-
-	static int		   counter = 0;
+int Cgi::createFiles()
+{
+	static int	counter = 0;
 	std::ostringstream bodyOss, resOss;
 	bodyOss << "/tmp/cgi_body_" << std::time(0) << "_" << counter;
 	resOss << "/tmp/cgi_res_" << std::time(0) << "_" << counter;
 	counter++;
-
-	std::string bodyPath = bodyOss.str();
-	std::string resPath	 = resOss.str();
-
-	std::ofstream bodyFile(bodyPath.c_str());
+	_bodyPath = bodyOss.str();
+	_resPath = resOss.str();
+	std::ofstream bodyFile(_bodyPath.c_str());
 	if (!bodyFile.is_open())
-		return CgiInfo();
+		return 1;
 	bodyFile << _req.getBody();
 	bodyFile.close();
-
-	std::ofstream responseFile(resPath.c_str());
+	std::ofstream responseFile(_resPath.c_str());
 	if (!responseFile.is_open()) {
-		unlink(bodyPath.c_str());
-		return CgiInfo();
+		unlink(_bodyPath.c_str());
+		return 1;
 	}
 	responseFile.close();
+	return 0;
+}
+
+CgiInfo Cgi::start() {
+	const std::string& cgiPath = findCgiPath();
+	if (cgiPath.empty())
+		return CgiInfo();
+
+	char* argv[3];
+	argv[0] = const_cast<char*>(cgiPath.c_str());
+	size_t		slashPos = _scriptPath.rfind('/');
+	std::string	scriptDir = _scriptPath.substr(0, slashPos);
+	std::string	scriptName = _scriptPath.substr(slashPos + 1);
+	argv[1] = const_cast<char*>(scriptName.c_str());
+	argv[2] = NULL;
+
+	std::vector<std::string>	envVec = createEnv();
+	std::vector<char*>			envp;
+	for (size_t i = 0; i < envVec.size(); i++)
+		envp.push_back(const_cast<char*>(envVec[i].c_str()));
+	envp.push_back(NULL);
+
+	if (createFiles() == 1)
+		return CgiInfo();
 
 	pid_t pid = fork();
 	if (pid == -1) {
-		unlink(bodyPath.c_str());
-		unlink(resPath.c_str());
+		unlink(_bodyPath.c_str());
+		unlink(_resPath.c_str());
 		return CgiInfo();
 	}
-
 	if (pid == 0) {
-		int bodyFd = open(bodyPath.c_str(), O_RDONLY);
+		int bodyFd = open(_bodyPath.c_str(), O_RDONLY);
 		if (bodyFd == -1)
 			_exit(1);
 		if (dup2(bodyFd, STDIN_FILENO) == -1)
 			_exit(1);
 		close(bodyFd);
-
-		int resFd = open(resPath.c_str(), O_WRONLY);
+		int resFd = open(_resPath.c_str(), O_WRONLY);
 		if (resFd == -1)
 			_exit(1);
 		if (dup2(resFd, STDOUT_FILENO) == -1)
 			_exit(1);
 		close(resFd);
-
 		if (chdir(scriptDir.c_str()) == -1)
 			_exit(1);
-
 		execve(cgiPath.c_str(), argv, &envp[0]);
 		_exit(1);
 	}
 
 	CgiInfo info;
-	info.pid	  = pid;
-	info.resPath  = resPath;
-	info.bodyPath = bodyPath;
+	info.pid = pid;
+	info.resPath = _resPath;
+	info.bodyPath = _bodyPath;
 	return info;
 }

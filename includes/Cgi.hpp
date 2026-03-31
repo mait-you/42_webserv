@@ -14,10 +14,12 @@ struct CgiInfo {
 
 class Cgi {
   private:
-	Request				  _req;
-	ServerConfig		  _srv;
-	const LocationConfig* _loc;
-	std::string			  _scriptPath;
+	Request					_req;
+	ServerConfig			_srv;
+	const LocationConfig*	_loc;
+	std::string				_scriptPath;
+	std::string				_resPath;
+	std::string				_bodyPath;
 
   public:
 	Cgi();
@@ -30,6 +32,8 @@ class Cgi {
 
   private:
 	std::vector<std::string> createEnv() const;
+	const std::string findCgiPath() const;
+	int createFiles();
 };
 
 #endif
