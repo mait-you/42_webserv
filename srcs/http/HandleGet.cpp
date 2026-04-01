@@ -1,6 +1,78 @@
 #include "../../includes/MimeTypes.hpp"
 #include "../../includes/Response.hpp"
 
+std::string extractId(std::string& cookie) {
+	std::stringstream	ss(cookie);
+	std::string			str;
+
+	while (std::getline(ss, str, ';')) {
+		size_t pos = str.find("session_id=");
+		if (pos != std::string::npos)
+			return str.substr(11);
+	}
+	return "";
+}
+
+int Response::handleDashboard(const Request& request, const std::string& fullPath)
+{
+	std::stringstream ss;
+	std::string cookie = request.getHeader("Cookie");
+	if (!cookie.empty())
+	{
+		std::string sessionId = extractId(cookie);
+		if (!sessionId.empty())
+		{
+			std::map<std::string, SessionInfo>::iterator it;
+			for (it = _sessions->begin(); it != _sessions->end(); it++)
+			{
+				if (it->first == sessionId)
+				{
+					if (it->second.isLogged == true)
+					{
+						ss << "<html> <head><title>Webserv - Dashboard</title>"
+							<< "<link rel='stylesheet' href='css/style.css'></head> <body>"
+							<< "<a href='/logout.html'>logout</a>"
+							<< "<h1> Welcome, " << it->second.username << "</h1>"
+							<< "<a href='/'>Back to Home</a></body></html>";
+						setStatus(HTTP_200_OK);
+						std::string extension = getExtension(fullPath);
+						setHeader("Content-type", Mime::getType(extension));
+						setBody(ss.str());
+						return 1;
+					}
+					break;
+				}
+			}
+			
+		}
+	}
+	return 0;
+}
+
+int Response::handleLogout(const Request& request)
+{
+	std::string cookie = request.getHeader("Cookie");
+	if (!cookie.empty())
+	{
+		std::string sessionId = extractId(cookie);
+		if (!sessionId.empty())
+		{
+			std::map<std::string, SessionInfo>::iterator it;
+			for (it = _sessions->begin(); it != _sessions->end(); it++)
+			{
+				if (it->first == sessionId)
+				{
+					it->second.isLogged = false;
+					setStatus(HTTP_302_FOUND, "Found");
+					setHeader("Location", "/login.html");
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 void Response::handleFile(const Request& request, const std::string& fullPath) {
 	if (access(fullPath.c_str(), F_OK) == -1) {
 		errorPage(request, HTTP_404_NOT_FOUND);
@@ -21,63 +93,16 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 			_hasCgiRunning = true;
 		return;
 	}
-	std::stringstream ss;
 	int flag = 0;
-	if (request.getUri() == "/dashboard.html") {
-		std::string cookie = request.getHeader("Cookie");
-		if (!cookie.empty())
-		{
-			size_t pos = cookie.find("session_id=");
-			if (pos != std::string::npos)
-			{
-				std::string sessionId = cookie.substr(pos + 11);
-				std::map<std::string, SessionInfo>::iterator it;
-				for (it = _sessions->begin(); it != _sessions->end(); it++)
-				{
-					if (it->first == sessionId)
-					{
-						if (it->second.isLogged == true)
-						{
-							ss << "<html> <head><title>Webserv - Dashboard</title>"
-								<< "<link rel='stylesheet' href='css/style.css'></head> <body>"
-								<< "<a href='/logout.html'>logout</a>"
-								<< "<h1> Welcome, " << it->second.username << "</h1>"
-								<< "<a href='/'>Back to Home</a></body></html>";
-							flag = 1;
-						}
-						break;
-					}
-				}
-				
-			}
-		}
-	}
+	if (request.getUri() == "/dashboard.html")
+		flag = handleDashboard(request, fullPath);
 	else if (request.getUri() == "/logout.html")
-	{
-		std::string cookie = request.getHeader("Cookie");
-		if (!cookie.empty())
-		{
-			size_t pos = cookie.find("session_id=");
-			if (pos != std::string::npos)
-			{
-				std::string sessionId = cookie.substr(pos + 11);
-				std::map<std::string, SessionInfo>::iterator it;
-				for (it = _sessions->begin(); it != _sessions->end(); it++)
-				{
-					if (it->first == sessionId)
-					{
-						it->second.isLogged = false;
-						setStatus(HTTP_302_FOUND, "Found");
-						setHeader("Location", "/login.html");
-						return;
-					}
-				}
-				
-			}
-		}
-	}
-	if (flag == 0)
-		ss << file.rdbuf();
+		flag = handleLogout(request);
+
+	if (flag == 1)
+		return;
+	std::stringstream ss;
+	ss << file.rdbuf();
 	setStatus(HTTP_200_OK);
 	std::string extension = getExtension(fullPath);
 	setHeader("Content-type", Mime::getType(extension));

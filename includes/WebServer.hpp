@@ -18,7 +18,7 @@ class WebServer {
 	int			  _epollFd;
 	t_ev		  _events[MAX_EVENTS];
 	const Config& _config;
-	std::map<std::string, SessionInfo> sessions;
+	std::map<std::string, SessionInfo> _sessions;
 
   public:
 	WebServer(const Config& conf);
@@ -37,7 +37,7 @@ class WebServer {
   private:
 	WebServer();
 	WebServer(const WebServer& other);
-	WebServer& operator=(const WebServer& other);
+	// WebServer& operator=(const WebServer& other);
 };
 
 #endif
