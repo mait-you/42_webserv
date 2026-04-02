@@ -9,6 +9,7 @@ struct CgiInfo {
 	pid_t		pid;
 	std::string resPath;
 	std::string bodyPath;
+	std::time_t startTime;
 	CgiInfo();
 };
 

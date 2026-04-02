@@ -188,5 +188,6 @@ CgiInfo Cgi::start() {
 	info.pid = pid;
 	info.resPath = _resPath;
 	info.bodyPath = _bodyPath;
+	info.startTime = std::time(0);
 	return info;
 }
