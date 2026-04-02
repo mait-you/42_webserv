@@ -74,3 +74,31 @@ Person 1 Focus:          Person 2 Focus:
 └───────────────────────────────────────┘
 ```
 
+```mermaid
+graph TD
+    A[Client/Browser] -->|HTTP Request| B[Socket Layer<br/>poll/select/epoll]
+    B -->|Accept Connection| C[Parse HTTP Request]
+    C -->|Extract Method, URI, Headers| D{Configuration<br/>Routing}
+
+    D -->|Static File Request| E[Serve Static File]
+    D -->|CGI Extension<br/>.php .py| F[Execute CGI Script]
+    D -->|POST with Upload| G[Handle File Upload]
+
+    E -->|Read from Filesystem| H[Build HTTP Response]
+    F -->|Fork & Execute<br/>Read stdout| H
+    G -->|Save to Upload Dir| H
+
+    H -->|Add Status & Headers| I[Send Response]
+    I -->|Write to Socket| J[Client Receives Response]
+
+    style A fill:#86efac,stroke:#22c55e,stroke-width:3px
+    style B fill:#fdba74,stroke:#f97316,stroke-width:2px
+    style C fill:#93c5fd,stroke:#3b82f6,stroke-width:2px
+    style D fill:#d8b4fe,stroke:#a855f7,stroke-width:3px
+    style E fill:#93c5fd,stroke:#3b82f6,stroke-width:2px
+    style F fill:#93c5fd,stroke:#3b82f6,stroke-width:2px
+    style G fill:#93c5fd,stroke:#3b82f6,stroke-width:2px
+    style H fill:#93c5fd,stroke:#3b82f6,stroke-width:2px
+    style I fill:#fdba74,stroke:#f97316,stroke-width:2px
+    style J fill:#fca5a5,stroke:#ef4444,stroke-width:3px
+```

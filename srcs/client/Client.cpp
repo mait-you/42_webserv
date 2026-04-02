@@ -48,7 +48,6 @@ bool Client::readData() {
 bool Client::sendData() {
 	if (!_requestComplete || _responseSent)
 		return true;
-
 	if (_response.hasCgiRunning()) {
 		if (!_response.checkCgi(_request))
 			return true;  // CGI not done yet, wait

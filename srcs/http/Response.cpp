@@ -48,6 +48,25 @@ void Response::setBody(const std::string& body) {
 bool Response::hasCgiRunning() const {
 	return _hasCgiRunning;
 }
+void Response::_parseCgiHeaders(const std::string& headers, codeStatus& status) {
+	std::istringstream stream(headers);
+	std::string		   line;
+
+	while (std::getline(stream, line)) {
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+
+		size_t colon = line.find(':');
+		if (colon == std::string::npos)
+			continue;
+
+		std::string key = line.substr(0, colon);
+		std::string val = line.substr(colon + 2);
+
+		setHeader(key, val);
+	}
+}
+
 bool Response::checkCgi(const Request& request) {
 	if (!_hasCgiRunning)
 		return false;
@@ -62,6 +81,7 @@ bool Response::checkCgi(const Request& request) {
 	if (!_runningCgi.bodyPath.empty())
 		unlink(_runningCgi.bodyPath.c_str());
 
+	// CGI failed
 	if (result == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 		if (!_runningCgi.resPath.empty())
 			unlink(_runningCgi.resPath.c_str());
@@ -69,61 +89,41 @@ bool Response::checkCgi(const Request& request) {
 		return _responseReady = true;
 	}
 
+	// Read output file
 	std::ifstream file(_runningCgi.resPath.c_str());
 	if (!file.is_open()) {
 		unlink(_runningCgi.resPath.c_str());
 		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 		return _responseReady = true;
 	}
-
 	std::ostringstream oss;
 	oss << file.rdbuf();
 	file.close();
 	unlink(_runningCgi.resPath.c_str());
 
-	LOG("_runningCgi sent         | " << oss.str());
+	std::string raw = oss.str();
 
-	std::string raw	   = oss.str();
-	size_t		sepPos = raw.find("\r\n\r\n");
-	size_t		skip   = 4;	 // \r\n\r\n
+
+	std::cout << "wiiiiiiiiii3\n" << raw << "\nwiiiii3\n";
+
+	// Split headers and body
+	size_t sepPos = raw.find("\r\n\r\n");
+	size_t skip	  = 4;
 	if (sepPos == std::string::npos) {
 		sepPos = raw.find("\n\n");
-		skip   = 2;	 // \n\n
+		skip   = 2;
 	}
 
 	if (sepPos == std::string::npos) {
 		setStatus(HTTP_200_OK, "OK");
 		setBody(raw);
-		return true;
+		return _responseReady = true;
 	}
 
-	std::string		   headers = raw.substr(0, sepPos);
-	std::string		   body	   = raw.substr(sepPos + skip);	 // correct skip now
-	std::istringstream headerStream(headers);
-	std::string		   line;
-	codeStatus		   cgiStatus = HTTP_200_OK;
-
-	while (std::getline(headerStream, line)) {
-		if (!line.empty() && line[line.size() - 1] == '\r')
-			line.erase(line.size() - 1);
-		size_t colon = line.find(':');
-		if (colon == std::string::npos)
-			continue;
-		std::string key = line.substr(0, colon);
-		std::string val = line.substr(colon + 2);
-		if (key == "Status") {
-			cgiStatus = static_cast<codeStatus>(std::atoi(val.c_str()));
-			continue;
-		}
-		setHeader(key, val);
-	}
-
-	// in checkCgi(), after oss << file.rdbuf():
-	LOG("CGI raw output size: " << oss.str().size());
-	LOG("CGI raw output: [" << oss.str() << "]");
-
-	setStatus(cgiStatus, "OK");	 // always pass reason string
-	setBody(body);
+	codeStatus cgiStatus = HTTP_200_OK;
+	_parseCgiHeaders(raw.substr(0, sepPos), cgiStatus);
+	setStatus(cgiStatus, "OK");
+	setBody(raw.substr(sepPos + skip));
 	return _responseReady = true;
 }
 
@@ -149,6 +149,8 @@ std::string Response::build(Request& request) {
 	} else if (request.getMethod() == "DELETE") {
 		handleDelete(request);
 	}
+	if (_hasCgiRunning)
+		return "";
 	return buildSendBuffer();
 }
 

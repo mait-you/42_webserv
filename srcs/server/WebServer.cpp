@@ -24,7 +24,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 			LOG("Listening             | " << sock);
 		}
 	}
-	// std::cout << conf << std::endl;
+	std::cout << conf;
 }
 
 WebServer::~WebServer() {

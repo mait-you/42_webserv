@@ -41,7 +41,7 @@ void Request::parseRequestLine(const std::string& buf) {
 		return;
 	std::istringstream iss(line);
 	if (!(iss >> _method >> _uri >> _version))
-		return setError(HTTP_400_BAD_REQUEST);
+		return  setError(HTTP_400_BAD_REQUEST);
 	std::string extra;
 	if (iss >> extra)
 		return setError(HTTP_400_BAD_REQUEST);
@@ -54,6 +54,7 @@ void Request::parseRequestLine(const std::string& buf) {
 	matchedLocation();
 	detectCgi();
 	setState(PARSE_HEADERS);
+
 }
 
 void Request::parseHeaders(const std::string& buf) {

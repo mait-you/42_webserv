@@ -74,7 +74,6 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 }
 
 void Response::handleGet(const Request& request) {
-
 	std::string fullPath = request.resolveFullPath();
 
 	struct stat buffer;
