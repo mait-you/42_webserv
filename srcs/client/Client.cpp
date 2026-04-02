@@ -49,8 +49,17 @@ bool Client::sendData() {
 	if (!_requestComplete || _responseSent)
 		return true;
 
-	if (_sendBuffer.empty())
+	if (_response.hasCgiRunning()) {
+		if (!_response.checkCgi(_request))
+			return true;  // CGI not done yet, wait
+		// CGI done — fall through to build
+	}
+
+	if (_sendBuffer.empty()) {
 		_sendBuffer = _response.build(_request);
+		if (_sendBuffer.empty())
+			return true;  // CGI just started (first call), wait
+	}
 
 	ssize_t n = send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent,
 					 _sendBuffer.size() - _bytesSent, MSG_DONTWAIT);
@@ -86,6 +95,10 @@ bool Client::isRequestComplete() const {
 
 bool Client::isResponseSent() const {
 	return _responseSent;
+}
+
+bool Client::hasCgiRunning() const {
+	return _response.hasCgiRunning();
 }
 
 std::ostream& operator<<(std::ostream& out, const Client& client) {

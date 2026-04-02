@@ -231,8 +231,8 @@ std::ostream& operator<<(std::ostream& out, const Request& req) {
 		if (body.size() > 32)
 			out << "...";
 		out << std::dec << "\n";
-		out << "--- Type ---\n";
-		out << "  " << (req.hasCgi() ? "Dynamic" : "Static") << "\n";
 	}
+	out << "--- Type ---\n";
+	out << "  " << (req.hasCgi() ? "Dynamic" : "Static") << "\n";
 	return out;
 }

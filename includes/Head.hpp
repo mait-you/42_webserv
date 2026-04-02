@@ -9,9 +9,11 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <exception>
@@ -22,7 +24,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <sys/wait.h>
 
 #ifndef DEBUGGING
 	#define DEBUGGING 0
