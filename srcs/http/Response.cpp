@@ -63,6 +63,13 @@ void Response::_parseCgiHeaders(const std::string& headers, codeStatus& status) 
 		std::string key = line.substr(0, colon);
 		std::string val = line.substr(colon + 2);
 
+		if (key == "Content-Length")
+			continue;
+		else if (key == "Status")
+			status = static_cast<codeStatus>(std::atoi(val.c_str()));
+		else
+			setHeader(key, val);
+
 		setHeader(key, val);
 	}
 }
@@ -102,7 +109,6 @@ bool Response::checkCgi(const Request& request) {
 	unlink(_runningCgi.resPath.c_str());
 
 	std::string raw = oss.str();
-
 
 	std::cout << "wiiiiiiiiii3\n" << raw << "\nwiiiii3\n";
 
