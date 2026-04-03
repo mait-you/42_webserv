@@ -16,7 +16,8 @@ print("")
 print("<html><body>")
 print("<h1>CGI Test Page</h1>")
 print("<p>METHOD: " + method + "</p>")
-print("<p>QUERY_STRING: " + query + "</p>")
+if query:
+    print("<p>QUERY_STRING: " + query + "</p>")
 if body:
     print("<p>BODY: " + body + "</p>")
 print("</body></html>")
