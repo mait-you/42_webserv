@@ -89,7 +89,7 @@ void Request::parseBody(const std::string& buf) {
 	if (!(iss >> cl))
 		return setError(HTTP_400_BAD_REQUEST);
 	if (cl > _srvConf->client_max_body_size)
-		return setError(HTTP_400_BAD_REQUEST);
+		return setError(HTTP_413_REQUEST_ENTITY_TOO_LARGE);
 	std::size_t _bodyExpected = static_cast<std::size_t>(cl);
 	if (_bodyExpected == 0)
 		return setState(PARSE_COMPLETE);

@@ -31,18 +31,6 @@ bool Response::allowedMethods(const Request& request) {
 	return false;
 }
 
-bool Response::bodySize(const Request& request) {
-	std::string maxStr = request.getHeader("Content-Length");
-	if (maxStr.empty())
-		return true;
-	unsigned long	  bodyLen = 0;
-	std::stringstream ss(maxStr);
-	ss >> bodyLen;
-	if (ss.fail() || !ss.eof())
-		return false;
-	return bodyLen <= request.getServerConf()->client_max_body_size;
-}
-
 std::string Response::getList(const std::string& fullPath, const std::string& uri) {
 	std::string res;
 	DIR*		dir = opendir(fullPath.c_str());

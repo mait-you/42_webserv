@@ -44,7 +44,6 @@ class Response : public HttpStatus {
 
 	// helpers
 	bool		allowedMethods(const Request& request);
-	bool		bodySize(const Request& request);
 	std::string getList(const std::string& fullPath, const std::string& uri);
 
 	void handleFile(const Request& request, const std::string& fullPath);

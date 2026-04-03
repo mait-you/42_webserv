@@ -67,9 +67,10 @@ void Response::_parseCgiHeaders(const std::string& headers, codeStatus& status,
 		size_t colon = line.find(':');
 		if (colon == std::string::npos)
 			continue;
-
+		if (line[colon + 1] == ' ')
+			line.erase(colon + 1, 1);
 		std::string key = line.substr(0, colon);
-		std::string val = line.substr(colon + 2);
+		std::string val = line.substr(colon + 1);
 
 		if (key == "Content-Length")
 			continue;
@@ -88,18 +89,16 @@ bool Response::checkCgi(const Request& request) {
 	int	  status;
 	pid_t result = waitpid(_runningCgi.pid, &status, WNOHANG);
 	if (result == 0) {
-		if (result == 0) {
-			if (std::time(0) - _runningCgi.startTime > 60) {
-				kill(_runningCgi.pid, SIGKILL);
-				_hasCgiRunning = false;
-				if (!_runningCgi.bodyPath.empty())
-					unlink(_runningCgi.bodyPath.c_str());
-				if (!_runningCgi.resPath.empty())
-					unlink(_runningCgi.resPath.c_str());
-				errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
-				return _responseReady = true;
-			}
-			return false;
+		if (std::time(0) - _runningCgi.startTime > 5) {
+			kill(_runningCgi.pid, SIGKILL);
+			waitpid(_runningCgi.pid, NULL, 0);
+			_hasCgiRunning = false;
+			if (!_runningCgi.bodyPath.empty())
+				unlink(_runningCgi.bodyPath.c_str());
+			if (!_runningCgi.resPath.empty())
+				unlink(_runningCgi.resPath.c_str());
+			errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
+			return _responseReady = true;
 		}
 		return false;
 	}
@@ -157,9 +156,7 @@ std::string Response::build(Request& request) {
 	if (_responseReady)
 		return buildSendBuffer();
 	if (!request.isValid()) {
-		codeStatus error = request.getStatusCode();
-		if (error == HTTP_400_BAD_REQUEST)
-			errorPage(request, HTTP_400_BAD_REQUEST);
+		errorPage(request, request.getStatusCode());
 	} else if (!request.getLocationConf()) {
 		errorPage(request, HTTP_404_NOT_FOUND);
 	} else if (request.getLocationConf()->has_redirect) {
@@ -168,6 +165,8 @@ std::string Response::build(Request& request) {
 		else
 			setStatus(HTTP_302_FOUND);
 		setHeader("Location", request.getLocationConf()->redirect_url);
+	} else if (!allowedMethods(request)) {
+		errorPage(request, HTTP_405_METHOD_NOT_ALLOWED);
 	} else if (request.getMethod() == "GET") {
 		handleGet(request);
 	} else if (request.getMethod() == "POST") {
@@ -183,7 +182,7 @@ std::string Response::build(Request& request) {
 std::string Response::buildSendBuffer() const {
 	std::ostringstream oss;
 
-	oss << "HTTP/1.1 " << _statusCode << " " << _statusMessage << "\r\n";
+	oss << "HTTP/1.0 " << _statusCode << " " << _statusMessage << "\r\n";
 	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
 		oss << it->first << ": " << it->second << "\r\n";
 	oss << "Content-Length: " << _body.size() << "\r\n";

@@ -32,7 +32,6 @@
 #define HTTP_VERSION "HTTP/1.0"
 #define MAX_EVENTS 10
 #define RECV_BUFFER_SIZE 4096
-#define END_OF_HEADERS "\r\n\r\n"
 #define MAX_URI_LENGTH 8192
 #define MAX_BODY_SIZE (1024 * 1024)
 

@@ -68,6 +68,10 @@ std::string HttpStatus::defaultMessage(codeStatus codeStatus) {
 		return "Forbidden";
 	case HTTP_404_NOT_FOUND:
 		return "Not Found";
+	case HTTP_405_METHOD_NOT_ALLOWED:
+		return "Method Not Allowed";
+	case HTTP_413_REQUEST_ENTITY_TOO_LARGE:
+		return "Request Entity Too Large";
 	case HTTP_500_INTERNAL_SERVER_ERROR:
 		return "Internal Server Error";
 	case HTTP_501_NOT_IMPLEMENTED:
