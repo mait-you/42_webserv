@@ -48,7 +48,9 @@ void Response::setBody(const std::string& body) {
 bool Response::hasCgiRunning() const {
 	return _hasCgiRunning;
 }
-void Response::_parseCgiHeaders(const std::string& headers, codeStatus& status) {
+
+void Response::_parseCgiHeaders(const std::string& headers, codeStatus& status,
+								std::string& msgStatus) {
 	std::istringstream stream(headers);
 	std::string		   line;
 
@@ -65,12 +67,11 @@ void Response::_parseCgiHeaders(const std::string& headers, codeStatus& status) 
 
 		if (key == "Content-Length")
 			continue;
-		else if (key == "Status")
-			status = static_cast<codeStatus>(std::atoi(val.c_str()));
-		else
+		else if (key == "Status") {
+			status	  = static_cast<codeStatus>(std::atoi(val.c_str()));
+			msgStatus = val.substr(4);
+		} else
 			setHeader(key, val);
-
-		setHeader(key, val);
 	}
 }
 
@@ -110,8 +111,6 @@ bool Response::checkCgi(const Request& request) {
 
 	std::string raw = oss.str();
 
-	std::cout << "wiiiiiiiiii3\n" << raw << "\nwiiiii3\n";
-
 	// Split headers and body
 	size_t sepPos = raw.find("\r\n\r\n");
 	size_t skip	  = 4;
@@ -126,9 +125,10 @@ bool Response::checkCgi(const Request& request) {
 		return _responseReady = true;
 	}
 
-	codeStatus cgiStatus = HTTP_200_OK;
-	_parseCgiHeaders(raw.substr(0, sepPos), cgiStatus);
-	setStatus(cgiStatus, "OK");
+	codeStatus	cgiStatus = HTTP_200_OK;
+	std::string msgStatus = "OK";
+	_parseCgiHeaders(raw.substr(0, sepPos), cgiStatus, msgStatus);
+	setStatus(cgiStatus, msgStatus);
 	setBody(raw.substr(sepPos + skip));
 	return _responseReady = true;
 }
