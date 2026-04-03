@@ -54,7 +54,7 @@ class Response : public HttpStatus {
 	void deleteFolder(const Request& request, const std::string& fullPath);
 	void errorPage(const Request& request, codeStatus codeStatus);
 
-	void _parseCgiHeaders(const std::string& headers, codeStatus& status);
+	void _parseCgiHeaders(const std::string& headers, codeStatus& status, std::string& msgStatus);
 
 	void handleGet(const Request& request);
 	void handleDelete(const Request& request);
