@@ -24,7 +24,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 			LOG("Listening             | " << sock);
 		}
 	}
-	// std::cout << conf << std::endl;
+	std::cout << conf;
 }
 
 WebServer::~WebServer() {
@@ -89,18 +89,18 @@ bool WebServer::handleWrite(int fd) {
 void WebServer::run() {
 	LOG("WebServer running...");
 	while (running) {
-		int numEvents = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
+		int numEvents = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
 		if (numEvents == -1) {
 			if (errno == EINTR)
 				continue;
 			throwError("epoll_wait: ");
 		}
 		for (int i = 0; i < numEvents; ++i) {
-			int fd = _events[i].data.fd;
+			int	 fd	  = _events[i].data.fd;
+			bool keep = true;
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
 			} else {
-				bool keep = true;
 				if (_events[i].events & EPOLLIN)
 					keep = handleRead(fd);
 				if (keep && (_events[i].events & EPOLLOUT))

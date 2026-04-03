@@ -1,7 +1,10 @@
 #include "../../includes/Request.hpp"
 
 void Request::detectCgi() {
-	if (_locConf && _locConf->has_cgi && _locConf->cgi.count(getExtension(_uri)))
+	if (!_locConf || !_locConf->has_cgi)
+		return;
+
+	if (_locConf->cgi.count("." + getExtension(_uri)))
 		_hasCgi = true;
 }
 

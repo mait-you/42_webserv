@@ -13,14 +13,14 @@ class Client {
 	typedef Map::const_iterator	  ConstIt;
 
   private:
-	Socket				_socket;
-	std::string			_recvBuffer;
-	std::string			_sendBuffer;
-	std::size_t			_bytesSent;
-	Request				_request;
-	Response			_response;
-	bool				_requestComplete;
-	bool				_responseSent;
+	Socket		_socket;
+	std::string _recvBuffer;
+	std::string _sendBuffer;
+	std::size_t _bytesSent;
+	Request		_request;
+	Response	_response;
+	bool		_requestComplete;
+	bool		_responseSent;
 
   public:
 	Client();
@@ -34,6 +34,7 @@ class Client {
 
 	void setResponse(const std::string& response);
 
+	bool	 hasCgiRunning() const;
 	Socket&	 getSocket();
 	Request& getRequest();
 	bool	 isRequestComplete() const;

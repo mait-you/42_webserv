@@ -17,9 +17,10 @@ class Response : public HttpStatus {
 	std::map<std::string, std::string> _headers;
 	std::string						   _body;
 
-	bool		_hasCgiRunning;
-	CgiInfo		_runningCgi;
+	bool								_hasCgiRunning;
+	CgiInfo								_runningCgi;
 	std::map<std::string, SessionInfo>* _sessions;
+	bool								_responseReady;
 
   public:
 	Response();
@@ -35,7 +36,8 @@ class Response : public HttpStatus {
 
 	bool hasCgiRunning() const;
 
-	std::string build(Request &request);
+	std::string build(Request& request);
+	bool		checkCgi(const Request& request);
 
   private:
 	std::string buildSendBuffer() const;
@@ -51,6 +53,8 @@ class Response : public HttpStatus {
 
 	void deleteFolder(const Request& request, const std::string& fullPath);
 	void errorPage(const Request& request, codeStatus codeStatus);
+
+	void _parseCgiHeaders(const std::string& headers, codeStatus& status);
 
 	void handleGet(const Request& request);
 	void handleDelete(const Request& request);
