@@ -87,8 +87,22 @@ bool Response::checkCgi(const Request& request) {
 
 	int	  status;
 	pid_t result = waitpid(_runningCgi.pid, &status, WNOHANG);
-	if (result == 0)
+	if (result == 0) {
+		if (result == 0) {
+			if (std::time(0) - _runningCgi.startTime > 60) {
+				kill(_runningCgi.pid, SIGKILL);
+				_hasCgiRunning = false;
+				if (!_runningCgi.bodyPath.empty())
+					unlink(_runningCgi.bodyPath.c_str());
+				if (!_runningCgi.resPath.empty())
+					unlink(_runningCgi.resPath.c_str());
+				errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
+				return _responseReady = true;
+			}
+			return false;
+		}
 		return false;
+	}
 
 	_hasCgiRunning = false;
 
