@@ -3,8 +3,10 @@
 void Request::detectCgi() {
 	if (!_locConf || !_locConf->has_cgi)
 		return;
-
-	if (_locConf->cgi.count("." + getExtension(_uri)))
+	std::string cleanUri = resolveFullPath();
+	if (_locConf->cgi.count(getExtension(cleanUri)))
+		_hasCgi = true;
+	else if (_locConf->cgi.count("." + getExtension(cleanUri)))
 		_hasCgi = true;
 }
 
