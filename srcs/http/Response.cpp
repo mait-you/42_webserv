@@ -55,7 +55,7 @@ bool Response::hasCgiRunning() const {
 	return _hasCgiRunning;
 }
 
-void Response::_parseCgiHeaders(const std::string& headers, codeStatus& status,
+void Response::parseCgiHeaders(const std::string& headers, codeStatus& status,
 								std::string& msgStatus) {
 	std::istringstream stream(headers);
 	std::string		   line;
@@ -108,7 +108,6 @@ bool Response::checkCgi(const Request& request) {
 	if (!_runningCgi.bodyPath.empty())
 		unlink(_runningCgi.bodyPath.c_str());
 
-	// CGI failed
 	if (result == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 		if (!_runningCgi.resPath.empty())
 			unlink(_runningCgi.resPath.c_str());
@@ -116,7 +115,6 @@ bool Response::checkCgi(const Request& request) {
 		return _responseReady = true;
 	}
 
-	// Read output file
 	std::ifstream file(_runningCgi.resPath.c_str());
 	if (!file.is_open()) {
 		unlink(_runningCgi.resPath.c_str());
@@ -130,14 +128,12 @@ bool Response::checkCgi(const Request& request) {
 
 	std::string raw = oss.str();
 
-	// Split headers and body
 	size_t sepPos = raw.find("\r\n\r\n");
 	size_t skip	  = 4;
 	if (sepPos == std::string::npos) {
 		sepPos = raw.find("\n\n");
 		skip   = 2;
 	}
-
 	if (sepPos == std::string::npos) {
 		setStatus(HTTP_200_OK, "OK");
 		setBody(raw);
@@ -146,7 +142,7 @@ bool Response::checkCgi(const Request& request) {
 
 	codeStatus	cgiStatus = HTTP_200_OK;
 	std::string msgStatus = "OK";
-	_parseCgiHeaders(raw.substr(0, sepPos), cgiStatus, msgStatus);
+	parseCgiHeaders(raw.substr(0, sepPos), cgiStatus, msgStatus);
 	setStatus(cgiStatus, msgStatus);
 	setBody(raw.substr(sepPos + skip));
 	return _responseReady = true;

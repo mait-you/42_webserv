@@ -51,7 +51,11 @@ bool Request::isValidUri(const std::string& uri) const {
 }
 
 bool Request::isValidHeaders() const {
-	if (getMethod() == "POST" && getHeader("Content-Length").empty())
+	const std::string& clHeader = getHeader("Content-Length");
+	if (clHeader.empty())
+		return true;
+	long cl = std::atol(clHeader.c_str());
+	if (cl < 0 || static_cast<std::size_t>(cl) > _srvConf->client_max_body_size)
 		return false;
 	return true;
 }

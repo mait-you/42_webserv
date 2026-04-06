@@ -22,7 +22,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 				throwError("epoll_ctl: ");
 			_serverSockets[sock.getFd()] = sock;
 			LOG("Listening             | " << sock);
-		}
+		}  
 	}
 	std::cout << conf;
 }
