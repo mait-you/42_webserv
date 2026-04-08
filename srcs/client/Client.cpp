@@ -4,7 +4,8 @@ Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response(),
 		  _requestComplete(false), _responseSent(false) {}
 
-Client::Client(const Socket& socket, const ServerConfig* serverConfig, std::map<std::string, SessionInfo>* session)
+Client::Client(const Socket& socket, const ServerConfig* serverConfig,
+			   std::map<std::string, SessionInfo>* session)
 		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(serverConfig),
 		  _response(session), _requestComplete(false), _responseSent(false) {}
 
@@ -37,10 +38,10 @@ bool Client::readData() {
 	_recvBuffer.append(buf, n);
 	try {
 		_requestComplete = _request.parse(_recvBuffer);
-		LOG("Request complete      |\n" << _request);
+		// LOG("Request complete      |\n" << _request);
 	} catch (const std::exception& e) {
 		_requestComplete = true;
-		LOG("Request Parse error   | " << e.what());
+		// LOG("Request Parse error   | " << e.what());
 	}
 	return true;
 }
@@ -51,7 +52,7 @@ bool Client::sendData() {
 	if (_response.hasCgiRunning()) {
 		if (!_response.checkCgi(_request))
 			return true;  // CGI not done yet, wait
-		// CGI done — fall through to build
+						  // CGI done — fall through to build
 	}
 
 	if (_sendBuffer.empty()) {
@@ -68,7 +69,7 @@ bool Client::sendData() {
 	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {
 		_responseSent = true;
-		LOG("Response sent         | " << *this);
+		// LOG("Response sent         | " << *this);
 		return false;
 	}
 	return true;
@@ -80,12 +81,24 @@ void Client::setResponse(const std::string& response) {
 	_responseSent = false;
 }
 
+Socket& Client::getSocket() {
+	return _socket;
+}
+
 Request& Client::getRequest() {
 	return _request;
 }
 
-Socket& Client::getSocket() {
-	return _socket;
+const Request& Client::getRequest() const {
+	return _request;
+}
+
+Response& Client::getResponse() {
+	return _response;
+}
+
+const Response& Client::getResponse() const {
+	return _response;
 }
 
 bool Client::isRequestComplete() const {
@@ -102,6 +115,10 @@ bool Client::hasCgiRunning() const {
 
 std::ostream& operator<<(std::ostream& out, const Client& client) {
 	const Socket& s = const_cast<Client&>(client).getSocket();
-	out << "Client(fd=" << s.getFd() << ", " << s.getIp() << ":" << s.getPort() << ")";
+	out << "=== Client(fd=" << s.getFd() << ", " << s.getIp() << ":" << s.getPort() << ") ===\n";
+	out << "-- Request --\n";
+	out << client.getRequest();
+	out << "-- Response --\n";
+	out << client.getResponse();
 	return out;
 }

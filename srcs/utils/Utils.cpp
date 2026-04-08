@@ -75,3 +75,25 @@ std::string getExtension(const std::string& fullPath) {
 		return name.substr(pos + 1);
 	return "";
 }
+
+void printWarning(const std::string& file, int line, const std::string& context,
+				  const std::string& detail) {
+	std::cerr << YEL "[WARNING]" RST " " << WHT << context << YEL " — " << detail << RST;
+	if (errno) {
+		std::cerr << YEL ": " << std::strerror(errno) << RST;
+		errno = 0;
+	}
+	std::cerr << GRY " (" << file << ":" << line << ")" RST << std::endl;
+}
+
+void throwError(const std::string& file, int line, const std::string& context,
+				const std::string& detail) {
+	std::ostringstream msg;
+	msg << RED "[ERROR]" RST " " << WHT << context << YEL " — " << detail << RST;
+	if (errno) {
+		msg << RED ": " << std::strerror(errno) << RST;
+		errno = 0;
+	}
+	msg << GRY " (" << file << ":" << line << ")" RST;
+	throw std::runtime_error(msg.str());
+}

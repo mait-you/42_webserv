@@ -6,7 +6,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	std::memset(_events, 0, sizeof(_events));
 	_epollFd = epoll_create(true);
 	if (_epollFd == -1)
-		throwError("epoll_create: ");
+		THROW_ERROR("epoll_create", "failed to create epoll instance");
 	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
@@ -18,13 +18,13 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 			EPOLL_EVENT(ev);
 			ev.events  = EPOLLIN;
 			ev.data.fd = sock.getFd();
-			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, sock.getFd(), &ev) == -1)
-				throwError("epoll_ctl: ");
+			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1)
+				THROW_ERROR("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
 			_serverSockets[sock.getFd()] = sock;
-			LOG("Listening             | " << sock);
-		}  
+			// LOG("Listening             | " << sock);
+		}
 	}
-	std::cout << conf;
+	// std::cout << conf;
 }
 
 WebServer::~WebServer() {
@@ -57,13 +57,13 @@ void WebServer::acceptClient(Socket& serverSock) {
 	EPOLL_EVENT(ev);
 	ev.events  = EPOLLIN;
 	ev.data.fd = newSock.getFd();
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, newSock.getFd(), &ev) == -1) {
-		std::cerr << "epoll_ctl ADD: " << std::strerror(errno) << std::endl;
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
+		PRINT_WARNING("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
 		newSock.close();
 		return;
 	}
-	_clients[newSock.getFd()] = Client(newSock, serverSock.getServerConf(), &_sessions);
-	LOG("New client            | " << newSock);
+	_clients[ev.data.fd] = Client(newSock, serverSock.getServerConf(), &_sessions);
+	// LOG("New client            | " << newSock);
 }
 
 bool WebServer::handleRead(int fd) {
@@ -87,28 +87,110 @@ bool WebServer::handleWrite(int fd) {
 }
 
 void WebServer::run() {
-	LOG("WebServer running...");
+	std::cout << _config;
 	while (running) {
 		int numEvents = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
 		if (numEvents == -1) {
 			if (errno == EINTR)
 				continue;
-			throwError("epoll_wait: ");
+			THROW_ERROR("epoll_wait", "failed to wait for events");
 		}
 		for (int i = 0; i < numEvents; ++i) {
-			int	 fd	  = _events[i].data.fd;
-			bool keep = true;
+			int			fd	  = _events[i].data.fd;
+			bool		keep  = true;
+			const char* event = NULL;
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
+				event = GRN "client connected" RST;
 			} else {
-				if (_events[i].events & EPOLLIN)
+				if (_events[i].events & EPOLLIN) {
 					keep = handleRead(fd);
-				if (keep && (_events[i].events & EPOLLOUT))
+					if (keep)
+						event = CYN "request received" RST;
+				}
+				if (keep && (_events[i].events & EPOLLOUT)) {
 					keep = handleWrite(fd);
-				if (!keep)
+					if (keep)
+						event = YEL "response sent" RST;
+				}
+				if (!keep) {
+					event = GRY "client disconnected" RST;
 					removeClient(fd);
+				}
+			}
+			if (event) {
+				std::cout << GRY "── " RST << event << GRY " ──" RST "\n";
+				std::cout << *this;
 			}
 		}
 	}
-	LOG("WebServer shutting down...");
+}
+
+const Socket::Map& WebServer::getServerSockets() const {
+	return _serverSockets;
+}
+const Client::Map& WebServer::getClients() const {
+	return _clients;
+}
+const SessionInfo::Map& WebServer::getSessions() const {
+	return _sessions;
+}
+const Config& WebServer::getConfig() const {
+	return _config;
+}
+
+std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
+	const Socket::Map& socks   = ws.getServerSockets();
+	const Client::Map& clients = ws.getClients();
+
+	out << "\n" GRY "┌─ WebServer ──────────────────────────────────┐" RST "\n";
+
+	// --- Server Sockets ---
+	out << GRY "│" RST " " WHT "Sockets" RST << GRY " [" RST << socks.size() << GRY "]" RST "\n";
+
+	if (socks.empty()) {
+		out << GRY "│  (none)\n" RST;
+	} else {
+		for (Socket::Map::const_iterator it = socks.begin(); it != socks.end(); ++it) {
+			const Socket& s = it->second;
+			out << GRY "│  " RST;
+			out << GRY "fd=" RST << YEL << s.getFd() << RST;
+			out << "  " << WHT << s.getIp() << GRY ":" RST << s.getPort() << RST;
+			if (s.isBound())
+				out << "  " << GRN "bound" RST;
+			if (s.isListening())
+				out << "  " << GRN "listening" RST;
+			out << "\n";
+		}
+	}
+
+	out << GRY "│" RST "\n";
+
+	// --- Clients ---
+	out << GRY "│" RST " " WHT "Clients" RST << GRY " [" RST << clients.size() << GRY "]" RST "\n";
+
+	if (clients.empty()) {
+		out << GRY "│  (none)\n" RST;
+	} else {
+		for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+			const Socket&	s	= const_cast<Client&>(it->second).getSocket();
+			const Request&	req = it->second.getRequest();
+			const Response& res = it->second.getResponse();
+
+			out << GRY "│  " RST;
+			out << GRY "fd=" RST << YEL << s.getFd() << RST;
+			out << "  " << WHT << s.getIp() << GRY ":" RST << s.getPort() << RST;
+			if (!req.getMethod().empty())
+				out << "  " << CYN << req.getMethod() << " " << req.getUri() << RST;
+			out << "  " << (res.getStatusCode() ? GRN : GRY);
+			if (res.getStatusCode())
+				out << res.getStatusCode() << " " << res.getStatusMessage();
+			else
+				out << "no response";
+			out << RST << "\n";
+		}
+	}
+
+	out << GRY "└──────────────────────────────────────────────┘" RST "\n";
+	return out;
 }

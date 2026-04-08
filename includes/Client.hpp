@@ -3,8 +3,8 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
-#include "Socket.hpp"
 #include "SessionInfo.hpp"
+#include "Socket.hpp"
 
 class Client {
   public:
@@ -24,7 +24,8 @@ class Client {
 
   public:
 	Client();
-	Client(const Socket& socket, const ServerConfig* config, std::map<std::string, SessionInfo>* _session);
+	Client(const Socket& socket, const ServerConfig* config,
+		   std::map<std::string, SessionInfo>* _session);
 	Client(const Client& other);
 	Client& operator=(const Client& other);
 	~Client();
@@ -34,11 +35,15 @@ class Client {
 
 	void setResponse(const std::string& response);
 
-	bool	 hasCgiRunning() const;
-	Socket&	 getSocket();
-	Request& getRequest();
-	bool	 isRequestComplete() const;
-	bool	 isResponseSent() const;
+	bool hasCgiRunning() const;
+	bool isRequestComplete() const;
+	bool isResponseSent() const;
+
+	Socket&			getSocket();
+	Request&		getRequest();
+	Response&		getResponse();
+	const Request&	getRequest() const;
+	const Response& getResponse() const;
 };
 
 std::ostream& operator<<(std::ostream& out, const Client& client);

@@ -29,6 +29,11 @@ class Response : public HttpStatus {
 	Response& operator=(const Response& other);
 	~Response();
 
+	codeStatus		   getStatusCode() const;
+	const std::string& getStatusMessage() const;
+	const HeaderMap&   getHeaders() const;
+	const std::string& getBody() const;
+
 	void setStatus(codeStatus codeStatus);
 	void setStatus(codeStatus codeStatus, const std::string& message);
 	void setHeader(const std::string& key, const std::string& value);
@@ -62,5 +67,7 @@ class Response : public HttpStatus {
 	int handleDashboard(const Request& request, const std::string& fullPath);
 	int handleLogout(const Request& request);
 };
+
+std::ostream& operator<<(std::ostream& out, const Response& res);
 
 #endif

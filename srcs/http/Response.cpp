@@ -1,6 +1,7 @@
 #include "../../includes/Response.hpp"
 
 #include "../../includes/MimeTypes.hpp"
+#include "../../includes/MimeTypes.hpp"
 
 Response::Response()
 		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
@@ -33,6 +34,19 @@ Response& Response::operator=(const Response& other) {
 
 Response::~Response() {}
 
+HttpStatus::codeStatus Response::getStatusCode() const {
+	return _statusCode;
+}
+const std::string& Response::getStatusMessage() const {
+	return _statusMessage;
+}
+const Response::HeaderMap& Response::getHeaders() const {
+	return _headers;
+}
+const std::string& Response::getBody() const {
+	return _body;
+}
+
 void Response::setStatus(codeStatus codeStatus, const std::string& message) {
 	_statusCode	   = codeStatus;
 	_statusMessage = message;
@@ -56,7 +70,7 @@ bool Response::hasCgiRunning() const {
 }
 
 void Response::parseCgiHeaders(const std::string& headers, codeStatus& status,
-								std::string& msgStatus) {
+							   std::string& msgStatus) {
 	std::istringstream stream(headers);
 	std::string		   line;
 
@@ -185,4 +199,22 @@ std::string Response::buildSendBuffer() const {
 	oss << "\r\n";
 	oss << _body;
 	return oss.str();
+}
+
+std::ostream& operator<<(std::ostream& out, const Response& res) {
+	out << "Status: " << res.getStatusCode() << " " << res.getStatusMessage() << "\n";
+	out << "--- Headers ---\n";
+	const Response::HeaderMap& hdrs = res.getHeaders();
+	if (hdrs.empty())
+		out << "(empty)\n";
+	else
+		for (Response::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
+			out << it->first << ": " << it->second << "\n";
+	out << "--- Body ---\n";
+	if (res.getBody().empty())
+		out << "(empty)\n";
+	else
+		out << "[" << res.getBody().size() << " bytes]\n";
+	out << "CGI running: " << (res.hasCgiRunning() ? "yes" : "no") << "\n";
+	return out;
 }
