@@ -29,15 +29,14 @@
 	#define DEBUGGING 0
 #endif
 
-#define RST  "\e[0m"
-#define GRY  "\e[90m"
-#define RED  "\e[31m"
-#define YEL  "\e[33m"
-#define WHT  "\e[97m"
-#define GRN  "\e[32m"
-#define BLU  "\e[34m"
-#define MAG  "\e[35m"
-#define CYN  "\e[36m"
+#define RST "\e[0m"
+#define GRY "\e[90m"
+#define WHT "\e[97m"
+#define GRN "\e[92m"
+#define YEL "\e[93m"
+#define CYN "\e[96m"
+#define RED "\e[91m"
+#define MGT "\e[95m"
 
 #define HTTP_VERSION "HTTP/1.0"
 #define MAX_EVENTS 10

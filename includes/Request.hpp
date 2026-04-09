@@ -70,7 +70,8 @@ class Request : public HttpStatus {
 
 	void matchedLocation();
 };
-
+void	  printRequest(std::ostream& out, const Request& req, const std::string& pre,
+						   const std::string& last);
 std::ostream& operator<<(std::ostream& out, const Request& req);
 
 #endif

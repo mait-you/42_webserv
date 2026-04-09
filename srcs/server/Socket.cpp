@@ -130,14 +130,14 @@ bool Socket::isValid() const {
 
 std::ostream& operator<<(std::ostream& out, const Socket& s) {
 	out << GRY "[" RST;
-	out << GRN "fd=" RST << YEL << s.getFd() << RST;
-	out << GRY "]" RST;
-	out << " " << WHT << s.getIp() << RST;
+	out << CYN "fd=" RST << YEL << s.getFd() << RST;
+	out << GRY "] " RST;
+	out << WHT << s.getIp() << RST;
 	out << GRY ":" RST;
 	out << WHT << s.getPort() << RST;
 	if (s.isBound())
-		out << " " GRY "." RST " " GRN "bound" RST;
+		out << GRY " · " RST GRN "bound" RST;
 	if (s.isListening())
-		out << " " GRY "." RST " " GRN "listening" RST;
+		out << GRY " · " RST GRN "listening" RST;
 	return out;
 }

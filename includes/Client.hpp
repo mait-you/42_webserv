@@ -46,6 +46,8 @@ class Client {
 	const Response& getResponse() const;
 };
 
+void	  printClient(std::ostream& out, const Client& client, const std::string& connector,
+						  const std::string& pre);
 std::ostream& operator<<(std::ostream& out, const Client& client);
 
 #endif

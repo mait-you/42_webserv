@@ -21,6 +21,7 @@ class Response : public HttpStatus {
 	CgiInfo								_runningCgi;
 	std::map<std::string, SessionInfo>* _sessions;
 	bool								_responseReady;
+	bool								_isComplete;
 
   public:
 	Response();
@@ -39,13 +40,15 @@ class Response : public HttpStatus {
 	void setHeader(const std::string& key, const std::string& value);
 	void setBody(const std::string& body);
 
+	bool isComplete() const;
+
 	bool hasCgiRunning() const;
 
 	std::string build(Request& request);
 	bool		checkCgi(const Request& request);
 
   private:
-	std::string buildSendBuffer() const;
+	std::string buildSendBuffer();
 
 	// helpers
 	bool		allowedMethods(const Request& request);
@@ -68,6 +71,8 @@ class Response : public HttpStatus {
 	int handleLogout(const Request& request);
 };
 
+void	  printResponse(std::ostream& out, const Response& res, const std::string& pre,
+							const std::string& last);
 std::ostream& operator<<(std::ostream& out, const Response& res);
 
 #endif

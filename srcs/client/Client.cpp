@@ -113,12 +113,33 @@ bool Client::hasCgiRunning() const {
 	return _response.hasCgiRunning();
 }
 
+// ── Client ───────────────────────────────────────────────────────────────────
+//  'connector' is the branch glyph drawn before this client: "├─ " or "└─ "
+//  'pre'       is the vertical continuation line for children: "│   " or "    "
+void printClient(std::ostream& out, const Client& client, const std::string& connector,
+						const std::string& pre) {
+	const Socket&	s	= const_cast<Client&>(client).getSocket();
+	const Request&	req = client.getRequest();
+	const Response& res = client.getResponse();
+
+	bool hasReq = req.isComplete();
+	bool hasRes = res.isComplete();
+
+	out << GRY "│  " RST << connector << s << "\n";
+
+	if (hasReq) {
+		std::string reqConn = (hasRes ? GRY "├─ " RST : GRY "└─ " RST);
+		out << GRY "│  " RST << pre << reqConn << WHT "Request" RST "\n";
+		printRequest(out, req, GRY "│  " RST + pre + (hasRes ? GRY "│   " RST : GRY "    " RST),
+					 GRY "└─ " RST);
+	}
+	if (hasRes) {
+		out << GRY "│  " RST << pre << GRY "└─ " RST << WHT "Response" RST "\n";
+		printResponse(out, res, GRY "│  " RST + pre + GRY "    " RST, GRY "└─ " RST);
+	}
+}
+
 std::ostream& operator<<(std::ostream& out, const Client& client) {
-	const Socket& s = const_cast<Client&>(client).getSocket();
-	out << "=== Client(fd=" << s.getFd() << ", " << s.getIp() << ":" << s.getPort() << ") ===\n";
-	out << "-- Request --\n";
-	out << client.getRequest();
-	out << "-- Response --\n";
-	out << client.getResponse();
+	printClient(out, client, GRY "├─ " RST, GRY "│   " RST);
 	return out;
 }

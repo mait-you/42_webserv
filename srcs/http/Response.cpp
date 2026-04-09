@@ -1,21 +1,20 @@
 #include "../../includes/Response.hpp"
 
 #include "../../includes/MimeTypes.hpp"
-#include "../../includes/MimeTypes.hpp"
 
 Response::Response()
 		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(NULL), _responseReady(false) {}
+		  _hasCgiRunning(false), _sessions(NULL), _responseReady(false), _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
 		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(session), _responseReady(false) {}
+		  _hasCgiRunning(false), _sessions(session), _responseReady(false), _isComplete(false) {}
 
 Response::Response(const Response& other)
 		: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
 		  _headers(other._headers), _body(other._body), _hasCgiRunning(other._hasCgiRunning),
 		  _runningCgi(other._runningCgi), _sessions(other._sessions),
-		  _responseReady(other._responseReady) {}
+		  _responseReady(other._responseReady), _isComplete(other._isComplete) {}
 
 Response& Response::operator=(const Response& other) {
 	if (this != &other) {
@@ -28,6 +27,7 @@ Response& Response::operator=(const Response& other) {
 		_runningCgi	   = other._runningCgi;
 		_sessions	   = other._sessions;
 		_responseReady = other._responseReady;
+		_isComplete	   = other._isComplete;
 	}
 	return *this;
 }
@@ -69,6 +69,9 @@ bool Response::hasCgiRunning() const {
 	return _hasCgiRunning;
 }
 
+bool Response::isComplete() const {
+	return _isComplete;
+}
 void Response::parseCgiHeaders(const std::string& headers, codeStatus& status,
 							   std::string& msgStatus) {
 	std::istringstream stream(headers);
@@ -189,7 +192,7 @@ std::string Response::build(Request& request) {
 	return buildSendBuffer();
 }
 
-std::string Response::buildSendBuffer() const {
+std::string Response::buildSendBuffer() {
 	std::ostringstream oss;
 
 	oss << "HTTP/1.0 " << _statusCode << " " << _statusMessage << "\r\n";
@@ -198,23 +201,36 @@ std::string Response::buildSendBuffer() const {
 	oss << "Content-Length: " << _body.size() << "\r\n";
 	oss << "\r\n";
 	oss << _body;
+	_isComplete = true;
 	return oss.str();
 }
 
-std::ostream& operator<<(std::ostream& out, const Response& res) {
-	out << "Status: " << res.getStatusCode() << " " << res.getStatusMessage() << "\n";
-	out << "--- Headers ---\n";
+// ── Response ─────────────────────────────────────────────────────────────────
+void printResponse(std::ostream& out, const Response& res, const std::string& pre,
+						  const std::string& last) {
 	const Response::HeaderMap& hdrs = res.getHeaders();
-	if (hdrs.empty())
-		out << "(empty)\n";
+
+	out << pre << GRY "├─ " WHT "Status " RST "  ";
+	if (res.getStatusCode() == 0)
+		out << GRY "(none)" RST "\n";
 	else
-		for (Response::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
-			out << it->first << ": " << it->second << "\n";
-	out << "--- Body ---\n";
+		out << YEL << res.getStatusCode() << RST " " << res.getStatusMessage() << "\n";
+
+	out << pre << GRY "├─ " WHT "Headers" GRY " [" RST << hdrs.size() << GRY "]" RST "\n";
+	for (Response::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
+		out << pre << GRY "│   " RST << it->first << GRY ": " RST << it->second << "\n";
+
+	out << pre << GRY "├─ " WHT "Body   " RST "  ";
 	if (res.getBody().empty())
-		out << "(empty)\n";
+		out << GRY "(empty)" RST "\n";
 	else
-		out << "[" << res.getBody().size() << " bytes]\n";
-	out << "CGI running: " << (res.hasCgiRunning() ? "yes" : "no") << "\n";
+		out << GRY "[" RST << res.getBody().size() << GRY " bytes]" RST "\n";
+
+	out << pre << last << WHT "CGI    " RST "  "
+		<< (res.hasCgiRunning() ? CYN "running" RST : GRY "idle" RST) << "\n";
+}
+
+std::ostream& operator<<(std::ostream& out, const Response& res) {
+	printResponse(out, res, GRY "│   " RST, GRY "└─ " RST);
 	return out;
 }

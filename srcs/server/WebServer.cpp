@@ -86,8 +86,16 @@ bool WebServer::handleWrite(int fd) {
 	return true;
 }
 
+static void printEvent(const char* event, const WebServer& ws) {
+	std::cout << GRY "│ \n│── " RST << event << GRY " ──\n│ \n" RST;
+	std::cout << ws;
+}
+
 void WebServer::run() {
 	std::cout << _config;
+	std::cout << "\n" GRY "┌─ WebServer" RST "\n";
+	std::cout << *this;
+
 	while (running) {
 		int numEvents = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
 		if (numEvents == -1) {
@@ -96,34 +104,31 @@ void WebServer::run() {
 			THROW_ERROR("epoll_wait", "failed to wait for events");
 		}
 		for (int i = 0; i < numEvents; ++i) {
-			int			fd	  = _events[i].data.fd;
-			bool		keep  = true;
-			const char* event = NULL;
+			int	 fd	  = _events[i].data.fd;
+			bool keep = true;
+
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
-				event = GRN "client connected" RST;
+				printEvent(GRN "Client connected" RST, *this);
 			} else {
 				if (_events[i].events & EPOLLIN) {
 					keep = handleRead(fd);
-					if (keep)
-						event = CYN "request received" RST;
+					if (_clients.count(fd) && _clients[fd].getRequest().isComplete())
+						printEvent(CYN "Request received" RST, *this);
 				}
 				if (keep && (_events[i].events & EPOLLOUT)) {
 					keep = handleWrite(fd);
-					if (keep)
-						event = YEL "response sent" RST;
+					if (_clients.count(fd) && _clients[fd].getResponse().isComplete())
+						printEvent(YEL "Response sent" RST, *this);
 				}
 				if (!keep) {
-					event = GRY "client disconnected" RST;
 					removeClient(fd);
+					printEvent(GRY "Client disconnected" RST, *this);
 				}
-			}
-			if (event) {
-				std::cout << GRY "── " RST << event << GRY " ──" RST "\n";
-				std::cout << *this;
 			}
 		}
 	}
+	std::cout << GRY "\r└─── ─ ─ ─ " RST "\n";
 }
 
 const Socket::Map& WebServer::getServerSockets() const {
@@ -139,58 +144,45 @@ const Config& WebServer::getConfig() const {
 	return _config;
 }
 
+// ── WebServer ─────────────────────────────────────────────────────────────────
 std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
 	const Socket::Map& socks   = ws.getServerSockets();
 	const Client::Map& clients = ws.getClients();
 
-	out << "\n" GRY "┌─ WebServer ──────────────────────────────────┐" RST "\n";
-
-	// --- Server Sockets ---
-	out << GRY "│" RST " " WHT "Sockets" RST << GRY " [" RST << socks.size() << GRY "]" RST "\n";
-
+	// ── Sockets ──
+	out << GRY "│ " WHT "Server Sockets" GRY " [" RST << socks.size() << GRY "]" RST "\n";
 	if (socks.empty()) {
-		out << GRY "│  (none)\n" RST;
+		out << GRY "│   (none)\n" RST;
 	} else {
-		for (Socket::Map::const_iterator it = socks.begin(); it != socks.end(); ++it) {
-			const Socket& s = it->second;
-			out << GRY "│  " RST;
-			out << GRY "fd=" RST << YEL << s.getFd() << RST;
-			out << "  " << WHT << s.getIp() << GRY ":" RST << s.getPort() << RST;
-			if (s.isBound())
-				out << "  " << GRN "bound" RST;
-			if (s.isListening())
-				out << "  " << GRN "listening" RST;
-			out << "\n";
+		Socket::Map::const_iterator it	= socks.begin();
+		Socket::Map::const_iterator end = socks.end();
+		while (it != end) {
+			Socket::Map::const_iterator next = it;
+			++next;
+			bool isLast = (next == end);
+			out << GRY "│   " RST << (isLast ? GRY "└─ " RST : GRY "├─ " RST) << it->second << "\n";
+			it = next;
 		}
 	}
 
-	out << GRY "│" RST "\n";
+	out << GRY "│\n";
 
-	// --- Clients ---
-	out << GRY "│" RST " " WHT "Clients" RST << GRY " [" RST << clients.size() << GRY "]" RST "\n";
-
+	// ── Clients ──
+	out << GRY "│ " WHT "Clients" GRY " [" RST << clients.size() << GRY "]" RST "\n";
 	if (clients.empty()) {
-		out << GRY "│  (none)\n" RST;
+		out << GRY "│   (none)\n" RST;
 	} else {
-		for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-			const Socket&	s	= const_cast<Client&>(it->second).getSocket();
-			const Request&	req = it->second.getRequest();
-			const Response& res = it->second.getResponse();
-
-			out << GRY "│  " RST;
-			out << GRY "fd=" RST << YEL << s.getFd() << RST;
-			out << "  " << WHT << s.getIp() << GRY ":" RST << s.getPort() << RST;
-			if (!req.getMethod().empty())
-				out << "  " << CYN << req.getMethod() << " " << req.getUri() << RST;
-			out << "  " << (res.getStatusCode() ? GRN : GRY);
-			if (res.getStatusCode())
-				out << res.getStatusCode() << " " << res.getStatusMessage();
-			else
-				out << "no response";
-			out << RST << "\n";
+		Client::Map::const_iterator it	= clients.begin();
+		Client::Map::const_iterator end = clients.end();
+		while (it != end) {
+			Client::Map::const_iterator next = it;
+			++next;
+			bool isLast = (next == end);
+			printClient(out, it->second, isLast ? GRY "└─ " RST : GRY "├─ " RST,
+						isLast ? GRY "    " RST : GRY "│   " RST);
+			it = next;
 		}
 	}
 
-	out << GRY "└──────────────────────────────────────────────┘" RST "\n";
 	return out;
 }

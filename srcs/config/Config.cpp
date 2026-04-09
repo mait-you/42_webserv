@@ -156,14 +156,13 @@ std::ostream& operator<<(std::ostream& out, const Config& config) {
 	const std::vector<ServerConfig>& servers = config.getServers();
 
 	out << "\n" GRY "┌─ Config " RST << GRY "[" RST << servers.size()
-		<< GRY "] ────────────────────────────┐" RST "\n";
+		<< GRY "]" RST "\n";
 
 	for (size_t i = 0; i < servers.size(); i++) {
-		out << GRY "│" RST "\n";
 		out << GRY "│ " RST << WHT "Server" RST << GRY " [" RST << (i + 1) << GRY "]" RST "\n";
 		out << servers[i];
 	}
 
-	out << GRY "└──────────────────────────────────────────────┘" RST "\n";
+	out << GRY "└─── ─ ─ ─ " RST "\n";
 	return out;
 }
