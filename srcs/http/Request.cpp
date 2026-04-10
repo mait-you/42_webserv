@@ -158,8 +158,19 @@ bool Request::hasCgi() const {
 
 std::string Request::resolveFullPath() const {
 	std::string root = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
-	// std::string rest = resolvePath().substr(_locConf->path.length());
 	std::string rest = resolvePath();
+	if (_hasCgi)
+	{
+		for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin(); it != _locConf->cgi.end(); it++)
+		{
+			size_t pos = rest.find(it->first);
+			if (pos != std::string::npos)
+			{
+				rest = rest.substr(0, pos + it->first.length());
+				break;
+			}
+		}
+	}
 	return root + rest;
 }
 
