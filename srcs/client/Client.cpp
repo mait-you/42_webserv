@@ -38,10 +38,8 @@ bool Client::readData() {
 	_recvBuffer.append(buf, n);
 	try {
 		_requestComplete = _request.parse(_recvBuffer);
-		// LOG("Request complete      |\n" << _request);
 	} catch (const std::exception& e) {
 		_requestComplete = true;
-		// LOG("Request Parse error   | " << e.what());
 	}
 	return true;
 }
@@ -69,7 +67,6 @@ bool Client::sendData() {
 	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {
 		_responseSent = true;
-		// LOG("Response sent         | " << *this);
 		return false;
 	}
 	return true;

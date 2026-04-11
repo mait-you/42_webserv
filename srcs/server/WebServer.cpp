@@ -21,10 +21,8 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1)
 				THROW_ERROR("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
 			_serverSockets[sock.getFd()] = sock;
-			// LOG("Listening             | " << sock);
 		}
 	}
-	// std::cout << conf;
 }
 
 WebServer::~WebServer() {
@@ -34,6 +32,19 @@ WebServer::~WebServer() {
 		it->second.getSocket().close();
 	if (_epollFd != -1)
 		::close(_epollFd);
+}
+
+const Socket::Map& WebServer::getServerSockets() const {
+	return _serverSockets;
+}
+const Client::Map& WebServer::getClients() const {
+	return _clients;
+}
+const SessionInfo::Map& WebServer::getSessions() const {
+	return _sessions;
+}
+const Config& WebServer::getConfig() const {
+	return _config;
 }
 
 void WebServer::removeClient(int fd) {
@@ -63,7 +74,6 @@ void WebServer::acceptClient(Socket& serverSock) {
 		return;
 	}
 	_clients[ev.data.fd] = Client(newSock, serverSock.getServerConf(), &_sessions);
-	// LOG("New client            | " << newSock);
 }
 
 bool WebServer::handleRead(int fd) {
@@ -128,59 +138,38 @@ void WebServer::run() {
 			}
 		}
 	}
+	printEvent(GRY "Server shutdown" RST, *this);
 	std::cout << GRY "\r└─── ─ ─ ─ " RST "\n";
 }
 
-const Socket::Map& WebServer::getServerSockets() const {
-	return _serverSockets;
-}
-const Client::Map& WebServer::getClients() const {
-	return _clients;
-}
-const SessionInfo::Map& WebServer::getSessions() const {
-	return _sessions;
-}
-const Config& WebServer::getConfig() const {
-	return _config;
-}
-
-// ── WebServer ─────────────────────────────────────────────────────────────────
 std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
 	const Socket::Map& socks   = ws.getServerSockets();
 	const Client::Map& clients = ws.getClients();
 
-	// ── Sockets ──
 	out << GRY "│ " WHT "Server Sockets" GRY " [" RST << socks.size() << GRY "]" RST "\n";
 	if (socks.empty()) {
 		out << GRY "│   (none)\n" RST;
 	} else {
-		Socket::Map::const_iterator it	= socks.begin();
-		Socket::Map::const_iterator end = socks.end();
-		while (it != end) {
+		for (Socket::Map::const_iterator it = socks.begin(); it != socks.end(); ++it) {
 			Socket::Map::const_iterator next = it;
 			++next;
-			bool isLast = (next == end);
+			bool isLast = (next == socks.end());
 			out << GRY "│   " RST << (isLast ? GRY "└─ " RST : GRY "├─ " RST) << it->second << "\n";
-			it = next;
 		}
 	}
 
 	out << GRY "│\n";
 
-	// ── Clients ──
 	out << GRY "│ " WHT "Clients" GRY " [" RST << clients.size() << GRY "]" RST "\n";
 	if (clients.empty()) {
 		out << GRY "│   (none)\n" RST;
 	} else {
-		Client::Map::const_iterator it	= clients.begin();
-		Client::Map::const_iterator end = clients.end();
-		while (it != end) {
+		for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
 			Client::Map::const_iterator next = it;
 			++next;
-			bool isLast = (next == end);
+			bool isLast = (next == clients.end());
 			printClient(out, it->second, isLast ? GRY "└─ " RST : GRY "├─ " RST,
 						isLast ? GRY "    " RST : GRY "│   " RST);
-			it = next;
 		}
 	}
 

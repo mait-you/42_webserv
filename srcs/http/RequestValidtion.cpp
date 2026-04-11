@@ -39,12 +39,12 @@ bool Request::isValidMethod(const std::string& method) const {
 bool Request::isValidUri(const std::string& uri) const {
 	if (uri.empty() || uri.size() > MAX_URI_LENGTH)
 		return false;
+	const std::string invalid = "\"<>\\^~`{}|";
 	for (std::size_t i = 0; i < uri.size(); ++i) {
 		unsigned char c = uri[i];
 		if (c < 33 || c == 127)
 			return false;
-		if (c == '"' || c == '<' || c == '>' || c == '\\' || c == '^' || c == '`' || c == '{'
-			|| c == '}' || c == '|')
+		if (invalid.find(c) != std::string::npos)
 			return false;
 	}
 	return true;

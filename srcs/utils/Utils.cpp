@@ -97,3 +97,9 @@ void throwError(const std::string& file, int line, const std::string& context,
 	msg << GRY " (" << file << ":" << line << ")" RST;
 	throw std::runtime_error(msg.str());
 }
+
+std::string toString(int val) {
+	std::ostringstream ss;
+	ss << val;
+	return ss.str();
+}

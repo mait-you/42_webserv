@@ -6,6 +6,8 @@
 #include "SessionInfo.hpp"
 #include "Socket.hpp"
 
+#define RECV_BUFFER_SIZE 4096
+
 class Client {
   public:
 	typedef std::map<int, Client> Map;
@@ -46,7 +48,7 @@ class Client {
 	const Response& getResponse() const;
 };
 
-void	  printClient(std::ostream& out, const Client& client, const std::string& connector,
+void		  printClient(std::ostream& out, const Client& client, const std::string& connector,
 						  const std::string& pre);
 std::ostream& operator<<(std::ostream& out, const Client& client);
 

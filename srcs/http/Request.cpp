@@ -49,8 +49,6 @@ void Request::parseRequestLine(const std::string& buf) {
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
-	// if (!isValidVersion(_version))
-	// 	setError(UNSUPPORTED_VERSION);
 	matchedLocation();
 	detectCgi();
 	setState(PARSE_HEADERS);
@@ -157,7 +155,6 @@ bool Request::hasCgi() const {
 
 std::string Request::resolveFullPath() const {
 	std::string root = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
-	// std::string rest = resolvePath().substr(_locConf->path.length());
 	std::string rest = resolvePath();
 	return root + rest;
 }

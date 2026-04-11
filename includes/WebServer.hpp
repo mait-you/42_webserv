@@ -9,6 +9,7 @@
 #include "Socket.hpp"
 
 typedef struct epoll_event t_ev;
+#define MAX_EVENTS 10
 #define EPOLL_EVENT(name)                                                                          \
 	t_ev name;                                                                                     \
 	std::memset(&name, 0, sizeof(name));
@@ -38,9 +39,7 @@ class WebServer {
 
   private:
 	void acceptClient(Socket& serverSock);
-
 	bool handleRead(int fd);
-
 	bool handleWrite(int fd);
 	void removeClient(int fd);
 

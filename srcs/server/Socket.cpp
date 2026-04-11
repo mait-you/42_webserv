@@ -32,8 +32,7 @@ Socket::~Socket() {}
 
 void Socket::createAndBind() {
 	struct addrinfo	 hints;
-	struct addrinfo* result;
-	struct addrinfo* rp;
+	struct addrinfo *result = NULL, *rp = NULL;
 
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family	  = AF_INET;
@@ -44,12 +43,16 @@ void Socket::createAndBind() {
 	if (status != 0)
 		THROW_ERROR("getaddrinfo", gai_strerror(status));
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		_fd = ::socket(rp->ai_family, SOCK_STREAM, 0);
+		_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (_fd == -1)
 			continue;
 		int opt = 1;
-		setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-		if (::bind(_fd, rp->ai_addr, rp->ai_addrlen) == 0) {
+		if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt) == -1) {
+			::close(_fd);
+			_fd = -1;
+			continue;
+		}
+		if (bind(_fd, rp->ai_addr, rp->ai_addrlen) == 0) {
 			_is_bound = true;
 			break;
 		}
@@ -74,7 +77,7 @@ void Socket::setNonBlocking() {
 void Socket::startListening(int backlog) {
 	if (!_is_bound)
 		THROW_ERROR("Socket::startListening", "socket is not bound");
-	if (::listen(_fd, backlog) == -1)
+	if (listen(_fd, backlog) == -1)
 		THROW_ERROR("listen", "failed to start listening");
 	_is_listening = true;
 }
