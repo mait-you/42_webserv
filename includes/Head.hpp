@@ -53,5 +53,6 @@ void		throwError(const std::string& file, int line, const std::string& context,
 void		printWarning(const std::string& file, int line, const std::string& context,
 						 const std::string& detail);
 std::string toString(int val);
+std::string htmlEscape(const std::string& s);
 
 #endif

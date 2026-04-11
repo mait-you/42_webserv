@@ -103,3 +103,30 @@ std::string toString(int val) {
 	ss << val;
 	return ss.str();
 }
+
+std::string htmlEscape(const std::string& s) {
+	std::string out;
+
+	for (std::string::size_type i = 0; i < s.size(); ++i) {
+		switch (s[i]) {
+			case '&':
+				out += "&amp;";
+				break;
+			case '<':
+				out += "&lt;";
+				break;
+			case '>':
+				out += "&gt;";
+				break;
+			case '"':
+				out += "&quot;";
+				break;
+			case '\'':
+				out += "&#39;";
+				break;
+			default:
+				out += s[i];
+		}
+	}
+	return out;
+}
