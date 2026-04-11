@@ -82,7 +82,8 @@ void Response::handlePost(const Request& request) {
 		uploadDir += '/';
 
 	std::ostringstream oss;
-	oss << uploadDir << "upload_" << std::time(NULL);
+	static unsigned long uploadCounter = 0;
+	oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
 
 	std::string ext = Mime::getExtension(request.getHeader("Content-Type"));
 	if (!ext.empty())
