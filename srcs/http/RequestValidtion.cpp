@@ -5,30 +5,26 @@ void Request::detectCgi() {
 		return;
 	std::string cleanUri = resolveFullPath();
 
-	for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin(); it != _locConf->cgi.end(); it++)
-	{
+	for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
+		 it != _locConf->cgi.end(); it++) {
 		size_t pos = cleanUri.find(it->first);
-		if (pos != std::string::npos)
-		{
+		if (pos != std::string::npos) {
 			size_t len = it->first.length();
-			cleanUri = cleanUri.substr(0, pos + len);
+			cleanUri   = cleanUri.substr(0, pos + len);
 			break;
 		}
 	}
 
-	if (_locConf->cgi.count(getExtension(cleanUri)))
-	{
+	if (_locConf->cgi.count(getExtension(cleanUri))) {
 		_hasCgi = true;
-	}
-	else if (_locConf->cgi.count("." + getExtension(cleanUri)))
-	{
+	} else if (_locConf->cgi.count("." + getExtension(cleanUri))) {
 		_hasCgi = true;
 	}
 }
 
 void Request::matchedLocation() {
 	if (!_srvConf)
-		return;
+		return setError(HTTP_400_BAD_REQUEST);
 	const std::string& uri		  = resolvePath();
 	std::size_t		   matchedLen = 0;
 	for (size_t i = 0; i < _srvConf->locations.size(); i++) {

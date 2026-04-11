@@ -3,18 +3,18 @@
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
-		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(NULL), _responseReady(false), _isComplete(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"), _hasCgiRunning(false),
+		  _sessions(NULL), _responseReady(false), _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
-		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(session), _responseReady(false), _isComplete(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"), _hasCgiRunning(false),
+		  _sessions(session), _responseReady(false), _isComplete(false) {}
 
 Response::Response(const Response& other)
-		: HttpStatus(other), _statusMessage(other._statusMessage),
-		  _headers(other._headers), _body(other._body), _hasCgiRunning(other._hasCgiRunning),
-		  _runningCgi(other._runningCgi), _sessions(other._sessions),
-		  _responseReady(other._responseReady), _isComplete(other._isComplete) {}
+		: HttpStatus(other), _statusMessage(other._statusMessage), _headers(other._headers),
+		  _body(other._body), _hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
+		  _sessions(other._sessions), _responseReady(other._responseReady),
+		  _isComplete(other._isComplete) {}
 
 Response& Response::operator=(const Response& other) {
 	if (this != &other) {
@@ -54,7 +54,7 @@ void Response::setStatus(codeStatus codeStatus, const std::string& message) {
 
 void Response::setStatus(codeStatus codeStatus) {
 	_statusCode	   = codeStatus;
-	_statusMessage = defaultMessage(codeStatus);
+	_statusMessage = HttpStatus::defaultMessage(codeStatus);
 }
 
 void Response::setHeader(const std::string& key, const std::string& value) {
@@ -198,16 +198,19 @@ std::string Response::buildSendBuffer() {
 	oss << HTTP_VERSION << " " << _statusCode << " " << _statusMessage << "\r\n";
 	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
 		oss << it->first << ": " << it->second << "\r\n";
-	oss << "Content-Length: " << _body.size() << "\r\n";
+	bool noBody = (_statusCode == HTTP_202_ACCEPTED || HTTP_304_NOT_MODIFIED == 304);
+	if (!noBody)
+		oss << "Content-Length: " << _body.size() << "\r\n";
 	oss << "\r\n";
-	oss << _body;
+	if (!noBody)
+		oss << _body;
 	_isComplete = true;
 	return oss.str();
 }
 
 // ── Response ─────────────────────────────────────────────────────────────────
 void printResponse(std::ostream& out, const Response& res, const std::string& pre,
-						  const std::string& last) {
+				   const std::string& last) {
 	const Response::HeaderMap& hdrs = res.getHeaders();
 
 	out << pre << GRY "├─ " WHT "Status " RST "  ";

@@ -49,6 +49,8 @@ void Request::parseRequestLine(const std::string& buf) {
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
+	// if (!isValidVersion(_version))
+	// 	return setError(HTTP_400_BAD_REQUEST);
 	matchedLocation();
 	detectCgi();
 	setState(PARSE_HEADERS);
@@ -156,13 +158,11 @@ bool Request::hasCgi() const {
 std::string Request::resolveFullPath() const {
 	std::string root = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
 	std::string rest = resolvePath();
-	if (_hasCgi)
-	{
-		for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin(); it != _locConf->cgi.end(); it++)
-		{
+	if (_hasCgi) {
+		for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
+			 it != _locConf->cgi.end(); it++) {
 			size_t pos = rest.find(it->first);
-			if (pos != std::string::npos)
-			{
+			if (pos != std::string::npos) {
 				rest = rest.substr(0, pos + it->first.length());
 				break;
 			}
@@ -218,7 +218,7 @@ void Request::setState(ParseState state) {
 
 // ── Request ─────────────────────────────────────────────────────────────────
 void printRequest(std::ostream& out, const Request& req, const std::string& pre,
-						 const std::string& last) {
+				  const std::string& last) {
 	const std::string& m = req.getMethod();
 	const std::string& u = req.getUri();
 	const std::string& v = req.getVersion();

@@ -49,14 +49,13 @@ bool Client::sendData() {
 		return true;
 	if (_response.hasCgiRunning()) {
 		if (!_response.checkCgi(_request))
-			return true;  // CGI not done yet, wait
-						  // CGI done — fall through to build
+			return true;
 	}
 
 	if (_sendBuffer.empty()) {
 		_sendBuffer = _response.build(_request);
 		if (_sendBuffer.empty())
-			return true;  // CGI just started (first call), wait
+			return true;
 	}
 
 	ssize_t n = send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent,
@@ -114,7 +113,7 @@ bool Client::hasCgiRunning() const {
 //  'connector' is the branch glyph drawn before this client: "├─ " or "└─ "
 //  'pre'       is the vertical continuation line for children: "│   " or "    "
 void printClient(std::ostream& out, const Client& client, const std::string& connector,
-						const std::string& pre) {
+				 const std::string& pre) {
 	const Socket&	s	= const_cast<Client&>(client).getSocket();
 	const Request&	req = client.getRequest();
 	const Response& res = client.getResponse();
