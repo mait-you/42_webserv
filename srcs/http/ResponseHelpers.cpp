@@ -17,7 +17,7 @@ void Response::errorPage(const Request& request, codeStatus code) {
 	setHeader("Content-type", "text/html");
 	std::string defaultErr = "<html><body style='display:flex;justify-content:center;'><h1>";
 	defaultErr += defaultMessage(code);
-	defaultErr += "</h1></body></html>";
+	defaultErr += "</h1></body></html>\n";
 	setBody(defaultErr);
 }
 

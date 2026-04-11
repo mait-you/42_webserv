@@ -34,9 +34,12 @@ void Request::matchedLocation() {
 	for (size_t i = 0; i < _srvConf->locations.size(); i++) {
 		const std::string& path = _srvConf->locations[i].path;
 		if (uri.compare(0, path.size(), path) == 0) {
-			if (path.size() > matchedLen) {
-				matchedLen = path.size();
-				_locConf   = &_srvConf->locations[i];
+			if (path == "/" || uri.size() == path.size() || uri[path.size()] == '/') {
+			
+				if (path.size() > matchedLen) {
+					matchedLen = path.size();
+					_locConf = &_srvConf->locations[i];
+				}
 			}
 		}
 	}

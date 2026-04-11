@@ -33,22 +33,23 @@ CgiInfo::CgiInfo() : pid(-1) {}
 
 std::vector<std::string> Cgi::createEnv() const {
 	std::vector<std::string> envVec;
-
+	std::string root = !_loc->root.empty() ? _loc->root : _srv.root;
 	std::string query;
 	std::string uri = _req.getUri();
+
 	envVec.push_back("REQUEST_URI=" + uri);
 	size_t		pos = uri.find('?');
 	if (pos != std::string::npos) {
 		query = uri.substr(pos + 1);
 		uri = uri.substr(0, pos);
 	}
-	envVec.push_back("DOCUMENT_ROOT=" + _srv.root);
+	envVec.push_back("DOCUMENT_ROOT=" + root);
 	// envVec.push_back("REMOTE_ADDR=" + _req.getClientIp());
 	
 	envVec.push_back("REQUEST_METHOD=" + _req.getMethod());
 	envVec.push_back("QUERY_STRING=" + query);
-	envVec.push_back("CONTENT_TYPE=" + _req.getHeader("Content-Type"));
-	envVec.push_back("CONTENT_LENGTH=" + _req.getHeader("Content-Length"));
+	envVec.push_back("CONTENT_TYPE=" + _req.getHeader("content-type"));
+	envVec.push_back("CONTENT_LENGTH=" + _req.getHeader("content-length"));
 
 	std::string extension;
 	size_t		dotPos = _scriptPath.rfind('.');
@@ -66,11 +67,15 @@ std::vector<std::string> Cgi::createEnv() const {
 		}
 	}
 
+	if (pathInfo.empty()) {
+        pathInfo = uri;
+    }
 	envVec.push_back("SCRIPT_NAME=" + uri);
 	envVec.push_back("SCRIPT_FILENAME=" + _scriptPath);
-	envVec.push_back("PATH_INFO=" + pathInfo);
-	if (!pathInfo.empty())
-		envVec.push_back("PATH_TRANSLATED=" + _srv.root + pathInfo);
+	if (!pathInfo.empty()) {
+		envVec.push_back("PATH_INFO=" + pathInfo);
+		envVec.push_back("PATH_TRANSLATED=" + root + pathInfo);
+	}
 	envVec.push_back("SERVER_NAME=" + _srv.host);
 	envVec.push_back("SERVER_PORT=" + _srv.ports[0]);
 	envVec.push_back("SERVER_PROTOCOL=" + _req.getVersion());
@@ -82,7 +87,7 @@ std::vector<std::string> Cgi::createEnv() const {
 	for (std::map<std::string, std::string>::const_iterator it = myHeaders.begin();
 		 it != myHeaders.end(); ++it) {
 		std::string key = it->first;
-		if (key == "Content-Type" || key == "Content-Length")
+		if (key == "content-type" || key == "content-length")
 			continue;
 		for (size_t i = 0; i < key.length(); i++) {
 			if (key[i] == '-')
