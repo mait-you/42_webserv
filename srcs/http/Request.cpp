@@ -2,43 +2,61 @@
 
 Request::Request()
 		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(NULL), _locConf(NULL), _state(PARSE_REQUEST_LINE),
-		  _parsePos(0), _requestComplete(false), _hasCgi(false) {}
+		  _parsePos(0), _hasCgi(false) {}
 
 Request::Request(const ServerConfig* serverConfig)
 		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(serverConfig), _locConf(NULL),
-		  _state(PARSE_REQUEST_LINE), _parsePos(0), _requestComplete(false), _hasCgi(false) {}
+		  _state(PARSE_REQUEST_LINE), _parsePos(0), _hasCgi(false) {}
 
 Request::Request(const Request& other)
 		: HttpStatus(other), _srvConf(other._srvConf), _locConf(other._locConf),
 		  _method(other._method), _uri(other._uri), _version(other._version),
 		  _headers(other._headers), _body(other._body), _state(other._state),
-		  _parsePos(other._parsePos), _requestComplete(other._requestComplete),
-		  _hasCgi(other._hasCgi) {}
+		  _parsePos(other._parsePos), _hasCgi(other._hasCgi) {}
 
 Request& Request::operator=(const Request& other) {
 	if (this != &other) {
 		HttpStatus::operator=(other);
-		_srvConf		 = other._srvConf;
-		_locConf		 = other._locConf;
-		_method			 = other._method;
-		_uri			 = other._uri;
-		_version		 = other._version;
-		_headers		 = other._headers;
-		_body			 = other._body;
-		_state			 = other._state;
-		_parsePos		 = other._parsePos;
-		_requestComplete = other._requestComplete;
-		_hasCgi			 = other._hasCgi;
+		_srvConf  = other._srvConf;
+		_locConf  = other._locConf;
+		_method	  = other._method;
+		_uri	  = other._uri;
+		_version  = other._version;
+		_headers  = other._headers;
+		_body	  = other._body;
+		_state	  = other._state;
+		_parsePos = other._parsePos;
+		_hasCgi	  = other._hasCgi;
 	}
 	return *this;
 }
 
 Request::~Request() {}
 
-void Request::parseRequestLine(const std::string& buf) {
+bool Request::matchedLocation() {
+	if (!_srvConf)
+		return setError(HTTP_400_BAD_REQUEST);
+	const std::string& uri		  = resolvePath();
+	std::size_t		   matchedLen = 0;
+	for (size_t i = 0; i < _srvConf->locations.size(); i++) {
+		const std::string& path = _srvConf->locations[i].path;
+		if (uri.compare(0, path.size(), path) == 0) {
+			if (path.size() > matchedLen) {
+				matchedLen = path.size();
+				_locConf   = &_srvConf->locations[i];
+			}
+		}
+	}
+	if (!_locConf)
+		return setError(HTTP_400_BAD_REQUEST);
+	return true;
+}
+
+bool Request::parseRequestLine(const std::string& buf) {
 	std::string line;
 	if (!getLine(buf, _parsePos, line))
-		return;
+		return false;
+
 	std::istringstream iss(line);
 	if (!(iss >> _method >> _uri >> _version))
 		return setError(HTTP_400_BAD_REQUEST);
@@ -49,22 +67,23 @@ void Request::parseRequestLine(const std::string& buf) {
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
-	// if (!isValidVersion(_version))
-	// 	return setError(HTTP_400_BAD_REQUEST);
-	matchedLocation();
+	if (!matchedLocation())
+		return false;
 	detectCgi();
 	setState(PARSE_HEADERS);
+	return true;
 }
 
-void Request::parseHeaders(const std::string& buf) {
+bool Request::parseHeaders(const std::string& buf) {
 	while (true) {
 		std::string line;
 		if (!getLine(buf, _parsePos, line))
-			return;
+			return false;
 		if (line.empty()) {
-			if (isValidHeaders())
-				return setState(PARSE_BODY);
-			return setError(HTTP_400_BAD_REQUEST);
+			if (!isValidHeaders())
+				return setError(HTTP_400_BAD_REQUEST);
+			setState(PARSE_BODY);
+			return true;
 		}
 		std::size_t colon = line.find(':');
 		if (colon == std::string::npos)
@@ -79,13 +98,13 @@ void Request::parseHeaders(const std::string& buf) {
 	}
 }
 
-void Request::parseBody(const std::string& buf) {
+bool Request::parseBody(const std::string& buf) {
 	std::string clStr = getHeader("content-length");
 	if (clStr.empty()) {
-		setState(PARSE_COMPLETE);
-		if (getHeader("Transfer-Encoding") == "chunked")
+		if (getHeader("transfer-encoding") == "chunked")
 			return setError(HTTP_501_NOT_IMPLEMENTED);
-		return ;
+		setState(PARSE_COMPLETE);
+		return true;
 	}
 	std::size_t		   cl = 0;
 	std::istringstream iss(clStr);
@@ -93,31 +112,34 @@ void Request::parseBody(const std::string& buf) {
 		return setError(HTTP_400_BAD_REQUEST);
 	if (cl > _srvConf->client_max_body_size)
 		return setError(HTTP_413_REQUEST_ENTITY_TOO_LARGE);
-	std::size_t _bodyExpected = static_cast<std::size_t>(cl);
-	if (_bodyExpected == 0)
-		return setState(PARSE_COMPLETE);
-	if (buf.size() - _parsePos < _bodyExpected)
-		return;
-	_body = buf.substr(_parsePos, _bodyExpected);
-	_parsePos += _bodyExpected;
+	if (cl == 0) {
+		setState(PARSE_COMPLETE);
+		return true;
+	}
+	if (buf.size() - _parsePos < cl)
+		return false;
+	_body = buf.substr(_parsePos, cl);
+	_parsePos += cl;
 	setState(PARSE_COMPLETE);
+	return true;
 }
 
-bool Request::parse(const std::string& buf) {
+bool Request::parse(const std::string& recvBuffer) {
 	if (_state == PARSE_COMPLETE)
-		return true;
-	if (_state == PARSE_REQUEST_LINE)
-		parseRequestLine(buf);
-	if (_state == PARSE_HEADERS)
-		parseHeaders(buf);
+		return isComplete();
+	if (_state == PARSE_REQUEST_LINE && !parseRequestLine(recvBuffer))
+		return isComplete();
+	if (_state == PARSE_HEADERS && !parseHeaders(recvBuffer))
+		return isComplete();
 	if (_state == PARSE_BODY)
-		parseBody(buf);
-	return _state == PARSE_COMPLETE;
+		parseBody(recvBuffer);
+	return isComplete();
 }
 
 bool Request::isValid() const {
 	return _statusCode == HTTP_200_OK;
 }
+
 bool Request::isComplete() const {
 	return _state == PARSE_COMPLETE;
 }
@@ -209,18 +231,15 @@ std::string Request::resolvePath() const {
 	return buffer;
 }
 
-void Request::setError(codeStatus codeStatus) {
-	setStatus(codeStatus, HttpStatus::defaultMessage(codeStatus));
-	std::stringstream ss;
-	ss << codeStatus;
-	throw std::runtime_error(ss.str());
+bool Request::setError(codeStatus code) {
+	setStatus(code, HttpStatus::defaultMessage(code));
+	setState(PARSE_COMPLETE);
+	return false;
 }
-
 void Request::setState(ParseState state) {
 	_state = state;
 }
 
-// ── Request ─────────────────────────────────────────────────────────────────
 void printRequest(std::ostream& out, const Request& req, const std::string& pre,
 				  const std::string& last) {
 	const std::string& m = req.getMethod();

@@ -39,8 +39,8 @@ class WebServer {
 
   private:
 	void acceptClient(Socket& serverSock);
-	bool handleRead(int fd);
-	bool handleWrite(int fd);
+	bool handleRequest(Client& client);
+	bool handleResponse(Client& client);
 	void removeClient(int fd);
 
 	void printPrefix();

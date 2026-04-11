@@ -21,8 +21,6 @@ class Client {
 	std::size_t _bytesSent;
 	Request		_request;
 	Response	_response;
-	bool		_requestComplete;
-	bool		_responseSent;
 
   public:
 	Client();
@@ -32,14 +30,13 @@ class Client {
 	Client& operator=(const Client& other);
 	~Client();
 
-	bool readData();
+	bool recvData();
 	bool sendData();
 
-	void setResponse(const std::string& response);
+	bool parseRequest();
+	bool buildResponse();
 
 	bool hasCgiRunning() const;
-	bool isRequestComplete() const;
-	bool isResponseSent() const;
 
 	Socket&			getSocket();
 	Request&		getRequest();

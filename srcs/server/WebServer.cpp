@@ -76,21 +76,23 @@ void WebServer::acceptClient(Socket& serverSock) {
 	_clients[ev.data.fd] = Client(newSock, serverSock.getServerConf(), &_sessions);
 }
 
-bool WebServer::handleRead(int fd) {
-	Client& client = _clients[fd];
-	if (!client.readData())
+bool WebServer::handleRequest(Client& client) {
+	if (!client.recvData())
 		return false;
-	if (!client.isRequestComplete())
+	if (!client.parseRequest())
 		return true;
 	EPOLL_EVENT(ev);
 	ev.events  = EPOLLIN | EPOLLOUT;
-	ev.data.fd = fd;
-	epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
+	ev.data.fd = client.getSocket().getFd();
+	epoll_ctl(_epollFd, EPOLL_CTL_MOD, ev.data.fd, &ev);
 	return true;
 }
 
-bool WebServer::handleWrite(int fd) {
-	Client& client = _clients[fd];
+bool WebServer::handleResponse(Client& client) {
+	if (client.getResponse().hasCgiRunning())
+		client.getResponse().checkCgi(client.getRequest());
+	if (!client.buildResponse())
+		return true;
 	if (!client.sendData())
 		return false;
 	return true;
@@ -111,28 +113,39 @@ void WebServer::run() {
 				continue;
 			THROW_ERROR("epoll_wait", "failed to wait for events");
 		}
+
 		for (int i = 0; i < numEvents; ++i) {
 			int	 fd	  = _events[i].data.fd;
 			bool keep = true;
 
+			// Server socket first
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
 				printEvent(GRN "Client connected" RST, *this);
-			} else {
-				if (_events[i].events & EPOLLIN) {
-					keep = handleRead(fd);
-					if (_clients.count(fd) && _clients[fd].getRequest().isComplete())
-						printEvent(CYN "Request received" RST, *this);
-				}
-				if (keep && (_events[i].events & EPOLLOUT)) {
-					keep = handleWrite(fd);
-					if (_clients.count(fd) && _clients[fd].getResponse().isComplete())
-						printEvent(YEL "Response sent" RST, *this);
-				}
-				if (!keep) {
-					removeClient(fd);
-					printEvent(GRY "Client disconnected" RST, *this);
-				}
+				continue;
+			}
+
+			// only for clients
+			Client& client = _clients[fd];
+
+			// Recv
+			if (_events[i].events & EPOLLIN) {
+				keep = handleRequest(client);
+				if (client.getRequest().isComplete())
+					printEvent(CYN "Request received" RST, *this);
+			}
+
+			// Send
+			if (keep && (_events[i].events & EPOLLOUT)) {
+				keep = handleResponse(client);
+				if (client.getResponse().isComplete())
+					printEvent(YEL "Response sent" RST, *this);
+			}
+
+			// cleanup
+			if (!keep) {
+				removeClient(fd);
+				printEvent(GRY "Client disconnected" RST, *this);
 			}
 		}
 	}

@@ -26,7 +26,6 @@ class Request : public HttpStatus {
 
 	ParseState	_state;
 	std::size_t _parsePos;
-	bool		_requestComplete;
 	bool		_hasCgi;
 
   public:
@@ -54,9 +53,9 @@ class Request : public HttpStatus {
 	std::string			  resolveFullPath() const;
 
   private:
-	void parseRequestLine(const std::string& buf);
-	void parseHeaders(const std::string& buf);
-	void parseBody(const std::string& buf);
+	bool parseRequestLine(const std::string& buf);
+	bool parseHeaders(const std::string& buf);
+	bool parseBody(const std::string& buf);
 
 	bool isValidMethod(const std::string& method) const;
 	bool isValidUri(const std::string& uri) const;
@@ -65,10 +64,10 @@ class Request : public HttpStatus {
 
 	void detectCgi();
 
-	void setError(codeStatus codeStatus);  // throws
+	bool setError(codeStatus code);  // throws
 	void setState(ParseState state);
 
-	void matchedLocation();
+	bool matchedLocation();
 };
 void	  printRequest(std::ostream& out, const Request& req, const std::string& pre,
 						   const std::string& last);
