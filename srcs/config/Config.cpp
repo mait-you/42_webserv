@@ -1,44 +1,38 @@
 #include "../../includes/Config.hpp"
 
-Config::Config() {
-}
+Config::Config() {}
 
-Config::Config(const std::string &confFile) {
+Config::Config(const std::string& confFile) {
 	parse(confFile);
 }
 
-Config::Config(const Config &other) : _servers(other._servers) {
-}
+Config::Config(const Config& other) : _servers(other._servers) {}
 
-Config &Config::operator=(const Config &other) {
+Config& Config::operator=(const Config& other) {
 	if (this != &other)
 		_servers = other._servers;
 	return *this;
 }
 
-Config::~Config() {
-}
+Config::~Config() {}
 
-
-ServerConfig::ServerConfig()
-{
-	host = "0.0.0.0";
-	root = "./www";
-	index = "index.html";
+ServerConfig::ServerConfig() {
+	host				 = "0.0.0.0";
+	root				 = "./www";
+	index				 = "index.html";
 	client_max_body_size = 1 * 1024 * 1024;
 }
 
-LocationConfig::LocationConfig()
-{
+LocationConfig::LocationConfig() {
 	allow_methods.push_back("GET");
-	autoindex = false;
-	upload = false;
-	has_redirect = false;
+	autoindex	  = false;
+	upload		  = false;
+	has_redirect  = false;
 	redirect_code = 0;
-	has_cgi = false;
+	has_cgi		  = false;
 }
 
-bool hasSamePort(const ServerConfig &a, const ServerConfig &b) {
+bool hasSamePort(const ServerConfig& a, const ServerConfig& b) {
 	for (size_t i = 0; i < a.ports.size(); i++) {
 		for (size_t j = 0; j < b.ports.size(); j++) {
 			if (a.ports[i] == b.ports[j])
@@ -48,17 +42,14 @@ bool hasSamePort(const ServerConfig &a, const ServerConfig &b) {
 	return false;
 }
 
-void Config::parse(const std::string &filename) {
+void Config::parse(const std::string& filename) {
 	std::vector<Token> tokens = tokenize(filename);
 
 	size_t i = 0;
-	while ( i < tokens.size())
-	{
-		if (tokens[i].type == word && tokens[i].value == "server")
-		{
+	while (i < tokens.size()) {
+		if (tokens[i].type == word && tokens[i].value == "server") {
 			i++;
-			if (i >= tokens.size() || tokens[i].type != openBrace)
-			{
+			if (i >= tokens.size() || tokens[i].type != openBrace) {
 				throw std::runtime_error("Invalid config: expected { after server");
 			}
 			i++;
@@ -66,14 +57,13 @@ void Config::parse(const std::string &filename) {
 			parseServer(tokens, i, server);
 			if (server.ports.empty())
 				server.ports.push_back("8080");
-			if (server.locations.empty())
-			{
+			if (server.locations.empty()) {
 				LocationConfig location;
 				location.path = "/";
 				server.locations.push_back(location);
 			}
 			for (size_t s = 0; s < _servers.size(); s++) {
-				ServerConfig &current = _servers[s];
+				ServerConfig& current = _servers[s];
 				if (hasSamePort(server, current)) {
 					if (server.host == current.host) {
 						throw std::runtime_error("Invalid config: Invalid server config");
@@ -82,15 +72,12 @@ void Config::parse(const std::string &filename) {
 						throw std::runtime_error("Invalid config: Invalid server config");
 				}
 			}
-			if (i>= tokens.size() || tokens[i].type != closeBrace)
-			{
+			if (i >= tokens.size() || tokens[i].type != closeBrace) {
 				throw std::runtime_error("Invalid config: expected } in server block");
 			}
 			i++;
 			_servers.push_back(server);
-		}
-		else
-		{
+		} else {
 			std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
 			throw std::runtime_error(str);
 		}
@@ -99,78 +86,83 @@ void Config::parse(const std::string &filename) {
 		throw std::runtime_error("Config file is empty or contains no server blocks");
 }
 
-const std::vector<ServerConfig> &Config::getServers() const {
+const std::vector<ServerConfig>& Config::getServers() const {
 	return _servers;
 }
 
-std::ostream &operator<<(std::ostream &out, const LocationConfig &loc) {
-	out << "    Location: " << loc.path << std::endl;
-	out << "      Methods: ";
+std::ostream& operator<<(std::ostream& out, const LocationConfig& loc) {
+	out << GRY "│    " RST << CYN << loc.path << RST "\n";
+
+	out << GRY "│      " RST "methods: ";
 	for (size_t i = 0; i < loc.allow_methods.size(); i++) {
-		out << loc.allow_methods[i];
+		out << GRN << loc.allow_methods[i] << RST;
 		if (i + 1 < loc.allow_methods.size())
-			out << ", ";
+			out << GRY ", " RST;
 	}
-	out << std::endl;
-	out << "      Autoindex: " << (loc.autoindex ? "on" : "off") << std::endl;
-	out << "      Upload: " << (loc.upload ? "on" : "off") << std::endl;
-	if (loc.upload)
-		out << "      Upload Path: " << loc.upload_path << std::endl;
+	out << "\n";
+
 	if (!loc.root.empty())
-		out << "      Root: " << loc.root << std::endl;
+		out << GRY "│      " RST "root:      " << WHT << loc.root << RST "\n";
 	if (!loc.index.empty())
-		out << "      Index: " << loc.index << std::endl;
-	if (loc.has_redirect) {
-		out << "      Redirect: " << loc.redirect_code << " "
-			<< loc.redirect_url << std::endl;
+		out << GRY "│      " RST "index:     " << WHT << loc.index << RST "\n";
+	if (loc.has_redirect)
+		out << GRY "│      " RST "redirect:  " << YEL << loc.redirect_code << " "
+			<< loc.redirect_url << RST "\n";
+
+	out << GRY "│      " RST "autoindex: " << (loc.autoindex ? GRN "on" : GRY "off") << RST "\n";
+	out << GRY "│      " RST "upload:    " << (loc.upload ? GRN "on" : GRY "off") << RST;
+	if (loc.upload)
+		out << "  " << WHT << loc.upload_path << RST;
+	out << "\n";
+
+	if (loc.has_cgi) {
+		for (std::map<std::string, std::string>::const_iterator it = loc.cgi.begin();
+			 it != loc.cgi.end(); ++it)
+			out << GRY "│      " RST "cgi:       " << CYN << it->first << RST " -> " << WHT
+				<< it->second << RST "\n";
 	}
 
-	out << "      has_cgi: " << (loc.has_cgi ? "on" : "off") << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = loc.cgi.begin(); it != loc.cgi.end(); ++it)
-		out << "      cgi_pass: " << it->first << " " << it->second << std::endl;
 	return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const ServerConfig &server) {
-	out << "  Server:" << std::endl;
-	out << "    Host: " << server.host << std::endl;
-	out << "    Ports: ";
+std::ostream& operator<<(std::ostream& out, const ServerConfig& server) {
+	out << GRY "│  " RST << WHT << server.host << RST;
+
+	out << GRY ":" RST;
 	for (size_t i = 0; i < server.ports.size(); i++) {
-		out << server.ports[i];
+		out << YEL << server.ports[i] << RST;
 		if (i + 1 < server.ports.size())
-			out << ", ";
+			out << GRY "," RST;
 	}
-	out << std::endl;
+
 	if (!server.server_name.empty())
-		out << "    Server Name: " << server.server_name << std::endl;
-	out << "    Root: " << server.root << std::endl;
-	out << "    Index: " << server.index << std::endl;
-	// if (!server.error_page.empty())
-	// 	out << "    Error Page: " << server.error_page << std::endl;
-	out << "    Max Body Size: " << server.client_max_body_size << " bytes"
-		<< std::endl;
+		out << "  " << GRY "[" RST << server.server_name << GRY "]" RST;
+
+	out << "\n";
+	out << GRY "│    " RST "root:      " << WHT << server.root << RST "\n";
+	out << GRY "│    " RST "index:     " << WHT << server.index << RST "\n";
+	out << GRY "│    " RST "max body:  " << YEL << server.client_max_body_size << RST " bytes\n";
 
 	if (!server.locations.empty()) {
-		out << "    Locations:" << std::endl;
-		for (size_t i = 0; i < server.locations.size(); i++) {
+		out << GRY "│    " RST "locations:\n";
+		for (size_t i = 0; i < server.locations.size(); i++)
 			out << server.locations[i];
-		}
 	}
+
 	return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const Config &config) {
-	const std::vector<ServerConfig> &servers = config.getServers();
+std::ostream& operator<<(std::ostream& out, const Config& config) {
+	const std::vector<ServerConfig>& servers = config.getServers();
 
-	out << "Configuration:" << std::endl;
-	out << "Total Servers: " << servers.size() << std::endl;
-	out << std::endl;
+	out << "\n" GRY "┌─ Config " RST << GRY "[" RST << servers.size()
+		<< GRY "]" RST "\n";
 
 	for (size_t i = 0; i < servers.size(); i++) {
-		out << "Server [" << i + 1 << "]:" << std::endl;
+		out << GRY "│ " RST << WHT "Server" RST << GRY " [" RST << (i + 1) << GRY "]" RST "\n";
 		out << servers[i];
-		out << std::endl;
 	}
 
+	out << GRY "└─── ─ ─ ─ " RST "\n";
 	return out;
 }

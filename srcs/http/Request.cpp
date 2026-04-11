@@ -41,7 +41,7 @@ void Request::parseRequestLine(const std::string& buf) {
 		return;
 	std::istringstream iss(line);
 	if (!(iss >> _method >> _uri >> _version))
-		return  setError(HTTP_400_BAD_REQUEST);
+		return setError(HTTP_400_BAD_REQUEST);
 	std::string extra;
 	if (iss >> extra)
 		return setError(HTTP_400_BAD_REQUEST);
@@ -49,12 +49,9 @@ void Request::parseRequestLine(const std::string& buf) {
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
-	// if (!isValidVersion(_version))
-	// 	setError(UNSUPPORTED_VERSION);
 	matchedLocation();
 	detectCgi();
 	setState(PARSE_HEADERS);
-
 }
 
 void Request::parseHeaders(const std::string& buf) {
@@ -177,7 +174,7 @@ std::string Request::resolveFullPath() const {
 std::string Request::resolvePath() const {
 	if (_uri.empty())
 		return "";
-	std::string str = _uri;
+	std::string str	 = _uri;
 	std::size_t qpos = str.find('?');
 	if (qpos != std::string::npos)
 		str = str.substr(0, qpos);
@@ -219,32 +216,42 @@ void Request::setState(ParseState state) {
 	_state = state;
 }
 
-std::ostream& operator<<(std::ostream& out, const Request& req) {
-	const std::string none = "(empty)";
-	out << "Method:  " << (req.getMethod().empty() ? none : req.getMethod()) << "\n";
-	out << "URI:     " << (req.getUri().empty() ? none : req.getUri()) << "\n";
-	out << "Version: " << (req.getVersion().empty() ? none : req.getVersion()) << "\n";
-	out << "--- Headers ---\n";
+// ── Request ─────────────────────────────────────────────────────────────────
+void printRequest(std::ostream& out, const Request& req, const std::string& pre,
+						 const std::string& last) {
+	const std::string& m = req.getMethod();
+	const std::string& u = req.getUri();
+	const std::string& v = req.getVersion();
+
+	out << pre << GRY "├─ " WHT "Method " RST << (m.empty() ? GRY "(none)" RST : m.c_str()) << "\n";
+	out << pre << GRY "├─ " WHT "URI    " RST << (u.empty() ? GRY "(none)" RST : u.c_str()) << "\n";
+	out << pre << GRY "├─ " WHT "Version" RST " " << (v.empty() ? GRY "(none)" RST : v.c_str())
+		<< "\n";
+
 	const Request::HeaderMap& hdrs = req.getHeaders();
-	if (hdrs.empty())
-		out << none << "\n";
-	else
-		for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
-			out << it->first << ": " << it->second << "\n";
-	out << "--- Body ---\n";
+	out << pre << GRY "├─ " WHT "Headers" GRY " [" RST << hdrs.size() << GRY "]" RST "\n";
+	for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
+		out << pre << GRY "│   " RST << it->first << GRY ": " RST << it->second << "\n";
+
 	const std::string& body = req.getBody();
+	out << pre << GRY "├─ " WHT "Body   " RST " ";
 	if (body.empty()) {
-		out << "(empty)\n";
+		out << GRY "(empty)" RST "\n";
 	} else {
-		out << "[binary " << body.size() << " bytes] ";
+		out << GRY "[" RST << body.size() << GRY " bytes] " RST;
 		out << std::hex << std::setfill('0');
-		for (size_t i = 0; i < body.size() && i < 32; ++i)
+		for (size_t i = 0; i < body.size() && i < 16; ++i)
 			out << std::setw(2) << (unsigned int) (unsigned char) body[i] << " ";
-		if (body.size() > 32)
-			out << "...";
+		if (body.size() > 16)
+			out << GRY "..." RST;
 		out << std::dec << "\n";
 	}
-	out << "--- Type ---\n";
-	out << "  " << (req.hasCgi() ? "Dynamic" : "Static") << "\n";
+
+	out << pre << last << WHT "Type   " RST " "
+		<< (req.hasCgi() ? CYN "dynamic" RST : GRY "static" RST) << "\n";
+}
+
+std::ostream& operator<<(std::ostream& out, const Request& req) {
+	printRequest(out, req, GRY "│   " RST, GRY "└─ " RST);
 	return out;
 }

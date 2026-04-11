@@ -4,7 +4,8 @@ Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response(),
 		  _requestComplete(false), _responseSent(false) {}
 
-Client::Client(const Socket& socket, const ServerConfig* serverConfig, std::map<std::string, SessionInfo>* session)
+Client::Client(const Socket& socket, const ServerConfig* serverConfig,
+			   std::map<std::string, SessionInfo>* session)
 		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(serverConfig),
 		  _response(session), _requestComplete(false), _responseSent(false) {}
 
@@ -37,10 +38,8 @@ bool Client::readData() {
 	_recvBuffer.append(buf, n);
 	try {
 		_requestComplete = _request.parse(_recvBuffer);
-		LOG("Request complete      |\n" << _request);
 	} catch (const std::exception& e) {
 		_requestComplete = true;
-		LOG("Request Parse error   | " << e.what());
 	}
 	return true;
 }
@@ -51,7 +50,7 @@ bool Client::sendData() {
 	if (_response.hasCgiRunning()) {
 		if (!_response.checkCgi(_request))
 			return true;  // CGI not done yet, wait
-		// CGI done — fall through to build
+						  // CGI done — fall through to build
 	}
 
 	if (_sendBuffer.empty()) {
@@ -68,7 +67,6 @@ bool Client::sendData() {
 	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {
 		_responseSent = true;
-		LOG("Response sent         | " << *this);
 		return false;
 	}
 	return true;
@@ -80,12 +78,24 @@ void Client::setResponse(const std::string& response) {
 	_responseSent = false;
 }
 
+Socket& Client::getSocket() {
+	return _socket;
+}
+
 Request& Client::getRequest() {
 	return _request;
 }
 
-Socket& Client::getSocket() {
-	return _socket;
+const Request& Client::getRequest() const {
+	return _request;
+}
+
+Response& Client::getResponse() {
+	return _response;
+}
+
+const Response& Client::getResponse() const {
+	return _response;
 }
 
 bool Client::isRequestComplete() const {
@@ -100,8 +110,33 @@ bool Client::hasCgiRunning() const {
 	return _response.hasCgiRunning();
 }
 
+// ── Client ───────────────────────────────────────────────────────────────────
+//  'connector' is the branch glyph drawn before this client: "├─ " or "└─ "
+//  'pre'       is the vertical continuation line for children: "│   " or "    "
+void printClient(std::ostream& out, const Client& client, const std::string& connector,
+						const std::string& pre) {
+	const Socket&	s	= const_cast<Client&>(client).getSocket();
+	const Request&	req = client.getRequest();
+	const Response& res = client.getResponse();
+
+	bool hasReq = req.isComplete();
+	bool hasRes = res.isComplete();
+
+	out << GRY "│  " RST << connector << s << "\n";
+
+	if (hasReq) {
+		std::string reqConn = (hasRes ? GRY "├─ " RST : GRY "└─ " RST);
+		out << GRY "│  " RST << pre << reqConn << WHT "Request" RST "\n";
+		printRequest(out, req, GRY "│  " RST + pre + (hasRes ? GRY "│   " RST : GRY "    " RST),
+					 GRY "└─ " RST);
+	}
+	if (hasRes) {
+		out << GRY "│  " RST << pre << GRY "└─ " RST << WHT "Response" RST "\n";
+		printResponse(out, res, GRY "│  " RST + pre + GRY "    " RST, GRY "└─ " RST);
+	}
+}
+
 std::ostream& operator<<(std::ostream& out, const Client& client) {
-	const Socket& s = const_cast<Client&>(client).getSocket();
-	out << "Client(fd=" << s.getFd() << ", " << s.getIp() << ":" << s.getPort() << ")";
+	printClient(out, client, GRY "├─ " RST, GRY "│   " RST);
 	return out;
 }

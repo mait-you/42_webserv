@@ -3,8 +3,10 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
-#include "Socket.hpp"
 #include "SessionInfo.hpp"
+#include "Socket.hpp"
+
+#define RECV_BUFFER_SIZE 4096
 
 class Client {
   public:
@@ -24,7 +26,8 @@ class Client {
 
   public:
 	Client();
-	Client(const Socket& socket, const ServerConfig* config, std::map<std::string, SessionInfo>* _session);
+	Client(const Socket& socket, const ServerConfig* config,
+		   std::map<std::string, SessionInfo>* _session);
 	Client(const Client& other);
 	Client& operator=(const Client& other);
 	~Client();
@@ -34,13 +37,19 @@ class Client {
 
 	void setResponse(const std::string& response);
 
-	bool	 hasCgiRunning() const;
-	Socket&	 getSocket();
-	Request& getRequest();
-	bool	 isRequestComplete() const;
-	bool	 isResponseSent() const;
+	bool hasCgiRunning() const;
+	bool isRequestComplete() const;
+	bool isResponseSent() const;
+
+	Socket&			getSocket();
+	Request&		getRequest();
+	Response&		getResponse();
+	const Request&	getRequest() const;
+	const Response& getResponse() const;
 };
 
+void		  printClient(std::ostream& out, const Client& client, const std::string& connector,
+						  const std::string& pre);
 std::ostream& operator<<(std::ostream& out, const Client& client);
 
 #endif

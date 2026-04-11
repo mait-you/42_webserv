@@ -12,7 +12,6 @@ class Response : public HttpStatus {
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
 
   private:
-	codeStatus						   _statusCode;
 	std::string						   _statusMessage;
 	std::map<std::string, std::string> _headers;
 	std::string						   _body;
@@ -21,6 +20,7 @@ class Response : public HttpStatus {
 	CgiInfo								_runningCgi;
 	std::map<std::string, SessionInfo>* _sessions;
 	bool								_responseReady;
+	bool								_isComplete;
 
   public:
 	Response();
@@ -29,10 +29,17 @@ class Response : public HttpStatus {
 	Response& operator=(const Response& other);
 	~Response();
 
+	codeStatus		   getStatusCode() const;
+	const std::string& getStatusMessage() const;
+	const HeaderMap&   getHeaders() const;
+	const std::string& getBody() const;
+
 	void setStatus(codeStatus codeStatus);
 	void setStatus(codeStatus codeStatus, const std::string& message);
 	void setHeader(const std::string& key, const std::string& value);
 	void setBody(const std::string& body);
+
+	bool isComplete() const;
 
 	bool hasCgiRunning() const;
 
@@ -40,7 +47,7 @@ class Response : public HttpStatus {
 	bool		checkCgi(const Request& request);
 
   private:
-	std::string buildSendBuffer() const;
+	std::string buildSendBuffer();
 
 	// helpers
 	bool		allowedMethods(const Request& request);
@@ -62,5 +69,9 @@ class Response : public HttpStatus {
 	int handleDashboard(const Request& request, const std::string& fullPath);
 	int handleLogout(const Request& request);
 };
+
+void	  printResponse(std::ostream& out, const Response& res, const std::string& pre,
+							const std::string& last);
+std::ostream& operator<<(std::ostream& out, const Response& res);
 
 #endif

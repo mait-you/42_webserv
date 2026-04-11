@@ -3,18 +3,18 @@
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
-		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(NULL), _responseReady(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"),
+		  _hasCgiRunning(false), _sessions(NULL), _responseReady(false), _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
-		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(session), _responseReady(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"),
+		  _hasCgiRunning(false), _sessions(session), _responseReady(false), _isComplete(false) {}
 
 Response::Response(const Response& other)
-		: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
+		: HttpStatus(other), _statusMessage(other._statusMessage),
 		  _headers(other._headers), _body(other._body), _hasCgiRunning(other._hasCgiRunning),
 		  _runningCgi(other._runningCgi), _sessions(other._sessions),
-		  _responseReady(other._responseReady) {}
+		  _responseReady(other._responseReady), _isComplete(other._isComplete) {}
 
 Response& Response::operator=(const Response& other) {
 	if (this != &other) {
@@ -27,11 +27,25 @@ Response& Response::operator=(const Response& other) {
 		_runningCgi	   = other._runningCgi;
 		_sessions	   = other._sessions;
 		_responseReady = other._responseReady;
+		_isComplete	   = other._isComplete;
 	}
 	return *this;
 }
 
 Response::~Response() {}
+
+HttpStatus::codeStatus Response::getStatusCode() const {
+	return _statusCode;
+}
+const std::string& Response::getStatusMessage() const {
+	return _statusMessage;
+}
+const Response::HeaderMap& Response::getHeaders() const {
+	return _headers;
+}
+const std::string& Response::getBody() const {
+	return _body;
+}
 
 void Response::setStatus(codeStatus codeStatus, const std::string& message) {
 	_statusCode	   = codeStatus;
@@ -55,8 +69,11 @@ bool Response::hasCgiRunning() const {
 	return _hasCgiRunning;
 }
 
+bool Response::isComplete() const {
+	return _isComplete;
+}
 void Response::parseCgiHeaders(const std::string& headers, codeStatus& status,
-								std::string& msgStatus) {
+							   std::string& msgStatus) {
 	std::istringstream stream(headers);
 	std::string		   line;
 
@@ -175,14 +192,45 @@ std::string Response::build(Request& request) {
 	return buildSendBuffer();
 }
 
-std::string Response::buildSendBuffer() const {
+std::string Response::buildSendBuffer() {
 	std::ostringstream oss;
 
-	oss << "HTTP/1.0 " << _statusCode << " " << _statusMessage << "\r\n";
+	oss << HTTP_VERSION << " " << _statusCode << " " << _statusMessage << "\r\n";
 	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
 		oss << it->first << ": " << it->second << "\r\n";
 	oss << "Content-Length: " << _body.size() << "\r\n";
 	oss << "\r\n";
 	oss << _body;
+	_isComplete = true;
 	return oss.str();
+}
+
+// ── Response ─────────────────────────────────────────────────────────────────
+void printResponse(std::ostream& out, const Response& res, const std::string& pre,
+						  const std::string& last) {
+	const Response::HeaderMap& hdrs = res.getHeaders();
+
+	out << pre << GRY "├─ " WHT "Status " RST "  ";
+	if (res.getStatusCode() == 0)
+		out << GRY "(none)" RST "\n";
+	else
+		out << YEL << res.getStatusCode() << RST " " << res.getStatusMessage() << "\n";
+
+	out << pre << GRY "├─ " WHT "Headers" GRY " [" RST << hdrs.size() << GRY "]" RST "\n";
+	for (Response::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
+		out << pre << GRY "│   " RST << it->first << GRY ": " RST << it->second << "\n";
+
+	out << pre << GRY "├─ " WHT "Body   " RST "  ";
+	if (res.getBody().empty())
+		out << GRY "(empty)" RST "\n";
+	else
+		out << GRY "[" RST << res.getBody().size() << GRY " bytes]" RST "\n";
+
+	out << pre << last << WHT "CGI    " RST "  "
+		<< (res.hasCgiRunning() ? CYN "running" RST : GRY "idle" RST) << "\n";
+}
+
+std::ostream& operator<<(std::ostream& out, const Response& res) {
+	printResponse(out, res, GRY "│   " RST, GRY "└─ " RST);
+	return out;
 }
