@@ -32,7 +32,7 @@ Client::~Client() {}
 
 bool Client::readData() {
 	char	buf[RECV_BUFFER_SIZE] = {0};
-	ssize_t n					  = recv(_socket.getFd(), buf, sizeof(buf), MSG_DONTWAIT);
+	ssize_t n					  = recv(_socket.getFd(), buf, sizeof(buf), 0);
 	if (n <= 0)
 		return false;
 	_recvBuffer.append(buf, n);
@@ -58,8 +58,8 @@ bool Client::sendData() {
 			return true;
 	}
 
-	ssize_t n = send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent,
-					 _sendBuffer.size() - _bytesSent, MSG_DONTWAIT);
+	ssize_t n =
+		send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent, _sendBuffer.size() - _bytesSent, 0);
 	if (n < 0)
 		return false;
 

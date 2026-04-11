@@ -43,6 +43,8 @@ class WebServer {
 	bool handleWrite(int fd);
 	void removeClient(int fd);
 
+	void printPrefix();
+
   private:
 	WebServer();
 	WebServer(const WebServer& other);

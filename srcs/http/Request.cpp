@@ -81,8 +81,12 @@ void Request::parseHeaders(const std::string& buf) {
 
 void Request::parseBody(const std::string& buf) {
 	std::string clStr = getHeader("content-length");
-	if (clStr.empty())
-		return setState(PARSE_COMPLETE);
+	if (clStr.empty()) {
+		setState(PARSE_COMPLETE);
+		if (getHeader("Transfer-Encoding") == "chunked")
+			return setError(HTTP_501_NOT_IMPLEMENTED);
+		return ;
+	}
 	std::size_t		   cl = 0;
 	std::istringstream iss(clStr);
 	if (!(iss >> cl))

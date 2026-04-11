@@ -102,9 +102,7 @@ static void printEvent(const char* event, const WebServer& ws) {
 }
 
 void WebServer::run() {
-	std::cout << _config;
-	std::cout << "\n" GRY "┌─ WebServer" RST "\n";
-	std::cout << *this;
+	printPrefix();
 
 	while (running) {
 		int numEvents = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
@@ -142,24 +140,28 @@ void WebServer::run() {
 	std::cout << GRY "\r└─── ─ ─ ─ " RST "\n";
 }
 
-std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
-	const Socket::Map& socks   = ws.getServerSockets();
-	const Client::Map& clients = ws.getClients();
-
-	out << GRY "│ " WHT "Server Sockets" GRY " [" RST << socks.size() << GRY "]" RST "\n";
-	if (socks.empty()) {
-		out << GRY "│   (none)\n" RST;
+void WebServer::printPrefix() {
+	std::cout << _config;
+	std::cout << "\n" GRY "┌─ WebServer" RST "\n";
+	std::cout << GRY "│ " WHT "Server Sockets" GRY " [" RST << _serverSockets.size()
+			  << GRY "]" RST "\n";
+	if (_serverSockets.empty()) {
+		std::cout << GRY "│   (none)\n" RST;
 	} else {
-		for (Socket::Map::const_iterator it = socks.begin(); it != socks.end(); ++it) {
+		for (Socket::Map::const_iterator it = _serverSockets.begin(); it != _serverSockets.end();
+			 ++it) {
 			Socket::Map::const_iterator next = it;
 			++next;
-			bool isLast = (next == socks.end());
-			out << GRY "│   " RST << (isLast ? GRY "└─ " RST : GRY "├─ " RST) << it->second << "\n";
+			bool isLast = (next == _serverSockets.end());
+			std::cout << GRY "│   " RST << (isLast ? GRY "└─ " RST : GRY "├─ " RST) << it->second
+					  << "\n";
 		}
 	}
 
-	out << GRY "│\n";
-
+	std::cout << GRY "│\n";
+}
+std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
+	const Client::Map& clients = ws.getClients();
 	out << GRY "│ " WHT "Clients" GRY " [" RST << clients.size() << GRY "]" RST "\n";
 	if (clients.empty()) {
 		out << GRY "│   (none)\n" RST;
