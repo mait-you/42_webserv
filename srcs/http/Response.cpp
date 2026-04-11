@@ -196,19 +196,24 @@ std::string Response::buildSendBuffer() {
 	std::ostringstream oss;
 
 	oss << HTTP_VERSION << " " << _statusCode << " " << _statusMessage << "\r\n";
+
 	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
 		oss << it->first << ": " << it->second << "\r\n";
-	bool noBody = (_statusCode == HTTP_202_ACCEPTED || HTTP_304_NOT_MODIFIED == 304);
+
+	bool noBody = (_statusCode == HTTP_204_NO_CONTENT || _statusCode == HTTP_304_NOT_MODIFIED);
+
 	if (!noBody)
 		oss << "Content-Length: " << _body.size() << "\r\n";
+
 	oss << "\r\n";
+
 	if (!noBody)
 		oss << _body;
+
 	_isComplete = true;
 	return oss.str();
 }
 
-// ── Response ─────────────────────────────────────────────────────────────────
 void printResponse(std::ostream& out, const Response& res, const std::string& pre,
 				   const std::string& last) {
 	const Response::HeaderMap& hdrs = res.getHeaders();
