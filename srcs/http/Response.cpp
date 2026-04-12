@@ -3,35 +3,46 @@
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
-		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(NULL), _responseReady(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"), _hasCgiRunning(false),
+		  _sessions(NULL), _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
-		: HttpStatus(HTTP_200_OK, "OK"), _statusCode(HTTP_200_OK), _statusMessage("OK"),
-		  _hasCgiRunning(false), _sessions(session), _responseReady(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"), _hasCgiRunning(false),
+		  _sessions(session), _isComplete(false) {}
 
 Response::Response(const Response& other)
-		: HttpStatus(other), _statusCode(other._statusCode), _statusMessage(other._statusMessage),
-		  _headers(other._headers), _body(other._body), _hasCgiRunning(other._hasCgiRunning),
-		  _runningCgi(other._runningCgi), _sessions(other._sessions),
-		  _responseReady(other._responseReady) {}
+		: HttpStatus(other), _statusMessage(other._statusMessage), _headers(other._headers),
+		  _body(other._body), _hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
+		  _sessions(other._sessions), _isComplete(other._isComplete) {}
 
 Response& Response::operator=(const Response& other) {
 	if (this != &other) {
 		HttpStatus::operator=(other);
-		_statusCode	   = other._statusCode;
 		_statusMessage = other._statusMessage;
 		_headers	   = other._headers;
 		_body		   = other._body;
 		_hasCgiRunning = other._hasCgiRunning;
 		_runningCgi	   = other._runningCgi;
 		_sessions	   = other._sessions;
-		_responseReady = other._responseReady;
+		_isComplete	   = other._isComplete;
 	}
 	return *this;
 }
 
 Response::~Response() {}
+
+HttpStatus::codeStatus Response::getStatusCode() const {
+	return _statusCode;
+}
+const std::string& Response::getStatusMessage() const {
+	return _statusMessage;
+}
+const Response::HeaderMap& Response::getHeaders() const {
+	return _headers;
+}
+const std::string& Response::getBody() const {
+	return _body;
+}
 
 void Response::setStatus(codeStatus codeStatus, const std::string& message) {
 	_statusCode	   = codeStatus;
@@ -40,7 +51,7 @@ void Response::setStatus(codeStatus codeStatus, const std::string& message) {
 
 void Response::setStatus(codeStatus codeStatus) {
 	_statusCode	   = codeStatus;
-	_statusMessage = defaultMessage(codeStatus);
+	_statusMessage = HttpStatus::defaultMessage(codeStatus);
 }
 
 void Response::setHeader(const std::string& key, const std::string& value) {
@@ -55,102 +66,113 @@ bool Response::hasCgiRunning() const {
 	return _hasCgiRunning;
 }
 
-void Response::parseCgiHeaders(const std::string& headers, codeStatus& status,
-								std::string& msgStatus) {
-	std::istringstream stream(headers);
+bool Response::isComplete() const {
+	return _isComplete;
+}
+
+void Response::applyCgiHeaders(const std::string& rawHeaders, codeStatus& outStatus,
+							   std::string& outMsg) {
+	std::istringstream stream(rawHeaders);
 	std::string		   line;
 
 	while (std::getline(stream, line)) {
 		if (!line.empty() && line[line.size() - 1] == '\r')
 			line.erase(line.size() - 1);
+		if (line.empty())
+			continue;
 
 		size_t colon = line.find(':');
 		if (colon == std::string::npos)
 			continue;
-		if (line[colon + 1] == ' ')
+
+		if (colon + 1 < line.size() && line[colon + 1] == ' ')
 			line.erase(colon + 1, 1);
+
 		std::string key = line.substr(0, colon);
-		std::string val = line.substr(colon + 1);
+		std::string val = (colon + 1 < line.size()) ? line.substr(colon + 1) : "";
 
 		if (key == "Content-Length")
 			continue;
 		else if (key == "Status") {
-			status	  = static_cast<codeStatus>(std::atoi(val.c_str()));
-			msgStatus = val.substr(4);
+			if (val.size() >= 4) {
+				outStatus = static_cast<codeStatus>(std::atoi(val.c_str()));
+				outMsg	  = val.substr(4);
+			}
 		} else
 			setHeader(key, val);
 	}
 }
-
-bool Response::checkCgi(const Request& request) {
-	if (!_hasCgiRunning)
-		return false;
-
-	int	  status;
-	pid_t result = waitpid(_runningCgi.pid, &status, WNOHANG);
-	if (result == 0) {
-		if (std::time(0) - _runningCgi.startTime > 5) {
-			kill(_runningCgi.pid, SIGKILL);
-			waitpid(_runningCgi.pid, NULL, 0);
-			_hasCgiRunning = false;
-			if (!_runningCgi.bodyPath.empty())
-				unlink(_runningCgi.bodyPath.c_str());
-			if (!_runningCgi.resPath.empty())
-				unlink(_runningCgi.resPath.c_str());
-			errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
-			return _responseReady = true;
-		}
-		return false;
-	}
-
-	_hasCgiRunning = false;
-
-	if (!_runningCgi.bodyPath.empty())
-		unlink(_runningCgi.bodyPath.c_str());
-
-	if (result == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-		if (!_runningCgi.resPath.empty())
-			unlink(_runningCgi.resPath.c_str());
-		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
-		return _responseReady = true;
-	}
-
+bool Response::processCgiOutput(const Request& request) {
 	std::ifstream file(_runningCgi.resPath.c_str());
 	if (!file.is_open()) {
 		unlink(_runningCgi.resPath.c_str());
 		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
-		return _responseReady = true;
+		return false;
 	}
+
 	std::ostringstream oss;
 	oss << file.rdbuf();
 	file.close();
 	unlink(_runningCgi.resPath.c_str());
 
-	std::string raw = oss.str();
+	std::string raw	   = oss.str();
+	size_t		sepPos = raw.find("\r\n\r\n");
+	size_t		skip   = 4;
 
-	size_t sepPos = raw.find("\r\n\r\n");
-	size_t skip	  = 4;
 	if (sepPos == std::string::npos) {
 		sepPos = raw.find("\n\n");
 		skip   = 2;
 	}
+
 	if (sepPos == std::string::npos) {
 		setStatus(HTTP_200_OK, "OK");
 		setBody(raw);
-		return _responseReady = true;
+		return true;
 	}
 
 	codeStatus	cgiStatus = HTTP_200_OK;
-	std::string msgStatus = "OK";
-	parseCgiHeaders(raw.substr(0, sepPos), cgiStatus, msgStatus);
-	setStatus(cgiStatus, msgStatus);
+	std::string cgiMsg	  = "OK";
+
+	applyCgiHeaders(raw.substr(0, sepPos), cgiStatus, cgiMsg);
+	setStatus(cgiStatus, cgiMsg);
 	setBody(raw.substr(sepPos + skip));
-	return _responseReady = true;
+	return true;
+}
+
+bool Response::pollCgi(const Request& request) {
+	int	  wstatus;
+	pid_t result = waitpid(_runningCgi.pid, &wstatus, WNOHANG);
+
+	if (result == 0) {
+		if (std::time(0) - _runningCgi.startTime <= 5)
+			return false;
+		kill(_runningCgi.pid, SIGKILL);
+		waitpid(_runningCgi.pid, NULL, 0);
+		_hasCgiRunning = false;
+		if (!_runningCgi.bodyPath.empty())
+			unlink(_runningCgi.bodyPath.c_str());
+		if (!_runningCgi.resPath.empty())
+			unlink(_runningCgi.resPath.c_str());
+		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
+		return true;
+	}
+
+	_hasCgiRunning = false;
+	if (!_runningCgi.bodyPath.empty())
+		unlink(_runningCgi.bodyPath.c_str());
+
+	if (result == -1 || !WIFEXITED(wstatus) || WEXITSTATUS(wstatus) != 0) {
+		if (!_runningCgi.resPath.empty())
+			unlink(_runningCgi.resPath.c_str());
+		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
+		return true;
+	}
+
+	processCgiOutput(request);
+	return true;
 }
 
 std::string Response::build(Request& request) {
-	if (_responseReady)
-		return buildSendBuffer();
 	if (!request.isValid()) {
 		errorPage(request, request.getStatusCode());
 	} else if (!request.getLocationConf()) {
@@ -175,14 +197,53 @@ std::string Response::build(Request& request) {
 	return buildSendBuffer();
 }
 
-std::string Response::buildSendBuffer() const {
+std::string Response::buildSendBuffer() {
 	std::ostringstream oss;
 
-	oss << "HTTP/1.0 " << _statusCode << " " << _statusMessage << "\r\n";
+	oss << HTTP_VERSION << " " << _statusCode << " " << _statusMessage << "\r\n";
+
 	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
 		oss << it->first << ": " << it->second << "\r\n";
-	oss << "Content-Length: " << _body.size() << "\r\n";
+
+	bool noBody = (_statusCode == HTTP_204_NO_CONTENT || _statusCode == HTTP_304_NOT_MODIFIED);
+
+	if (!noBody)
+		oss << "Content-Length: " << _body.size() << "\r\n";
+
 	oss << "\r\n";
-	oss << _body;
+
+	if (!noBody)
+		oss << _body;
+
+	_isComplete = true;
 	return oss.str();
+}
+
+void printResponse(std::ostream& out, const Response& res, const std::string& pre,
+				   const std::string& last) {
+	const Response::HeaderMap& hdrs = res.getHeaders();
+
+	out << pre << GRY "├─ " WHT "Status " RST "  ";
+	if (res.getStatusCode() == 0)
+		out << GRY "(none)" RST "\n";
+	else
+		out << YEL << res.getStatusCode() << RST " " << res.getStatusMessage() << "\n";
+
+	out << pre << GRY "├─ " WHT "Headers" GRY " [" RST << hdrs.size() << GRY "]" RST "\n";
+	for (Response::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
+		out << pre << GRY "│   " RST << it->first << GRY ": " RST << it->second << "\n";
+
+	out << pre << GRY "├─ " WHT "Body   " RST "  ";
+	if (res.getBody().empty())
+		out << GRY "(empty)" RST "\n";
+	else
+		out << GRY "[" RST << res.getBody().size() << GRY " bytes]" RST "\n";
+
+	out << pre << last << WHT "CGI    " RST "  "
+		<< (res.hasCgiRunning() ? CYN "running" RST : GRY "idle" RST) << "\n";
+}
+
+std::ostream& operator<<(std::ostream& out, const Response& res) {
+	printResponse(out, res, GRY "│   " RST, GRY "└─ " RST);
+	return out;
 }

@@ -12,7 +12,6 @@ class Response : public HttpStatus {
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
 
   private:
-	codeStatus						   _statusCode;
 	std::string						   _statusMessage;
 	std::map<std::string, std::string> _headers;
 	std::string						   _body;
@@ -20,7 +19,8 @@ class Response : public HttpStatus {
 	bool								_hasCgiRunning;
 	CgiInfo								_runningCgi;
 	std::map<std::string, SessionInfo>* _sessions;
-	bool								_responseReady;
+	// bool								_responseReady;
+	bool								_isComplete;
 
   public:
 	Response();
@@ -29,18 +29,25 @@ class Response : public HttpStatus {
 	Response& operator=(const Response& other);
 	~Response();
 
+	codeStatus		   getStatusCode() const;
+	const std::string& getStatusMessage() const;
+	const HeaderMap&   getHeaders() const;
+	const std::string& getBody() const;
+
 	void setStatus(codeStatus codeStatus);
 	void setStatus(codeStatus codeStatus, const std::string& message);
 	void setHeader(const std::string& key, const std::string& value);
 	void setBody(const std::string& body);
 
+	bool isComplete() const;
+
 	bool hasCgiRunning() const;
 
 	std::string build(Request& request);
-	bool		checkCgi(const Request& request);
+	bool		pollCgi(const Request& request);
+	std::string buildSendBuffer();
 
   private:
-	std::string buildSendBuffer() const;
 
 	// helpers
 	bool		allowedMethods(const Request& request);
@@ -53,7 +60,8 @@ class Response : public HttpStatus {
 	void deleteFolder(const Request& request, const std::string& fullPath);
 	void errorPage(const Request& request, codeStatus codeStatus);
 
-	void parseCgiHeaders(const std::string& headers, codeStatus& status, std::string& msgStatus);
+	void applyCgiHeaders(const std::string& rawHeaders, codeStatus& outStatus, std::string& outMsg);
+	bool processCgiOutput(const Request& request);
 
 	void handleGet(const Request& request);
 	void handleDelete(const Request& request);
@@ -62,5 +70,9 @@ class Response : public HttpStatus {
 	int handleDashboard(const Request& request, const std::string& fullPath);
 	int handleLogout(const Request& request);
 };
+
+void		  printResponse(std::ostream& out, const Response& res, const std::string& pre,
+							const std::string& last);
+std::ostream& operator<<(std::ostream& out, const Response& res);
 
 #endif

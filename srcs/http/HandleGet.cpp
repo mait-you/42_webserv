@@ -2,8 +2,8 @@
 #include "../../includes/Response.hpp"
 
 std::string extractId(std::string& cookie) {
-	std::stringstream	ss(cookie);
-	std::string			str;
+	std::stringstream ss(cookie);
+	std::string		  str;
 
 	while (std::getline(ss, str, ';')) {
 		size_t pos = str.find("session_id=");
@@ -13,27 +13,21 @@ std::string extractId(std::string& cookie) {
 	return "";
 }
 
-int Response::handleDashboard(const Request& request, const std::string& fullPath)
-{
+int Response::handleDashboard(const Request& request, const std::string& fullPath) {
 	std::stringstream ss;
-	std::string cookie = request.getHeader("Cookie");
-	if (!cookie.empty())
-	{
+	std::string		  cookie = request.getHeader("Cookie");
+	if (!cookie.empty()) {
 		std::string sessionId = extractId(cookie);
-		if (!sessionId.empty())
-		{
+		if (!sessionId.empty()) {
 			std::map<std::string, SessionInfo>::iterator it;
-			for (it = _sessions->begin(); it != _sessions->end(); it++)
-			{
-				if (it->first == sessionId)
-				{
-					if (it->second.isLogged == true)
-					{
+			for (it = _sessions->begin(); it != _sessions->end(); it++) {
+				if (it->first == sessionId) {
+					if (it->second.isLogged == true) {
 						ss << "<html> <head><title>Webserv - Dashboard</title>"
-							<< "<link rel='stylesheet' href='css/style.css'></head> <body>"
-							<< "<a href='/logout.html'>logout</a>"
-							<< "<h1> Welcome, " << it->second.username << "</h1>"
-							<< "<a href='/'>Back to Home</a></body></html>";
+						   << "<link rel='stylesheet' href='css/style.css'></head> <body>"
+						   << "<a href='/logout.html'>logout</a>"
+						   << "<h1> Welcome, " << it->second.username << "</h1>"
+						   << "<a href='/'>Back to Home</a></body></html>";
 						setStatus(HTTP_200_OK);
 						std::string extension = getExtension(fullPath);
 						setHeader("Content-type", Mime::getType(extension));
@@ -43,25 +37,19 @@ int Response::handleDashboard(const Request& request, const std::string& fullPat
 					break;
 				}
 			}
-			
 		}
 	}
 	return 0;
 }
 
-int Response::handleLogout(const Request& request)
-{
+int Response::handleLogout(const Request& request) {
 	std::string cookie = request.getHeader("Cookie");
-	if (!cookie.empty())
-	{
+	if (!cookie.empty()) {
 		std::string sessionId = extractId(cookie);
-		if (!sessionId.empty())
-		{
+		if (!sessionId.empty()) {
 			std::map<std::string, SessionInfo>::iterator it;
-			for (it = _sessions->begin(); it != _sessions->end(); it++)
-			{
-				if (it->first == sessionId)
-				{
+			for (it = _sessions->begin(); it != _sessions->end(); it++) {
+				if (it->first == sessionId) {
 					it->second.isLogged = false;
 					setStatus(HTTP_302_FOUND, "Found");
 					setHeader("Location", "/login.html");

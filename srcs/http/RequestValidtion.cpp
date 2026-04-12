@@ -5,19 +5,19 @@ void Request::detectCgi() {
 		return;
 	std::string cleanUri = resolveFullPath();
 
-	for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin(); it != _locConf->cgi.end(); it++)
-	{
+	for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
+		 it != _locConf->cgi.end(); it++) {
 		size_t pos = cleanUri.find(it->first);
-		if (pos != std::string::npos)
-		{
+		if (pos != std::string::npos) {
 			size_t len = it->first.length();
-			cleanUri = cleanUri.substr(0, pos + len);
+			cleanUri   = cleanUri.substr(0, pos + len);
 			break;
 		}
 	}
 
-	if (_locConf->cgi.count(getExtension(cleanUri)))
-	{
+	if (_locConf->cgi.count(getExtension(cleanUri))) {
+		_hasCgi = true;
+	} else if (_locConf->cgi.count("." + getExtension(cleanUri))) {
 		_hasCgi = true;
 	}
 	else if (_locConf->cgi.count("." + getExtension(cleanUri)))
@@ -58,12 +58,12 @@ bool Request::isValidMethod(const std::string& method) const {
 bool Request::isValidUri(const std::string& uri) const {
 	if (uri.empty() || uri.size() > MAX_URI_LENGTH)
 		return false;
+	const std::string invalid = "\"<>\\^~`{}|";
 	for (std::size_t i = 0; i < uri.size(); ++i) {
 		unsigned char c = uri[i];
 		if (c < 33 || c == 127)
 			return false;
-		if (c == '"' || c == '<' || c == '>' || c == '\\' || c == '^' || c == '`' || c == '{'
-			|| c == '}' || c == '|')
+		if (invalid.find(c) != std::string::npos)
 			return false;
 	}
 	return true;

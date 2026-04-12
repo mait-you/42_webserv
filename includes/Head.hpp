@@ -25,31 +25,19 @@
 #include <string>
 #include <vector>
 
-#ifndef DEBUGGING
-	#define DEBUGGING 0
-#endif
+#define RST "\e[0m"
+#define GRY "\e[90m"
+#define WHT "\e[97m"
+#define GRN "\e[92m"
+#define YEL "\e[93m"
+#define CYN "\e[96m"
+#define RED "\e[91m"
+#define MGT "\e[95m"
 
 #define HTTP_VERSION "HTTP/1.0"
-#define MAX_EVENTS 10
-#define RECV_BUFFER_SIZE 4096
-#define MAX_URI_LENGTH 8192
-#define MAX_BODY_SIZE (1024 * 1024)
 
-typedef struct epoll_event t_ev;
-#define EPOLL_EVENT(name)                                                                          \
-	t_ev name;                                                                                     \
-	std::memset(&name, 0, sizeof(name));
-
-#define LOG(msg) std::cout << msg << std::endl
-#define LOG_DEBUGG(msg)                                                                            \
-	if (DEBUGGING)                                                                                 \
-	std::cout << msg << std::endl
-
-inline void throwError(const std::string& msg) {
-	if (errno)
-		throw std::runtime_error(msg + ": " + std::strerror(errno));
-	throw std::runtime_error(msg);
-}
+#define THROW_ERROR(context, detail) throwError(__FILE__, __LINE__, context, detail)
+#define PRINT_WARNING(context, detail) printWarning(__FILE__, __LINE__, context, detail)
 
 void		setupSignals();
 bool		isNumber(const std::string& str);
@@ -60,5 +48,11 @@ std::string toLower(const std::string& s);
 std::string trimStr(const std::string& s);
 bool		getLine(const std::string& buf, std::size_t& pos, std::string& line);
 std::string getExtension(const std::string& fullPath);
+void		throwError(const std::string& file, int line, const std::string& context,
+					   const std::string& detail);
+void		printWarning(const std::string& file, int line, const std::string& context,
+						 const std::string& detail);
+std::string toString(int val);
+std::string htmlEscape(const std::string& s);
 
 #endif

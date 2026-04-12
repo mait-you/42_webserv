@@ -4,7 +4,7 @@ Socket::Socket() : _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(
 
 Socket::Socket(int fd) : _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
 	if (fd == -1)
-		throwError("Socket: invalid file descriptor");
+		THROW_ERROR("Socket constructor", "fd is -1 (invalid socket)");
 	_fd = fd;
 }
 
@@ -31,9 +31,10 @@ Socket& Socket::operator=(const Socket& other) {
 Socket::~Socket() {}
 
 void Socket::createAndBind() {
+	if (_fd != -1)
+		THROW_ERROR("Socket::createAndBind", "Socket already " + toString(_fd));
 	struct addrinfo	 hints;
-	struct addrinfo* result;
-	struct addrinfo* rp;
+	struct addrinfo *result = NULL, *rp = NULL;
 
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family	  = AF_INET;
@@ -42,14 +43,18 @@ void Socket::createAndBind() {
 
 	int status = getaddrinfo(_ip.empty() ? NULL : _ip.c_str(), _port.c_str(), &hints, &result);
 	if (status != 0)
-		throwError("getaddrinfo: " + std::string(gai_strerror(status)));
+		THROW_ERROR("getaddrinfo", gai_strerror(status));
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		_fd = ::socket(rp->ai_family, SOCK_STREAM, 0);
+		_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (_fd == -1)
 			continue;
 		int opt = 1;
-		setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-		if (::bind(_fd, rp->ai_addr, rp->ai_addrlen) == 0) {
+		if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt) == -1) {
+			::close(_fd);
+			_fd = -1;
+			continue;
+		}
+		if (bind(_fd, rp->ai_addr, rp->ai_addrlen) == 0) {
 			_is_bound = true;
 			break;
 		}
@@ -58,24 +63,26 @@ void Socket::createAndBind() {
 	}
 	freeaddrinfo(result);
 	if (!_is_bound)
-		throwError("Socket::createAndBind: failed on " + _ip + ":" + _port);
+		THROW_ERROR("Socket::createAndBind", "failed to bind on " + _ip + ":" + _port);
+	if (fcntl(_fd, F_SETFD, FD_CLOEXEC) == -1)
+		THROW_ERROR("Socket::createAndBind::fcntl", "failed to set FD_CLOEXEC");
 }
 
 void Socket::setNonBlocking() {
 	if (_fd == -1)
-		throwError("Socket::setNonBlocking: socket not created");
+		THROW_ERROR("Socket::setNonBlocking", "socket not created");
 	int flags = fcntl(_fd, F_GETFL, 0);
 	if (flags == -1)
-		throwError(std::string("fcntl F_GETFL: ") + std::strerror(errno));
+		THROW_ERROR("fcntl", "F_GETFL failed");
 	if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		throwError("fcntl F_SETFL: ");
+		THROW_ERROR("fcntl", "F_SETFL O_NONBLOCK failed");
 }
 
 void Socket::startListening(int backlog) {
 	if (!_is_bound)
-		throwError("Socket::startListening: socket not bound");
-	if (::listen(_fd, backlog) == -1)
-		throwError("listen: ");
+		THROW_ERROR("Socket::startListening", "socket is not bound");
+	if (listen(_fd, backlog) == -1)
+		THROW_ERROR("listen", "failed to start listening");
 	_is_listening = true;
 }
 
@@ -84,8 +91,8 @@ Socket Socket::accept() {
 	socklen_t		   addr_len = sizeof(client_addr);
 	std::memset(&client_addr, 0, sizeof(client_addr));
 	int clientFd = ::accept(_fd, (struct sockaddr*) &client_addr, &addr_len);
-	if (clientFd == -1)
-		throwError("accept: ");
+	if (fcntl(clientFd, F_SETFD, FD_CLOEXEC) == -1)
+		THROW_ERROR("fcntl", "failed to set FD_CLOEXEC");
 	Socket s(clientFd);
 	s.setIp(ipv4Tostr(client_addr.sin_addr.s_addr));
 	s.setPort(portTostr(ntohs(client_addr.sin_port)));
@@ -129,11 +136,15 @@ bool Socket::isValid() const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Socket& s) {
-	out << "Socket(fd=" << s.getFd() << ", " << s.getIp() << ":" << s.getPort();
+	out << GRY "[" RST;
+	out << CYN "fd=" RST << YEL << s.getFd() << RST;
+	out << GRY "] " RST;
+	out << WHT << s.getIp() << RST;
+	out << GRY ":" RST;
+	out << WHT << s.getPort() << RST;
 	if (s.isBound())
-		out << ", bound";
+		out << GRY " · " RST GRN "bound" RST;
 	if (s.isListening())
-		out << ", listening";
-	out << ")";
+		out << GRY " · " RST GRN "listening" RST;
 	return out;
 }
