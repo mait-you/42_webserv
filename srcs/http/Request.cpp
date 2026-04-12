@@ -35,7 +35,7 @@ Request::~Request() {}
 
 bool Request::matchedLocation() {
 	if (!_srvConf)
-		return setError(HTTP_400_BAD_REQUEST);
+		return false;
 	const std::string& uri		  = resolvePath();
 	std::size_t		   matchedLen = 0;
 	for (size_t i = 0; i < _srvConf->locations.size(); i++) {
@@ -48,7 +48,7 @@ bool Request::matchedLocation() {
 		}
 	}
 	if (!_locConf)
-		return setError(HTTP_400_BAD_REQUEST);
+		return false;
 	return true;
 }
 
@@ -67,8 +67,10 @@ bool Request::parseRequestLine(const std::string& buf) {
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
+	// if (!isValidVersion(_version))
+	// 	return setError(HTTP_400_BAD_REQUEST);
 	if (!matchedLocation())
-		return false;
+		return setError(HTTP_400_BAD_REQUEST);
 	detectCgi();
 	setState(PARSE_HEADERS);
 	return true;

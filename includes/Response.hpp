@@ -19,7 +19,7 @@ class Response : public HttpStatus {
 	bool								_hasCgiRunning;
 	CgiInfo								_runningCgi;
 	std::map<std::string, SessionInfo>* _sessions;
-	bool								_responseReady;
+	// bool								_responseReady;
 	bool								_isComplete;
 
   public:
@@ -44,10 +44,10 @@ class Response : public HttpStatus {
 	bool hasCgiRunning() const;
 
 	std::string build(Request& request);
-	bool		checkCgi(const Request& request);
+	bool		pollCgi(const Request& request);
+	std::string buildSendBuffer();
 
   private:
-	std::string buildSendBuffer();
 
 	// helpers
 	bool		allowedMethods(const Request& request);
@@ -60,7 +60,8 @@ class Response : public HttpStatus {
 	void deleteFolder(const Request& request, const std::string& fullPath);
 	void errorPage(const Request& request, codeStatus codeStatus);
 
-	void parseCgiHeaders(const std::string& headers, codeStatus& status, std::string& msgStatus);
+	void applyCgiHeaders(const std::string& rawHeaders, codeStatus& outStatus, std::string& outMsg);
+	bool processCgiOutput(const Request& request);
 
 	void handleGet(const Request& request);
 	void handleDelete(const Request& request);
@@ -70,7 +71,7 @@ class Response : public HttpStatus {
 	int handleLogout(const Request& request);
 };
 
-void	  printResponse(std::ostream& out, const Response& res, const std::string& pre,
+void		  printResponse(std::ostream& out, const Response& res, const std::string& pre,
 							const std::string& last);
 std::ostream& operator<<(std::ostream& out, const Response& res);
 

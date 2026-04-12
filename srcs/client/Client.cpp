@@ -29,10 +29,11 @@ Client::~Client() {}
 bool Client::recvData() {
 	char	buf[RECV_BUFFER_SIZE] = {0};
 	ssize_t n					  = recv(_socket.getFd(), buf, sizeof(buf), 0);
-	if (n <= 0)
+	if (n == 0)
 		return false;
+	if (n < 0)
+		return true;
 	_recvBuffer.append(buf, n);
-	parseRequest();
 	return true;
 }
 
@@ -41,20 +42,37 @@ bool Client::parseRequest() {
 }
 
 bool Client::sendData() {
-	buildResponse();
+	if (_response.hasCgiRunning() || _sendBuffer.empty())
+		return true;
+	if (_bytesSent >= _sendBuffer.size())
+		return true;
 	ssize_t n =
 		send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent, _sendBuffer.size() - _bytesSent, 0);
 	if (n < 0)
 		return false;
+	_bytesSent += static_cast<std::size_t>(n);
+	if (_bytesSent == _sendBuffer.size()) {
+		_sendBuffer.clear();
+		_bytesSent = 0;
+		return false;
+	}
 	return true;
 }
 
 bool Client::buildResponse() {
-	if (_response.hasCgiRunning())
+	if (_response.hasCgiRunning()) {
+		if (!_response.pollCgi(_request))
+			return true;
+		_sendBuffer = _response.buildSendBuffer();
+		if (_sendBuffer.empty())
+			return false;
 		return true;
+	}
+
 	_sendBuffer = _response.build(_request);
-	if (_sendBuffer.empty())
+	if (_sendBuffer.empty() && !_response.hasCgiRunning())
 		return false;
+
 	return true;
 }
 

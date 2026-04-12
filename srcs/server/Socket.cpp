@@ -31,6 +31,8 @@ Socket& Socket::operator=(const Socket& other) {
 Socket::~Socket() {}
 
 void Socket::createAndBind() {
+	if (_fd != -1)
+		THROW_ERROR("Socket::createAndBind", "Socket already " + toString(_fd));
 	struct addrinfo	 hints;
 	struct addrinfo *result = NULL, *rp = NULL;
 
@@ -62,6 +64,8 @@ void Socket::createAndBind() {
 	freeaddrinfo(result);
 	if (!_is_bound)
 		THROW_ERROR("Socket::createAndBind", "failed to bind on " + _ip + ":" + _port);
+	if (fcntl(_fd, F_SETFD, FD_CLOEXEC) == -1)
+		THROW_ERROR("Socket::createAndBind::fcntl", "failed to set FD_CLOEXEC");
 }
 
 void Socket::setNonBlocking() {
@@ -87,8 +91,8 @@ Socket Socket::accept() {
 	socklen_t		   addr_len = sizeof(client_addr);
 	std::memset(&client_addr, 0, sizeof(client_addr));
 	int clientFd = ::accept(_fd, (struct sockaddr*) &client_addr, &addr_len);
-	if (clientFd == -1)
-		THROW_ERROR("accept", "failed to accept new connection");
+	if (fcntl(clientFd, F_SETFD, FD_CLOEXEC) == -1)
+		THROW_ERROR("fcntl", "failed to set FD_CLOEXEC");
 	Socket s(clientFd);
 	s.setIp(ipv4Tostr(client_addr.sin_addr.s_addr));
 	s.setPort(portTostr(ntohs(client_addr.sin_port)));

@@ -7,6 +7,8 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	_epollFd = epoll_create(true);
 	if (_epollFd == -1)
 		THROW_ERROR("epoll_create", "failed to create epoll instance");
+	if (fcntl(_epollFd, F_SETFD, FD_CLOEXEC) == -1)
+		THROW_ERROR("fcntl", "failed to set FD_CLOEXEC");
 	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
@@ -47,13 +49,12 @@ const Config& WebServer::getConfig() const {
 	return _config;
 }
 
-void WebServer::removeClient(int fd) {
-	Client::It it = _clients.find(fd);
-	if (it == _clients.end())
-		return;
-	epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
-	it->second.getSocket().close();
-	_clients.erase(it);
+void WebServer::removeClient(Client& client) {
+	int fd = client.getSocket().getFd();
+	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) == -1)
+		PRINT_WARNING("WebServer::removeClient", "epoll_ctl DEL failed");
+	client.getSocket().close();
+	_clients.erase(fd);
 }
 
 void WebServer::acceptClient(Socket& serverSock) {
@@ -84,13 +85,12 @@ bool WebServer::handleRequest(Client& client) {
 	EPOLL_EVENT(ev);
 	ev.events  = EPOLLIN | EPOLLOUT;
 	ev.data.fd = client.getSocket().getFd();
-	epoll_ctl(_epollFd, EPOLL_CTL_MOD, ev.data.fd, &ev);
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, ev.data.fd, &ev) == -1)
+		PRINT_WARNING("WebServer::removeClient", "epoll_ctl DEL failed");
 	return true;
 }
 
 bool WebServer::handleResponse(Client& client) {
-	if (client.getResponse().hasCgiRunning())
-		client.getResponse().checkCgi(client.getRequest());
 	if (!client.buildResponse())
 		return true;
 	if (!client.sendData())
@@ -144,7 +144,7 @@ void WebServer::run() {
 
 			// cleanup
 			if (!keep) {
-				removeClient(fd);
+				removeClient(client);
 				printEvent(GRY "Client disconnected" RST, *this);
 			}
 		}
