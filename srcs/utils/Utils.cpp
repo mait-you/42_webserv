@@ -7,6 +7,7 @@ static void handler(int) {
 
 void setupSignals() {
 	signal(SIGINT, handler);
+	signal(SIGPIPE, SIG_IGN);
 }
 
 bool isNumber(const std::string& str) {
