@@ -3,16 +3,16 @@
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
-		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false),
-		  _sessions(NULL), _isComplete(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false), _sessions(NULL),
+		  _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
-		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false),
-		  _sessions(session), _isComplete(false) {}
+		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false), _sessions(session),
+		  _isComplete(false) {}
 
 Response::Response(const Response& other)
-		: HttpStatus(other), _headers(other._headers),
-		  _body(other._body), _hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
+		: HttpStatus(other), _headers(other._headers), _body(other._body),
+		  _hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
 		  _sessions(other._sessions), _isComplete(other._isComplete) {}
 
 Response& Response::operator=(const Response& other) {
@@ -161,26 +161,34 @@ bool Response::pollCgi(const Request& request) {
 	return true;
 }
 
-std::string Response::build(Request& request) {
-	if (!request.isValid()) {
-		errorPage(request, request.getStatusCode());
-	} else if (!request.getLocationConf()) {
-		errorPage(request, HTTP_404_NOT_FOUND);
-	} else if (request.getLocationConf()->has_redirect) {
-		if (request.getLocationConf()->redirect_code == HTTP_301_MOVED_PERMANENTLY)
-			setStatus(HTTP_301_MOVED_PERMANENTLY);
-		else
-			setStatus(HTTP_302_FOUND);
-		setHeader("Location", request.getLocationConf()->redirect_url);
-	} else if (!allowedMethods(request)) {
-		errorPage(request, HTTP_405_METHOD_NOT_ALLOWED);
-	} else if (request.getMethod() == "GET") {
+void Response::handleRedirect(const Request& request) {
+	const LocationConfig* loc = request.getLocationConf();
+	setStatus(static_cast<codeStatus>(loc->redirect_code));
+	setHeader("Location", loc->redirect_url);
+}
+
+void Response::dispatch(const Request& request) {
+	const std::string& m = request.getMethod();
+	if (m == "GET")
 		handleGet(request);
-	} else if (request.getMethod() == "POST") {
+	else if (m == "POST")
 		handlePost(request);
-	} else if (request.getMethod() == "DELETE") {
+	else if (m == "DELETE")
 		handleDelete(request);
-	}
+}
+
+std::string Response::build(Request& request) {
+	if (!request.isValid())
+		errorPage(request, request.getStatusCode());
+	else if (!request.getLocationConf())
+		errorPage(request, HTTP_404_NOT_FOUND);
+	else if (request.getLocationConf()->has_redirect)
+		handleRedirect(request);
+	else if (!allowedMethods(request))
+		errorPage(request, HTTP_405_METHOD_NOT_ALLOWED);
+	else
+		dispatch(request);
+
 	if (_hasCgiRunning)
 		return "";
 	return buildSendBuffer();
