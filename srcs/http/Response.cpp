@@ -3,22 +3,21 @@
 #include "../../includes/MimeTypes.hpp"
 
 Response::Response()
-		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"), _hasCgiRunning(false),
+		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false),
 		  _sessions(NULL), _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
-		: HttpStatus(HTTP_200_OK, "OK"), _statusMessage("OK"), _hasCgiRunning(false),
+		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false),
 		  _sessions(session), _isComplete(false) {}
 
 Response::Response(const Response& other)
-		: HttpStatus(other), _statusMessage(other._statusMessage), _headers(other._headers),
+		: HttpStatus(other), _headers(other._headers),
 		  _body(other._body), _hasCgiRunning(other._hasCgiRunning), _runningCgi(other._runningCgi),
 		  _sessions(other._sessions), _isComplete(other._isComplete) {}
 
 Response& Response::operator=(const Response& other) {
 	if (this != &other) {
 		HttpStatus::operator=(other);
-		_statusMessage = other._statusMessage;
 		_headers	   = other._headers;
 		_body		   = other._body;
 		_hasCgiRunning = other._hasCgiRunning;
@@ -42,16 +41,6 @@ const Response::HeaderMap& Response::getHeaders() const {
 }
 const std::string& Response::getBody() const {
 	return _body;
-}
-
-void Response::setStatus(codeStatus codeStatus, const std::string& message) {
-	_statusCode	   = codeStatus;
-	_statusMessage = message;
-}
-
-void Response::setStatus(codeStatus codeStatus) {
-	_statusCode	   = codeStatus;
-	_statusMessage = HttpStatus::defaultMessage(codeStatus);
 }
 
 void Response::setHeader(const std::string& key, const std::string& value) {

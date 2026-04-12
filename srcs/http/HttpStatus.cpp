@@ -35,6 +35,11 @@ void HttpStatus::setStatus(codeStatus codeStatus, const std::string &message) {
 	_statusMessage = message;
 }
 
+void HttpStatus::setStatus(codeStatus codeStatus) {
+	_statusCode	   = codeStatus;
+	_statusMessage = HttpStatus::defaultMessage(codeStatus);
+}
+
 bool HttpStatus::isError() const {
 	return static_cast<int>(_statusCode) >= HTTP_400_BAD_REQUEST;
 }

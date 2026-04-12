@@ -42,11 +42,14 @@ void Response::deleteFolder(const Request& request, const std::string& fullPath)
 		return (errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR));
 	}
 	closedir(dir);
-	return (errorPage(request, HTTP_204_NO_CONTENT));
+	return (errorPage(request, HTTP_204_NO_CONTENT));  // ! errorPage is for errors
+	// setStatus(HTTP_204_NO_CONTENT);
+	// setBody("");
+	// return ;
 }
 
 void Response::handleDelete(const Request& request) {
-	struct stat			  info;
+	struct stat info;
 
 	std::string fullPath = request.resolveFullPath();
 	std::cout << "uri conflect " << request.getUri() << std::endl;

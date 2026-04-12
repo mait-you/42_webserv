@@ -135,7 +135,7 @@ int Cgi::createFiles() {
 }
 
 CgiInfo Cgi::start() {
-	const std::string& cgiPath = findCgiPath();
+	std::string cgiPath = findCgiPath();
 	if (cgiPath.empty())
 		return CgiInfo();
 

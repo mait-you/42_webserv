@@ -12,7 +12,6 @@ class Response : public HttpStatus {
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
 
   private:
-	std::string						   _statusMessage;
 	std::map<std::string, std::string> _headers;
 	std::string						   _body;
 
@@ -34,8 +33,6 @@ class Response : public HttpStatus {
 	const HeaderMap&   getHeaders() const;
 	const std::string& getBody() const;
 
-	void setStatus(codeStatus codeStatus);
-	void setStatus(codeStatus codeStatus, const std::string& message);
 	void setHeader(const std::string& key, const std::string& value);
 	void setBody(const std::string& body);
 
