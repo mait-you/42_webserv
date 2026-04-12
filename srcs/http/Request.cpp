@@ -75,7 +75,7 @@ bool Request::parseRequestLine(const std::string& buf) {
 	if (!matchedLocation())
 		return setError(HTTP_400_BAD_REQUEST);
 	detectCgi();
-	setState(PARSE_HEADERS);
+	setParseState(PARSE_HEADERS);
 	return true;
 }
 
@@ -87,7 +87,7 @@ bool Request::parseHeaders(const std::string& buf) {
 		if (line.empty()) {
 			if (!isValidHeaders())
 				return setError(HTTP_400_BAD_REQUEST);
-			setState(PARSE_BODY);
+			setParseState(PARSE_BODY);
 			return true;
 		}
 		std::size_t colon = line.find(':');
@@ -108,7 +108,7 @@ bool Request::parseBody(const std::string& buf) {
 	if (clStr.empty()) {
 		if (getHeader("transfer-encoding") == "chunked")
 			return setError(HTTP_501_NOT_IMPLEMENTED);
-		setState(PARSE_COMPLETE);
+		setParseState(PARSE_COMPLETE);
 		return true;
 	}
 	std::size_t		   cl = 0;
@@ -118,14 +118,14 @@ bool Request::parseBody(const std::string& buf) {
 	if (cl > _srvConf->client_max_body_size)
 		return setError(HTTP_413_REQUEST_ENTITY_TOO_LARGE);
 	if (cl == 0) {
-		setState(PARSE_COMPLETE);
+		setParseState(PARSE_COMPLETE);
 		return true;
 	}
 	if (buf.size() - _parsePos < cl)
 		return false;
 	_body = buf.substr(_parsePos, cl);
 	_parsePos += cl;
-	setState(PARSE_COMPLETE);
+	setParseState(PARSE_COMPLETE);
 	return true;
 }
 
@@ -238,10 +238,10 @@ std::string Request::resolvePath() const {
 
 bool Request::setError(codeStatus code) {
 	setStatus(code, HttpStatus::defaultMessage(code));
-	setState(PARSE_COMPLETE);
+	setParseState(PARSE_COMPLETE);
 	return false;
 }
-void Request::setState(ParseState state) {
+void Request::setParseState(ParseState state) {
 	_state = state;
 }
 

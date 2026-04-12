@@ -65,7 +65,7 @@ class Request : public HttpStatus {
 	void detectCgi();
 
 	bool setError(codeStatus code);  // throws
-	void setState(ParseState state);
+	void setParseState(ParseState state);
 
 	bool matchedLocation();
 };

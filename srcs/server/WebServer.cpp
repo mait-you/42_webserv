@@ -80,24 +80,15 @@ void WebServer::acceptClient(Socket& serverSock) {
 bool WebServer::handleRequest(Client& client) {
 	if (!client.recvData())
 		return false;
-	if (!client.parseRequest())
-		return true;
-	EPOLL_EVENT(ev);
-	ev.events  = EPOLLIN | EPOLLOUT;
-	ev.data.fd = client.getSocket().getFd();
-	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, ev.data.fd, &ev) == -1)
-		PRINT_WARNING("WebServer::removeClient", "epoll_ctl DEL failed");
+	client.parseRequest();
 	return true;
 }
 
 bool WebServer::handleResponse(Client& client) {
 	if (!client.buildResponse())
-		return true;
-	if (!client.sendData())
-		return false;
-	return true;
+		return true;		   // CGI still running, come back next iteration
+	return client.sendData();  // false = done = close
 }
-
 static void printEvent(const char* event, const WebServer& ws) {
 	std::cout << GRY "│ \n│── " RST << event << GRY " ──\n│ \n" RST;
 	std::cout << ws;
@@ -107,42 +98,45 @@ void WebServer::run() {
 	printPrefix();
 
 	while (running) {
-		int numEvents = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
-		if (numEvents == -1) {
+		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
+		if (n == -1) {
 			if (errno == EINTR)
 				continue;
 			THROW_ERROR("epoll_wait", "failed to wait for events");
 		}
 
-		for (int i = 0; i < numEvents; ++i) {
-			int	 fd	  = _events[i].data.fd;
-			bool keep = true;
+		for (int i = 0; i < n; ++i) {
+			int fd = _events[i].data.fd;
 
-			// Server socket first
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
 				printEvent(GRN "Client connected" RST, *this);
 				continue;
 			}
 
-			// only for clients
-			Client& client = _clients[fd];
+			Client::It it = _clients.find(fd);
+			if (it == _clients.end())
+				continue;
+			Client& client = it->second;
+			bool keep = true;
 
-			// Recv
 			if (_events[i].events & EPOLLIN) {
 				keep = handleRequest(client);
-				if (client.getRequest().isComplete())
+				if (keep && client.getRequest().isComplete()) {
+					EPOLL_EVENT(ev);
+					ev.events  = EPOLLIN | EPOLLOUT;
+					ev.data.fd = fd;
+					epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
 					printEvent(CYN "Request received" RST, *this);
+				}
 			}
 
-			// Send
 			if (keep && (_events[i].events & EPOLLOUT)) {
 				keep = handleResponse(client);
 				if (client.getResponse().isComplete())
 					printEvent(YEL "Response sent" RST, *this);
 			}
 
-			// cleanup
 			if (!keep) {
 				removeClient(client);
 				printEvent(GRY "Client disconnected" RST, *this);

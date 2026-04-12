@@ -46,6 +46,7 @@ class HttpStatus {
 	codeStatus	getStatusCode() const;
 	std::string getStatusMessage() const;
 	void		setStatus(codeStatus codeStatus, const std::string &message);
+	void		setStatus(codeStatus codeStatus);
 	bool		isError() const;
 	bool		isSuccess() const;
 

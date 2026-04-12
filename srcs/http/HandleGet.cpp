@@ -8,7 +8,7 @@ std::string extractId(std::string& cookie) {
 	while (std::getline(ss, str, ';')) {
 		size_t pos = str.find("session_id=");
 		if (pos != std::string::npos)
-			return str.substr(11);
+			return str.substr(11);	// ! pos + length of "session_id="
 	}
 	return "";
 }
@@ -52,7 +52,7 @@ int Response::handleLogout(const Request& request) {
 				if (it->first == sessionId) {
 					it->second.isLogged = false;
 					setStatus(HTTP_302_FOUND, "Found");
-					setHeader("Location", "/login.html");
+					setHeader("Location", URI_LOGIN);
 					return 1;
 				}
 			}
@@ -82,9 +82,9 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 		return;
 	}
 	int flag = 0;
-	if (request.getUri() == "/dashboard.html")
+	if (request.getUri() == URI_DASHBOARD)
 		flag = handleDashboard(request, fullPath);
-	else if (request.getUri() == "/logout.html")
+	else if (request.getUri() == URI_LOGOUT)
 		flag = handleLogout(request);
 
 	if (flag == 1)

@@ -68,7 +68,7 @@ void Response::handlePost(const Request& request) {
 			setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly");
 		}
 		setStatus(HTTP_302_FOUND, "Found");
-		setHeader("Location", "/dashboard.html");
+		setHeader("Location", URI_DASHBOARD);
 		return;
 	}
 
@@ -81,7 +81,7 @@ void Response::handlePost(const Request& request) {
 	if (!uploadDir.empty() && uploadDir[uploadDir.size() - 1] != '/')
 		uploadDir += '/';
 
-	std::ostringstream oss;
+	std::ostringstream	 oss;
 	static unsigned long uploadCounter = 0;
 	oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
 

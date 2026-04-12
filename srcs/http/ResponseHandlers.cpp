@@ -9,7 +9,6 @@ int Response::handleErrorFile(const std::string& fullPath) {
 		return 0;
 	std::stringstream ss;
 	ss << file.rdbuf();
-	// ! file.close(); // zt lik hadi
 	std::string extension = getExtension(fullPath);
 	setHeader("Content-type", Mime::getType(extension));
 	setBody(ss.str());

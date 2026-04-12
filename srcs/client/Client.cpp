@@ -42,38 +42,32 @@ bool Client::parseRequest() {
 }
 
 bool Client::sendData() {
-	if (_response.hasCgiRunning() || _sendBuffer.empty())
-		return true;
-	if (_bytesSent >= _sendBuffer.size())
-		return true;
+	if (_sendBuffer.empty() || _bytesSent >= _sendBuffer.size())
+		return false;
+
 	ssize_t n =
 		send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent, _sendBuffer.size() - _bytesSent, 0);
 	if (n < 0)
 		return false;
+
 	_bytesSent += static_cast<std::size_t>(n);
-	if (_bytesSent == _sendBuffer.size()) {
+	if (_bytesSent >= _sendBuffer.size()) {
 		_sendBuffer.clear();
 		_bytesSent = 0;
-		return false;
+		return false;  // fully sent → close
 	}
-	return true;
+	return true;  // partial send → keep sending
 }
 
 bool Client::buildResponse() {
 	if (_response.hasCgiRunning()) {
 		if (!_response.pollCgi(_request))
-			return true;
+			return false;  // CGI not done yet
 		_sendBuffer = _response.buildSendBuffer();
-		if (_sendBuffer.empty())
-			return false;
-		return true;
+		return true;  // CGI done, buffer ready
 	}
-
 	_sendBuffer = _response.build(_request);
-	if (_sendBuffer.empty() && !_response.hasCgiRunning())
-		return false;
-
-	return true;
+	return !_response.hasCgiRunning();	// false only if CGI just started
 }
 
 Socket& Client::getSocket() {
