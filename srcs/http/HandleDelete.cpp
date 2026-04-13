@@ -1,7 +1,6 @@
 #include "../../includes/Response.hpp"
 
 void Response::deleteFolder(const Request& request, const std::string& fullPath) {
-	std::cout << "fullPath " << fullPath << std::endl;
 	DIR* dir = opendir(fullPath.c_str());
 	if (!dir)
 		return (errorPage(request, HTTP_403_FORBIDDEN));
@@ -12,7 +11,6 @@ void Response::deleteFolder(const Request& request, const std::string& fullPath)
 			continue;
 
 		std::string entryPath = fullPath + entry->d_name;
-		std::cout << "entryPath " << entryPath << std::endl;
 		struct stat info;
 		if (stat(entryPath.c_str(), &info) != 0) {
 			closedir(dir);
@@ -42,25 +40,19 @@ void Response::deleteFolder(const Request& request, const std::string& fullPath)
 		return (errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR));
 	}
 	closedir(dir);
-	return (errorPage(request, HTTP_204_NO_CONTENT));  // ! errorPage is for errors
-	// setStatus(HTTP_204_NO_CONTENT);
-	// setBody("");
-	// return ;
+	return (errorPage(request, HTTP_204_NO_CONTENT));
 }
 
 void Response::handleDelete(const Request& request) {
 	struct stat info;
 
 	std::string fullPath = request.resolveFullPath();
-	std::cout << "uri conflect " << request.getUri() << std::endl;
 	if (stat(fullPath.c_str(), &info) == -1)
 		errorPage(request, HTTP_404_NOT_FOUND);
 	else if (S_ISDIR(info.st_mode)) {
-		std::cout << "fullPath conflect " << fullPath << std::endl;
-		if (fullPath[fullPath.size() - 1] == '/')
-			deleteFolder(request, fullPath);
-		// else
-		// 	errorPage(srv, locConfig, 409);
+		if (fullPath[fullPath.size() - 1] != '/')
+			fullPath += '/';
+		deleteFolder(request, fullPath);
 	} else if (access(fullPath.c_str(), W_OK) == -1)
 		errorPage(request, HTTP_403_FORBIDDEN);
 	else if (std::remove(fullPath.c_str()) != 0)
