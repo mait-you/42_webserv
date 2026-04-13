@@ -189,6 +189,16 @@ bool Request::hasCgi() const {
 std::string Request::resolveFullPath() const {
 	std::string root = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
 	std::string rest = resolvePath();
+	std::string loc = _locConf->path;
+
+	if (loc != "/" && rest.find(loc) == 0 &&
+		(rest.length() == loc.length() || rest[loc.length()] == '/')) {
+		rest = rest.substr(loc.length());
+		if (rest.empty()) {
+			rest = "/";
+		}
+	}
+
 	if (_hasCgi) {
 		for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
 			 it != _locConf->cgi.end(); it++) {
@@ -199,6 +209,10 @@ std::string Request::resolveFullPath() const {
 			}
 		}
 	}
+	if (root[root.length() - 1] == '/' && rest[0] == '/')
+		return root + rest.substr(1);
+	if (root[root.length() - 1] != '/' && rest[0] != '/')
+		return root + "/" + rest;
 	return root + rest;
 }
 
