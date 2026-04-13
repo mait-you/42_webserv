@@ -15,25 +15,27 @@ void parselisten(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
 		throw std::runtime_error("Invalid config: Expected port");
 	}
 	std::string port;
-	size_t		pos = 0;
-	pos				= tokens[i].value.find(':');
+	size_t pos = 0;
+	std::string parsedHost = server.host;
+
+	pos = tokens[i].value.find(':');
 	if (pos != std::string::npos) {
-		server.host = tokens[i].value.substr(0, pos);
-		if (server.host.empty()) {
+		parsedHost = tokens[i].value.substr(0, pos);
+		if (parsedHost.empty())
 			throw std::runtime_error("Invalid config: invalid host");
-		}
 		port = tokens[i].value.substr(pos + 1);
-		if (server.host.empty() || !isNumber(port) || !isValidPort(port)) {
-			throw std::runtime_error("Invalid config: invalid port");
-		}
-		server.ports.push_back(port);
 	} else {
-		if (tokens[i].value.empty() || !isNumber(tokens[i].value) ||
-			!isValidPort(tokens[i].value)) {
-			throw std::runtime_error("Invalid config: invalid port");
-		}
-		server.ports.push_back(tokens[i].value);
+		port = tokens[i].value;
 	}
+	if (!isNumber(port) || !isValidPort(port))
+		throw std::runtime_error("Invalid config: invalid port");
+	for (size_t j = 0; j < server.ports.size(); j++) {
+		if (server.ports[j] == port && server.host == parsedHost) {
+			throw std::runtime_error("Invalid config: duplicate listen");
+		}
+	}
+	server.host = parsedHost;
+	server.ports.push_back(port);
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
