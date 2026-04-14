@@ -53,7 +53,7 @@ bool Request::isValidHeaders() const {
 	if (clHeader.empty())
 		return true;
 	long cl = std::atol(clHeader.c_str());
-	if (cl < 0 || static_cast<std::size_t>(cl) > _srvConf->client_max_body_size)
+	if (cl < 0)
 		return false;
 	return true;
 }
