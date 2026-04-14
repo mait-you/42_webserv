@@ -191,11 +191,13 @@ std::string Request::resolveFullPath() const {
 	std::string rest = resolvePath();
 	std::string loc = _locConf->path;
 
-	if (loc != "/" && rest.find(loc) == 0 &&
-		(rest.length() == loc.length() || rest[loc.length()] == '/')) {
-		rest = rest.substr(loc.length());
-		if (rest.empty()) {
-			rest = "/";
+	if (_locConf->isAlias) {
+		if (loc != "/" && rest.find(loc) == 0 &&
+			(rest.length() == loc.length() || rest[loc.length()] == '/')) {
+			rest = rest.substr(loc.length());
+			if (rest.empty()) {
+				rest = "/";
+			}
 		}
 	}
 
