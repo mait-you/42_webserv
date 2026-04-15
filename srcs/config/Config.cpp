@@ -25,11 +25,12 @@ ServerConfig::ServerConfig() {
 
 LocationConfig::LocationConfig() {
 	allow_methods.push_back("GET");
-	autoindex	  = false;
-	upload		  = false;
-	has_redirect  = false;
-	redirect_code = 0;
-	has_cgi		  = false;
+	autoindex		= false;
+	upload			= false;
+	has_redirect	= false;
+	redirect_code	= 0;
+	has_cgi			= false;
+	isAlias			= false;
 }
 
 bool hasSamePort(const ServerConfig& a, const ServerConfig& b) {

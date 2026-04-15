@@ -24,6 +24,7 @@ struct LocationConfig {
 	std::map<int, std::string>		 	error_pages;
 	bool							 	has_cgi;
 	std::map<std::string, std::string>	cgi;
+	bool								isAlias;
 	LocationConfig();
 };
 

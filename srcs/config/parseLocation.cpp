@@ -157,6 +157,20 @@ void parseredirection(size_t& i, std::vector<Token>& tokens, LocationConfig& loc
 	i++;
 }
 
+void parseAlias(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+	i++;
+	if (i >= tokens.size() || tokens[i].type != word) {
+		throw std::runtime_error("Invalid config: Expected Alias");
+	}
+	location.isAlias = true;
+	location.root = tokens[i].value;
+	i++;
+	if (i >= tokens.size() || tokens[i].type != semiColone) {
+		throw std::runtime_error("Invalid config: Expected ;");
+	}
+	i++;
+}
+
 void parseLocation(std::vector<Token>& tokens, size_t& i, LocationConfig& location) {
 	size_t tokenSize = tokens.size();
 	if (i >= tokenSize) {
@@ -182,6 +196,8 @@ void parseLocation(std::vector<Token>& tokens, size_t& i, LocationConfig& locati
 			parseredirection(i, tokens, location);
 		else if (tokens[i].type == word && tokens[i].value == "root")
 			parseRoot(i, tokens, location);
+		else if (tokens[i].type == word && tokens[i].value == "alias")
+			parseAlias(i, tokens, location);
 		else {
 			std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
 			throw std::runtime_error(str);
