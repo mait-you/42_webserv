@@ -1,8 +1,8 @@
 #ifndef SOCKET_HPP
 #define SOCKET_HPP
 
-#include "Config.hpp"
-#include "Head.hpp"
+#include "../config/Config.hpp"
+#include "../Head.hpp"
 
 class Socket {
   public:

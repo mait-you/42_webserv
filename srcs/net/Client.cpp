@@ -1,4 +1,4 @@
-#include "../../includes/Client.hpp"
+#include "../../includes/net/Client.hpp"
 
 Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response() {}

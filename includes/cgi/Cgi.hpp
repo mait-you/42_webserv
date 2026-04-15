@@ -1,9 +1,9 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
-#include "Config.hpp"
-#include "Head.hpp"
-#include "Request.hpp"
+#include "../config/Config.hpp"
+#include "../Head.hpp"
+#include "../http/Request.hpp"
 
 struct CgiInfo {
 	pid_t		pid;

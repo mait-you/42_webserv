@@ -1,7 +1,7 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include "Head.hpp"
+#include "../Head.hpp"
 
 enum TokenType { word, openBrace, closeBrace, semiColone };
 
@@ -65,4 +65,3 @@ void				parseLocation(std::vector<Token>& tokens, size_t& i, LocationConfig& loc
 void				parseServer(std::vector<Token>& tokens, size_t& i, ServerConfig& server);
 
 #endif
-

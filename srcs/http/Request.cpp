@@ -1,4 +1,6 @@
-#include "../../includes/Request.hpp"
+#include "../../includes/http/Request.hpp"
+
+#include "../includes/utils/Utils.hpp"
 
 Request::Request()
 		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(NULL), _locConf(NULL), _state(PARSE_REQUEST_LINE),
@@ -42,10 +44,9 @@ bool Request::matchedLocation() {
 		const std::string& path = _srvConf->locations[i].path;
 		if (uri.compare(0, path.size(), path) == 0) {
 			if (path == "/" || uri.size() == path.size() || uri[path.size()] == '/') {
-			
 				if (path.size() > matchedLen) {
 					matchedLen = path.size();
-					_locConf = &_srvConf->locations[i];
+					_locConf   = &_srvConf->locations[i];
 				}
 			}
 		}
@@ -189,10 +190,10 @@ bool Request::hasCgi() const {
 std::string Request::resolveFullPath() const {
 	std::string root = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
 	std::string rest = resolvePath();
-	std::string loc = _locConf->path;
+	std::string loc	 = _locConf->path;
 
-	if (loc != "/" && rest.find(loc) == 0 &&
-		(rest.length() == loc.length() || rest[loc.length()] == '/')) {
+	if (loc != "/" && rest.find(loc) == 0
+		&& (rest.length() == loc.length() || rest[loc.length()] == '/')) {
 		rest = rest.substr(loc.length());
 		if (rest.empty()) {
 			rest = "/";

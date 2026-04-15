@@ -1,4 +1,5 @@
-#include "../../includes/Config.hpp"
+#include "../../includes/config/Config.hpp"
+#include "../includes/utils/Utils.hpp"
 
 bool dupLocation(std::vector<LocationConfig> locations, std::string path) {
 	for (size_t i = 0; i < locations.size(); i++) {
@@ -9,13 +10,13 @@ bool dupLocation(std::vector<LocationConfig> locations, std::string path) {
 	return false;
 }
 
-void parselisten(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
+void parselisten(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected port");
 	}
 	std::string port;
-	size_t pos = 0;
+	size_t		pos		   = 0;
 	std::string parsedHost = server.host;
 
 	pos = tokens[i].value.find(':');
@@ -43,7 +44,7 @@ void parselisten(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
 	i++;
 }
 
-void parseServerName(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
+void parseServerName(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected server name");
@@ -56,7 +57,7 @@ void parseServerName(size_t &i, std::vector<Token> &tokens, ServerConfig &server
 	i++;
 }
 
-void parseRoot(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
+void parseRoot(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected root");
@@ -69,7 +70,7 @@ void parseRoot(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
 	i++;
 }
 
-void parseServerIndex(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
+void parseServerIndex(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected index");
@@ -82,7 +83,7 @@ void parseServerIndex(size_t &i, std::vector<Token> &tokens, ServerConfig &serve
 	i++;
 }
 
-void parseErrorPage(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
+void parseErrorPage(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected error page");
@@ -105,14 +106,14 @@ void parseErrorPage(size_t &i, std::vector<Token> &tokens, ServerConfig &server)
 	i++;
 }
 
-void parseMaxSize(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
+void parseMaxSize(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected client max body size");
 	}
-	unsigned long		value;
-	std::string			remaining;
-	std::stringstream	ss(tokens[i].value);
+	unsigned long	  value;
+	std::string		  remaining;
+	std::stringstream ss(tokens[i].value);
 	ss >> value;
 	if (ss.fail()) {
 		throw std::runtime_error("Invalid config: client max body size not valid");
@@ -137,7 +138,7 @@ void parseMaxSize(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
 	i++;
 }
 
-void parseLocation(size_t &i, std::vector<Token> &tokens, ServerConfig &server) {
+void parseLocation(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: unexpected location path");
@@ -156,15 +157,14 @@ void parseLocation(size_t &i, std::vector<Token> &tokens, ServerConfig &server) 
 	}
 	i++;
 	parseLocation(tokens, i, location);
-	if (i>= tokens.size() || tokens[i].type != closeBrace)
-	{
+	if (i >= tokens.size() || tokens[i].type != closeBrace) {
 		throw std::runtime_error("Invalid config: expected } in location");
 	}
 	i++;
 	server.locations.push_back(location);
 }
 
-void parseServer(std::vector<Token> &tokens, size_t &i, ServerConfig &server) {
+void parseServer(std::vector<Token>& tokens, size_t& i, ServerConfig& server) {
 	size_t tokenSize = tokens.size();
 	if (i >= tokenSize) {
 		throw std::runtime_error("Invalid config: expected }");

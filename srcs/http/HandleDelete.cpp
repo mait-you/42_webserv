@@ -1,4 +1,4 @@
-#include "../../includes/Response.hpp"
+#include "../../includes/http/Response.hpp"
 
 void Response::deleteFolder(const Request& request, const std::string& fullPath) {
 	DIR* dir = opendir(fullPath.c_str());

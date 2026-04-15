@@ -1,4 +1,5 @@
-#include "../includes/WebServer.hpp"
+#include "../includes/net/WebServer.hpp"
+#include "../includes/utils/Utils.hpp"
 
 int main(int ac, char** av) {
 	if (ac > 2) {

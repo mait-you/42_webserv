@@ -1,7 +1,7 @@
 #ifndef MIMETYPES_HPP
 #define MIMETYPES_HPP
 
-#include "Head.hpp"
+#include "../Head.hpp"
 
 class Mime {
   private:

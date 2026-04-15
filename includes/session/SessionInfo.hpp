@@ -1,7 +1,7 @@
 #ifndef SESSION_HPP
 #define SESSION_HPP
 
-#include "Head.hpp"
+#include "../Head.hpp"
 
 #define URI_LOGIN      "/login.html"
 #define URI_DASHBOARD  "/dashboard.html"

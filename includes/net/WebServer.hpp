@@ -1,12 +1,8 @@
 #ifndef WEBSERVER_HPP
 #define WEBSERVER_HPP
 
+
 #include "Client.hpp"
-#include "Config.hpp"
-#include "Request.hpp"
-#include "Response.hpp"
-#include "SessionInfo.hpp"
-#include "Socket.hpp"
 
 typedef struct epoll_event t_ev;
 #define MAX_EVENTS 10

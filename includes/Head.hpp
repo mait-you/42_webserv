@@ -36,23 +36,7 @@
 
 #define HTTP_VERSION "HTTP/1.0"
 
-#define THROW_ERROR(context, detail) throwError(__FILE__, __LINE__, context, detail)
-#define PRINT_WARNING(context, detail) printWarning(__FILE__, __LINE__, context, detail)
-
-void		setupSignals();
-bool		isNumber(const std::string& str);
-bool		isValidPort(const std::string& str);
-std::string ipv4Tostr(uint32_t ip);
-std::string portTostr(uint16_t port);
-std::string toLower(const std::string& s);
-std::string trimStr(const std::string& s);
-bool		getLine(const std::string& buf, std::size_t& pos, std::string& line);
-std::string getExtension(const std::string& fullPath);
-void		throwError(const std::string& file, int line, const std::string& context,
-					   const std::string& detail);
-void		printWarning(const std::string& file, int line, const std::string& context,
-						 const std::string& detail);
-std::string toString(int val);
-std::string htmlEscape(const std::string& s);
+#define ERROR_LOG(context, detail) throwError(__FILE__, __LINE__, context, detail)
+#define WARNING_LOG(context, detail) printWarning(__FILE__, __LINE__, context, detail)
 
 #endif

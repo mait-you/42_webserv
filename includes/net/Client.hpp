@@ -1,9 +1,9 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "Request.hpp"
-#include "Response.hpp"
-#include "SessionInfo.hpp"
+#include "../http/Request.hpp"
+#include "../http/Response.hpp"
+#include "../session/SessionInfo.hpp"
 #include "Socket.hpp"
 
 #define RECV_BUFFER_SIZE 4096

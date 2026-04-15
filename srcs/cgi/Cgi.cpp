@@ -1,4 +1,4 @@
-#include "../../includes/Cgi.hpp"
+#include "../../includes/cgi/Cgi.hpp"
 
 Cgi::Cgi() : _req(), _srv(), _loc(NULL), _scriptPath(""), _resPath(""), _bodyPath("") {}
 

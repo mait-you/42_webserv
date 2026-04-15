@@ -4,33 +4,34 @@ OBJ_DIR = obj
 INC_DIR = includes
 
 CXX      = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INC_DIR)
 
 HEADERS = \
-	$(INC_DIR)/WebServer.hpp    \
-	$(INC_DIR)/Cgi.hpp          \
-	$(INC_DIR)/Client.hpp       \
-	$(INC_DIR)/Config.hpp       \
-	$(INC_DIR)/Head.hpp         \
-	$(INC_DIR)/MimeTypes.hpp    \
-	$(INC_DIR)/Request.hpp      \
-	$(INC_DIR)/Response.hpp     \
-	$(INC_DIR)/HttpStatus.hpp   \
-	$(INC_DIR)/Socket.hpp       \
-	$(INC_DIR)/SessionInfo.hpp
+	$(INC_DIR)/Head.hpp                  \
+	$(INC_DIR)/net/WebServer.hpp         \
+	$(INC_DIR)/net/Socket.hpp            \
+	$(INC_DIR)/net/Client.hpp            \
+	$(INC_DIR)/cgi/Cgi.hpp              \
+	$(INC_DIR)/config/Config.hpp         \
+	$(INC_DIR)/http/MimeTypes.hpp        \
+	$(INC_DIR)/http/Request.hpp          \
+	$(INC_DIR)/http/Response.hpp         \
+	$(INC_DIR)/http/HttpStatus.hpp       \
+	$(INC_DIR)/session/SessionInfo.hpp   \
+	$(INC_DIR)/utils/Logger.hpp          \
+	$(INC_DIR)/utils/Utils.hpp
 
 SRCS = \
 	$(SRC_DIR)/main.cpp                     \
-	$(SRC_DIR)/server/WebServer.cpp         \
-	$(SRC_DIR)/server/Socket.cpp            \
+	$(SRC_DIR)/net/WebServer.cpp            \
+	$(SRC_DIR)/net/Socket.cpp              \
+	$(SRC_DIR)/net/Client.cpp              \
 	$(SRC_DIR)/config/Config.cpp            \
 	$(SRC_DIR)/config/tokenize.cpp          \
 	$(SRC_DIR)/config/parseLocation.cpp     \
 	$(SRC_DIR)/config/serverConfig.cpp      \
-	$(SRC_DIR)/client/Client.cpp            \
 	$(SRC_DIR)/http/Request.cpp             \
 	$(SRC_DIR)/http/RequestValidtion.cpp    \
-	$(SRC_DIR)/utils/Utils.cpp              \
 	$(SRC_DIR)/http/ResponseHelpers.cpp     \
 	$(SRC_DIR)/http/ResponseHandlers.cpp    \
 	$(SRC_DIR)/http/HandlePost.cpp          \
@@ -39,7 +40,8 @@ SRCS = \
 	$(SRC_DIR)/http/Response.cpp            \
 	$(SRC_DIR)/http/MimeTypes.cpp           \
 	$(SRC_DIR)/http/HttpStatus.cpp          \
-	$(SRC_DIR)/cgi/Cgi.cpp
+	$(SRC_DIR)/cgi/Cgi.cpp                  \
+	$(SRC_DIR)/utils/Utils.cpp
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
@@ -68,6 +70,6 @@ fclean: clean
 
 re: fclean all
 
-.PHONY:    all clean fclean re
+.PHONY: all clean fclean re
 .SILENT:
-.NOTPARALLEL: 
+.NOTPARALLEL:

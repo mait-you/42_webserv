@@ -1,6 +1,6 @@
-#include "../../includes/Config.hpp"
+#include "../../includes/config/Config.hpp"
 
-void parseIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseIndex(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected index");
@@ -13,7 +13,7 @@ void parseIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &location)
 	i++;
 }
 
-void parseRoot(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseRoot(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected root");
@@ -26,7 +26,7 @@ void parseRoot(size_t &i, std::vector<Token> &tokens, LocationConfig &location) 
 	i++;
 }
 
-void parseUploadPath(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseUploadPath(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected upload path");
@@ -40,7 +40,7 @@ void parseUploadPath(size_t &i, std::vector<Token> &tokens, LocationConfig &loca
 	i++;
 }
 
-void parseAutoIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseAutoIndex(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected auto index");
@@ -59,15 +59,16 @@ void parseAutoIndex(size_t &i, std::vector<Token> &tokens, LocationConfig &locat
 	i++;
 }
 
-void parseAllowedMethods(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseAllowedMethods(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected upload allowed methods");
 	}
 	location.allow_methods.clear();
 	for (int j = 1; j <= 3; j++) {
-		if (tokens[i].type == word && (tokens[i].value == "GET" || tokens[i].value == "POST" ||
-									   tokens[i].value == "DELETE")) {
+		if (tokens[i].type == word
+			&& (tokens[i].value == "GET" || tokens[i].value == "POST"
+				|| tokens[i].value == "DELETE")) {
 			location.allow_methods.push_back(tokens[i].value);
 			i++;
 		} else if (tokens[i].type == semiColone && j != 1) {
@@ -82,7 +83,7 @@ void parseAllowedMethods(size_t &i, std::vector<Token> &tokens, LocationConfig &
 	i++;
 }
 
-void parseErrorPage(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseErrorPage(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected error page");
@@ -105,7 +106,7 @@ void parseErrorPage(size_t &i, std::vector<Token> &tokens, LocationConfig &locat
 	i++;
 }
 
-void parseCgi(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseCgi(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected cgi extension");
@@ -117,7 +118,7 @@ void parseCgi(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
 		throw std::runtime_error("Invalid config: Expected cgi interpreter path");
 	}
 	location.cgi[extension] = tokens[i].value;
-	location.has_cgi = true;
+	location.has_cgi		= true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -125,7 +126,7 @@ void parseCgi(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
 	i++;
 }
 
-void parseredirection(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+void parseredirection(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected redirection status codeStatus");
@@ -156,7 +157,7 @@ void parseredirection(size_t &i, std::vector<Token> &tokens, LocationConfig &loc
 	i++;
 }
 
-void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &location) {
+void parseLocation(std::vector<Token>& tokens, size_t& i, LocationConfig& location) {
 	size_t tokenSize = tokens.size();
 	if (i >= tokenSize) {
 		throw std::runtime_error("Invalid config: expected }");

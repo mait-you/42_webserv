@@ -1,10 +1,13 @@
-#include "../../includes/Socket.hpp"
+#include "../../includes/net/Socket.hpp"
+
+#include "../includes/utils/Logger.hpp"
+#include "../includes/utils/Utils.hpp"
 
 Socket::Socket() : _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {}
 
 Socket::Socket(int fd) : _fd(-1), _ip(""), _port(""), _is_bound(false), _is_listening(false) {
 	if (fd == -1)
-		THROW_ERROR("Socket constructor", "fd is -1 (invalid socket)");
+		ERROR_LOG("Socket constructor", "fd is -1 (invalid socket)");
 	_fd = fd;
 }
 
@@ -32,7 +35,7 @@ Socket::~Socket() {}
 
 void Socket::createAndBind() {
 	if (_fd != -1)
-		THROW_ERROR("Socket::createAndBind", "Socket already " + toString(_fd));
+		ERROR_LOG("Socket::createAndBind", "Socket already " + toString(_fd));
 	struct addrinfo	 hints;
 	struct addrinfo *result = NULL, *rp = NULL;
 
@@ -43,7 +46,7 @@ void Socket::createAndBind() {
 
 	int status = getaddrinfo(_ip.empty() ? NULL : _ip.c_str(), _port.c_str(), &hints, &result);
 	if (status != 0)
-		THROW_ERROR("getaddrinfo", gai_strerror(status));
+		ERROR_LOG("getaddrinfo", gai_strerror(status));
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (_fd == -1)
@@ -63,26 +66,26 @@ void Socket::createAndBind() {
 	}
 	freeaddrinfo(result);
 	if (!_is_bound)
-		THROW_ERROR("Socket::createAndBind", "failed to bind on " + _ip + ":" + _port);
+		ERROR_LOG("Socket::createAndBind", "failed to bind on " + _ip + ":" + _port);
 	if (fcntl(_fd, F_SETFD, FD_CLOEXEC) == -1)
-		THROW_ERROR("Socket::createAndBind::fcntl", "failed to set FD_CLOEXEC");
+		ERROR_LOG("Socket::createAndBind::fcntl", "failed to set FD_CLOEXEC");
 }
 
 void Socket::setNonBlocking() {
 	if (_fd == -1)
-		THROW_ERROR("Socket::setNonBlocking", "socket not created");
+		ERROR_LOG("Socket::setNonBlocking", "socket not created");
 	int flags = fcntl(_fd, F_GETFL, 0);
 	if (flags == -1)
-		THROW_ERROR("fcntl", "F_GETFL failed");
+		ERROR_LOG("fcntl", "F_GETFL failed");
 	if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		THROW_ERROR("fcntl", "F_SETFL O_NONBLOCK failed");
+		ERROR_LOG("fcntl", "F_SETFL O_NONBLOCK failed");
 }
 
 void Socket::startListening(int backlog) {
 	if (!_is_bound)
-		THROW_ERROR("Socket::startListening", "socket is not bound");
+		ERROR_LOG("Socket::startListening", "socket is not bound");
 	if (listen(_fd, backlog) == -1)
-		THROW_ERROR("listen", "failed to start listening");
+		ERROR_LOG("listen", "failed to start listening");
 	_is_listening = true;
 }
 
@@ -93,10 +96,10 @@ Socket Socket::accept() {
 
 	int clientFd = ::accept(_fd, (struct sockaddr*) &client_addr, &addr_len);
 	if (clientFd == -1)
-		THROW_ERROR("Socket::accept", "accept() failed");
+		ERROR_LOG("Socket::accept", "accept() failed");
 	if (fcntl(clientFd, F_SETFD, FD_CLOEXEC) == -1) {
 		::close(clientFd);
-		THROW_ERROR("fcntl", "failed to set FD_CLOEXEC");
+		ERROR_LOG("fcntl", "failed to set FD_CLOEXEC");
 	}
 	Socket s(clientFd);
 	s.setIp(ipv4Tostr(client_addr.sin_addr.s_addr));

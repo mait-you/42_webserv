@@ -1,5 +1,5 @@
-#include "../../includes/MimeTypes.hpp"
-#include "../../includes/Response.hpp"
+#include "../../includes/http/MimeTypes.hpp"
+#include "../../includes/http/Response.hpp"
 
 std::string randomSessionId() {
 	static unsigned long idCounter = 0;

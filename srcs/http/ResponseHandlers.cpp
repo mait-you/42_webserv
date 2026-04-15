@@ -1,5 +1,8 @@
-#include "../../includes/MimeTypes.hpp"
-#include "../../includes/Response.hpp"
+#include "../../includes/http/MimeTypes.hpp"
+#include "../../includes/http/Response.hpp"
+
+#include "../includes/utils/Utils.hpp"
+
 
 int Response::handleErrorFile(const std::string& fullPath) {
 	if (access(fullPath.c_str(), F_OK) == -1)

@@ -1,9 +1,9 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
-#include "Cgi.hpp"
-#include "Request.hpp"
-#include "SessionInfo.hpp"
+#include "../cgi/Cgi.hpp"
+#include "../http/Request.hpp"
+#include "../session/SessionInfo.hpp"
 
 class Response : public HttpStatus {
   public:
@@ -45,7 +45,7 @@ class Response : public HttpStatus {
 	std::string buildSendBuffer();
 
   private:
-	void handleRedirect(const Request& request); 
+	void handleRedirect(const Request& request);
 	void dispatch(const Request& request);
 
 	// helpers

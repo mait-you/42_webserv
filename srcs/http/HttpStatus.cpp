@@ -1,4 +1,4 @@
-#include "../../includes/HttpStatus.hpp"
+#include "../../includes/http/HttpStatus.hpp"
 
 HttpStatus::HttpStatus() : _statusCode(HTTP_200_OK), _statusMessage("OK") {
 }

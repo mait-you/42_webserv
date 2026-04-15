@@ -1,4 +1,4 @@
-#include "../../includes/MimeTypes.hpp"
+#include "../../includes/http/MimeTypes.hpp"
 
 Mime::MimeMap Mime::_types = Mime::_initTypes();
 

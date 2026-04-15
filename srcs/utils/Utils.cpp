@@ -1,5 +1,5 @@
 #include "../../includes/Head.hpp"
-#include "../../includes/WebServer.hpp"
+#include "../../includes/net/WebServer.hpp"
 
 static void handler(int) {
 	WebServer::running = false;
