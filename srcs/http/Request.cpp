@@ -1,6 +1,6 @@
 #include "../../includes/http/Request.hpp"
 
-#include "../includes/utils/Utils.hpp"
+#include "../../includes/utils/Utils.hpp"
 
 Request::Request()
 		: HttpStatus(HTTP_200_OK, "OK"), _srvConf(NULL), _locConf(NULL), _state(PARSE_REQUEST_LINE),

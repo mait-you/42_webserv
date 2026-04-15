@@ -1,7 +1,7 @@
 #include "../../includes/net/WebServer.hpp"
 
-#include "../includes/utils/Logger.hpp"
-#include "../includes/utils/Utils.hpp"
+#include "../../includes/utils/Logger.hpp"
+#include "../../includes/utils/Utils.hpp"
 
 bool WebServer::running = true;
 
@@ -17,9 +17,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 		const ServerConfig& srv = servers[i];
 		for (std::size_t j = 0; j < srv.ports.size(); ++j) {
 			Socket sock(srv.host, srv.ports[j], &srv);
-			sock.createAndBind();
-			sock.setNonBlocking();
-			sock.startListening(128);
+			sock.setup();
 			EPOLL_EVENT(ev);
 			ev.events  = EPOLLIN;
 			ev.data.fd = sock.getFd();
@@ -64,7 +62,6 @@ void WebServer::acceptClient(Socket& serverSock) {
 	Socket newSock;
 	try {
 		newSock = serverSock.accept();
-		newSock.setNonBlocking();
 	} catch (const std::exception& e) {
 		newSock.close();
 		return;
@@ -89,12 +86,8 @@ bool WebServer::handleRequest(Client& client) {
 
 bool WebServer::handleResponse(Client& client) {
 	if (!client.buildResponse())
-		return true;		   // CGI still running, come back next iteration
-	return client.sendData();  // false = done = close
-}
-static void printEvent(const char* event, const WebServer& ws) {
-	std::cout << GRY "│ \n│── " RST << event << GRY " ──\n│ \n" RST;
-	std::cout << ws;
+		return true;
+	return client.sendData();
 }
 
 void WebServer::run() {
@@ -113,7 +106,7 @@ void WebServer::run() {
 
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
-				printEvent(GRN "Client connected" RST, *this);
+				printEvent(GRN "Client connected" RST);
 				continue;
 			}
 
@@ -130,24 +123,29 @@ void WebServer::run() {
 					ev.events  = EPOLLIN | EPOLLOUT;
 					ev.data.fd = fd;
 					epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
-					printEvent(CYN "Request received" RST, *this);
+					printEvent(CYN "Request received" RST);
 				}
 			}
 
 			if (keep && (_events[i].events & EPOLLOUT)) {
 				keep = handleResponse(client);
 				if (client.getResponse().isComplete())
-					printEvent(YEL "Response sent" RST, *this);
+					printEvent(YEL "Response sent" RST);
 			}
 
 			if (!keep) {
 				removeClient(client);
-				printEvent(GRY "Client disconnected" RST, *this);
+				printEvent(GRY "Client disconnected" RST);
 			}
 		}
 	}
-	printEvent(GRY "Server shutdown" RST, *this);
+	printEvent(GRY "Server shutdown" RST);
 	std::cout << GRY "\r└─── ─ ─ ─ " RST "\n";
+}
+
+void WebServer::printEvent(const char* event) {
+	std::cout << GRY "│ \n│── " RST << event << GRY " ──\n│ \n" RST;
+	std::cout << *this;
 }
 
 void WebServer::printPrefix() {
@@ -173,17 +171,17 @@ void WebServer::printPrefix() {
 std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
 	const Client::Map& clients = ws.getClients();
 	out << GRY "│ " WHT "Clients" GRY " [" RST << clients.size() << GRY "]" RST "\n";
-	if (clients.empty()) {
-		out << GRY "│   (none)\n" RST;
-	} else {
-		for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-			Client::Map::const_iterator next = it;
-			++next;
-			bool isLast = (next == clients.end());
-			printClient(out, it->second, isLast ? GRY "└─ " RST : GRY "├─ " RST,
-						isLast ? GRY "    " RST : GRY "│   " RST);
-		}
-	}
+	// if (clients.empty()) {
+	// 	out << GRY "│   (none)\n" RST;
+	// } else {
+	// 	for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+	// 		Client::Map::const_iterator next = it;
+	// 		++next;
+	// 		bool isLast = (next == clients.end());
+	// 		printClient(out, it->second, isLast ? GRY "└─ " RST : GRY "├─ " RST,
+	// 					isLast ? GRY "    " RST : GRY "│   " RST);
+	// 	}
+	// }
 
 	return out;
 }

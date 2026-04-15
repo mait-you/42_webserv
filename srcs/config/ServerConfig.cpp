@@ -1,5 +1,5 @@
 #include "../../includes/config/Config.hpp"
-#include "../includes/utils/Utils.hpp"
+#include "../../includes/utils/Utils.hpp"
 
 bool dupLocation(std::vector<LocationConfig> locations, std::string path) {
 	for (size_t i = 0; i < locations.size(); i++) {

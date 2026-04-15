@@ -40,6 +40,7 @@ class WebServer {
 	void removeClient(Client& client);
 
 	void printPrefix();
+	void printEvent(const char* event);
 
   private:
 	WebServer();

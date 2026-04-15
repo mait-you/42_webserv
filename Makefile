@@ -4,32 +4,32 @@ OBJ_DIR = obj
 INC_DIR = includes
 
 CXX      = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INC_DIR)
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 
 
 HEADERS = \
-	$(INC_DIR)/Head.hpp                  \
-	$(INC_DIR)/net/WebServer.hpp         \
-	$(INC_DIR)/net/Socket.hpp            \
-	$(INC_DIR)/net/Client.hpp            \
-	$(INC_DIR)/cgi/Cgi.hpp              \
-	$(INC_DIR)/config/Config.hpp         \
-	$(INC_DIR)/http/MimeTypes.hpp        \
-	$(INC_DIR)/http/Request.hpp          \
-	$(INC_DIR)/http/Response.hpp         \
-	$(INC_DIR)/http/HttpStatus.hpp       \
-	$(INC_DIR)/session/SessionInfo.hpp   \
-	$(INC_DIR)/utils/Logger.hpp          \
+	$(INC_DIR)/Head.hpp                     \
+	$(INC_DIR)/net/WebServer.hpp            \
+	$(INC_DIR)/net/Socket.hpp               \
+	$(INC_DIR)/net/Client.hpp               \
+	$(INC_DIR)/cgi/Cgi.hpp                  \
+	$(INC_DIR)/config/Config.hpp            \
+	$(INC_DIR)/http/MimeTypes.hpp           \
+	$(INC_DIR)/http/Request.hpp             \
+	$(INC_DIR)/http/Response.hpp            \
+	$(INC_DIR)/http/HttpStatus.hpp          \
+	$(INC_DIR)/session/SessionInfo.hpp      \
+	$(INC_DIR)/utils/Logger.hpp             \
 	$(INC_DIR)/utils/Utils.hpp
 
 SRCS = \
 	$(SRC_DIR)/main.cpp                     \
 	$(SRC_DIR)/net/WebServer.cpp            \
-	$(SRC_DIR)/net/Socket.cpp              \
-	$(SRC_DIR)/net/Client.cpp              \
+	$(SRC_DIR)/net/Socket.cpp               \
+	$(SRC_DIR)/net/Client.cpp               \
 	$(SRC_DIR)/config/Config.cpp            \
-	$(SRC_DIR)/config/tokenize.cpp          \
-	$(SRC_DIR)/config/parseLocation.cpp     \
-	$(SRC_DIR)/config/serverConfig.cpp      \
+	$(SRC_DIR)/config/Tokenize.cpp          \
+	$(SRC_DIR)/config/ParseLocation.cpp     \
+	$(SRC_DIR)/config/ServerConfig.cpp      \
 	$(SRC_DIR)/http/Request.cpp             \
 	$(SRC_DIR)/http/RequestValidtion.cpp    \
 	$(SRC_DIR)/http/ResponseHelpers.cpp     \

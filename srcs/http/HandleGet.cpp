@@ -1,6 +1,6 @@
 #include "../../includes/http/MimeTypes.hpp"
 #include "../../includes/http/Response.hpp"
-#include "../includes/utils/Utils.hpp"
+#include "../../includes/utils/Utils.hpp"
 
 std::string extractId(std::string& cookie) {
 	std::stringstream ss(cookie);

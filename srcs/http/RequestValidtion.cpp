@@ -1,5 +1,5 @@
 #include "../../includes/http/Request.hpp"
-#include "../includes/utils/Utils.hpp"
+#include "../../includes/utils/Utils.hpp"
 
 void Request::detectCgi() {
 	if (!_locConf || !_locConf->has_cgi)

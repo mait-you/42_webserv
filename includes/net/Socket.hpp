@@ -1,8 +1,8 @@
 #ifndef SOCKET_HPP
 #define SOCKET_HPP
 
-#include "../config/Config.hpp"
 #include "../Head.hpp"
+#include "../config/Config.hpp"
 
 class Socket {
   public:
@@ -14,34 +14,26 @@ class Socket {
 	int					_fd;
 	std::string			_ip;
 	std::string			_port;
-	bool				_is_bound;
-	bool				_is_listening;
 	const ServerConfig* _serverConfig;
 
   public:
 	Socket();
-	Socket(int fd);	 // throws
+	Socket(int fd);
 	Socket(const std::string& ip, const std::string& port, const ServerConfig* serverConfig);
 	Socket(const Socket& other);
 	Socket& operator=(const Socket& other);
 	~Socket();
 
-	void   createAndBind();				 // throws
-	void   setNonBlocking();			 // throws
-	void   startListening(int backlog);	 // throws
-	Socket accept();					 // throws
+	void   setup();	// bind + nonblocking + listen
+	Socket accept();
 	void   close();
 
-	// Setters
 	void setIp(const std::string& ip);
 	void setPort(const std::string& port);
 
-	// Getters
 	int					getFd() const;
 	const std::string&	getIp() const;
 	const std::string&	getPort() const;
-	bool				isBound() const;
-	bool				isListening() const;
 	bool				isValid() const;
 	const ServerConfig* getServerConf() const;
 };
