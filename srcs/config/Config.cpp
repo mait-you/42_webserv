@@ -31,6 +31,8 @@ LocationConfig::LocationConfig() {
 	redirect_code	= 0;
 	has_cgi			= false;
 	isAlias			= false;
+	has_max			= false;
+	client_max_body_size = 0;
 }
 
 bool hasSamePort(const ServerConfig& a, const ServerConfig& b) {

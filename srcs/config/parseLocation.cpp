@@ -170,6 +170,39 @@ void parseAlias(size_t &i, std::vector<Token> &tokens, LocationConfig &location)
 	i++;
 }
 
+void parseMaxSize(size_t &i, std::vector<Token> &tokens, LocationConfig &location) {
+	i++;
+	if (i >= tokens.size() || tokens[i].type != word) {
+		throw std::runtime_error("Invalid config: Expected client max body size");
+	}
+	unsigned long		value;
+	std::string			remaining;
+	std::stringstream	ss(tokens[i].value);
+	ss >> value;
+	if (ss.fail()) {
+		throw std::runtime_error("Invalid config: client max body size not valid");
+	}
+	if (!ss.eof()) {
+		ss >> remaining;
+		if (remaining == "K" || remaining == "KB")
+			value *= 1024;
+		else if (remaining == "M" || remaining == "MB")
+			value *= 1024 * 1024;
+		else if (remaining == "G" || remaining == "GB")
+			value *= 1024 * 1024 * 1024;
+		else {
+			throw std::runtime_error("Invalid config: client_max_body_size not valid");
+		}
+	}
+	location.client_max_body_size = value;
+	location.has_max = true;
+	i++;
+	if (i >= tokens.size() || tokens[i].type != semiColone) {
+		throw std::runtime_error("Invalid config: Expected ;");
+	}
+	i++;
+}
+
 void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &location) {
 	size_t tokenSize = tokens.size();
 	if (i >= tokenSize) {
@@ -197,6 +230,8 @@ void parseLocation(std::vector<Token> &tokens, size_t &i, LocationConfig &locati
 			parseRoot(i, tokens, location);
 		else if (tokens[i].type == word && tokens[i].value == "alias")
 			parseAlias(i, tokens, location);
+		else if (tokens[i].type == word && tokens[i].value == "client_max_body_size")
+			parseMaxSize(i, tokens, location);
 		else {
 			std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
 			throw std::runtime_error(str);
