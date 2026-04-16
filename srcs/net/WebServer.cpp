@@ -171,17 +171,17 @@ void WebServer::printPrefix() {
 std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
 	const Client::Map& clients = ws.getClients();
 	out << GRY "│ " WHT "Clients" GRY " [" RST << clients.size() << GRY "]" RST "\n";
-	// if (clients.empty()) {
-	// 	out << GRY "│   (none)\n" RST;
-	// } else {
-	// 	for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-	// 		Client::Map::const_iterator next = it;
-	// 		++next;
-	// 		bool isLast = (next == clients.end());
-	// 		printClient(out, it->second, isLast ? GRY "└─ " RST : GRY "├─ " RST,
-	// 					isLast ? GRY "    " RST : GRY "│   " RST);
-	// 	}
-	// }
+	if (clients.empty()) {
+		out << GRY "│   (none)\n" RST;
+	} else {
+		for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+			Client::Map::const_iterator next = it;
+			++next;
+			bool isLast = (next == clients.end());
+			printClient(out, it->second, isLast ? GRY "└─ " RST : GRY "├─ " RST,
+						isLast ? GRY "    " RST : GRY "│   " RST);
+		}
+	}
 
 	return out;
 }

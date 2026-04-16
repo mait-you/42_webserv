@@ -25,6 +25,8 @@ struct LocationConfig {
 	bool							 	has_cgi;
 	std::map<std::string, std::string>	cgi;
 	bool								isAlias;
+	bool								has_max;
+	std::size_t							client_max_body_size;
 	LocationConfig();
 };
 

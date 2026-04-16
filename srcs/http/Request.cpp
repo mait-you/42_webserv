@@ -116,7 +116,11 @@ bool Request::parseBody(const std::string& buf) {
 	std::istringstream iss(clStr);
 	if (!(iss >> cl))
 		return setError(HTTP_400_BAD_REQUEST);
-	if (cl > _srvConf->client_max_body_size)
+
+	size_t max = _srvConf->client_max_body_size;
+	if (_locConf->has_max)
+		max = _locConf->client_max_body_size;
+	if (cl > max)
 		return setError(HTTP_413_REQUEST_ENTITY_TOO_LARGE);
 	if (cl == 0) {
 		setParseState(PARSE_COMPLETE);
