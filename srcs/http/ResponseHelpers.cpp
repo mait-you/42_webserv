@@ -11,10 +11,23 @@ void Response::errorPage(const Request& request, codeStatus code) {
 		std::map<int, std::string>::const_iterator it = locConf->error_pages.find(code);
 		if (it != locConf->error_pages.end() && handleErrorFile(it->second))
 			return;
-	} else if (srvConf) {
+	}
+	if (srvConf) {
 		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(code);
-		if (it != srvConf->error_pages.end() && handleErrorFile(it->second))
-			return;
+
+		if (it != srvConf->error_pages.end())
+		{
+			std::string path;
+			std::string root = !locConf->root.empty() ? locConf->root : srvConf->root;
+			if (root[root.length() - 1] == '/' && it->second[0] == '/')
+				path = root + it->second.substr(1);
+			else if (root[root.length() - 1] != '/' && it->second[0] != '/')
+				path = root + "/" + it->second;
+			else
+				path = root + it->second;
+			 if (handleErrorFile(path))
+				return;
+		}
 	}
 	setHeader("Content-type", "text/html");
 	std::string defaultErr = "<html><body style='display:flex;justify-content:center;'><h1>";

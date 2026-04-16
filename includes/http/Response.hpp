@@ -57,7 +57,7 @@ class Response : public HttpStatus {
 	int	 handleErrorFile(const std::string& fullPath);
 
 	void deleteFolder(const Request& request, const std::string& fullPath);
-	void errorPage(const Request& request, codeStatus codeStatus);
+	void errorPage(const Request& request, HttpStatus::codeStatus code);
 
 	void applyCgiHeaders(const std::string& rawHeaders, codeStatus& outStatus, std::string& outMsg);
 	bool processCgiOutput(const Request& request);
