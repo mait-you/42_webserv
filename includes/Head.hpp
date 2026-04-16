@@ -24,6 +24,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cctype>
 
 #define RST "\e[0m"
 #define GRY "\e[90m"
