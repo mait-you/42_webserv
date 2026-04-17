@@ -46,7 +46,7 @@ class Response : public HttpStatus {
 
   private:
 	void handleRedirect(const Request& request);
-	void dispatch(const Request& request);
+	void handleByMethod(const Request& request);
 
 	// helpers
 	bool		allowedMethods(const Request& request);

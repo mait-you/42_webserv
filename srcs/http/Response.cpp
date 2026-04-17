@@ -166,7 +166,7 @@ void Response::handleRedirect(const Request& request) {
 	setHeader("Location", loc->redirect_url);
 }
 
-void Response::dispatch(const Request& request) {
+void Response::handleByMethod(const Request& request) {
 	const std::string& m = request.getMethod();
 	if (m == "GET")
 		handleGet(request);
@@ -186,7 +186,7 @@ std::string Response::build(Request& request) {
 	else if (!allowedMethods(request))
 		errorPage(request, HTTP_405_METHOD_NOT_ALLOWED);
 	else
-		dispatch(request);
+		handleByMethod(request);
 
 	if (_hasCgiRunning)
 		return "";
