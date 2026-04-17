@@ -29,12 +29,6 @@ void Response::handlePost(const Request& request) {
 		return;
 	}
 
-	// upload guard AFTER CGI check
-	if (!locConf->upload || locConf->upload_path.empty()) {
-		errorPage(request, HTTP_403_FORBIDDEN);
-		return;
-	}
-
 	if (request.getUri() == "/login") {
 		std::string body = request.getBody();
 		std::string username;

@@ -3,13 +3,13 @@
 #include "../../includes/utils/Utils.hpp"
 
 std::string extractId(std::string& cookie) {
-	std::stringstream ss(cookie);
-	std::string		  str;
+	std::stringstream	ss(cookie);
+	std::string			str;
 
 	while (std::getline(ss, str, ';')) {
 		size_t pos = str.find("session_id=");
-		if (pos != std::string::npos)
-			return str.substr(11);	// ! pos + length of "session_id="
+		if (pos != std::string::npos && pos == 0)
+			return str.substr(11);
 	}
 	return "";
 }
