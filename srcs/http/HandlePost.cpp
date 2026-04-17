@@ -33,8 +33,19 @@ void Response::handlePost(const Request& request) {
 		std::string body = request.getBody();
 		std::string username;
 		size_t		pos = body.find("username=");
-		if (pos != std::string::npos)
-			username = body.substr(pos + 9);
+		if (pos == std::string::npos)
+		{
+			setStatus(HTTP_302_FOUND, "Found");
+			setHeader("Location", URI_LOGIN);
+			return;
+		}
+		username = body.substr(pos + 9);
+		if (username.empty())
+		{
+			setStatus(HTTP_302_FOUND, "Found");
+			setHeader("Location", URI_LOGIN);
+			return;
+		}
 		bool		existUser = false;
 		std::string sessionId;
 		std::string cookie = request.getHeader("Cookie");

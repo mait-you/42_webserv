@@ -201,7 +201,6 @@ std::string Response::buildSendBuffer() {
 	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
 		oss << it->first << ": " << it->second << "\r\n";
 
-	// !
 	bool noBody = (_statusCode == HTTP_204_NO_CONTENT || _statusCode == HTTP_304_NOT_MODIFIED);
 
 	if (!noBody)
