@@ -36,7 +36,4 @@
 
 #define HTTP_VERSION "HTTP/1.0"
 
-#define ERROR_LOG(context, detail) throwError(__FILE__, __LINE__, context, detail)
-#define WARNING_LOG(context, detail) printWarning(__FILE__, __LINE__, context, detail)
-
 #endif

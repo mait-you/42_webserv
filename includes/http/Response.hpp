@@ -70,8 +70,6 @@ class Response : public HttpStatus {
 	int handleLogout(const Request& request);
 };
 
-void		  printResponse(std::ostream& out, const Response& res, const std::string& pre,
-							const std::string& last);
-std::ostream& operator<<(std::ostream& out, const Response& res);
+
 
 #endif
