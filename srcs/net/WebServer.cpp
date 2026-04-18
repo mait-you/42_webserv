@@ -7,11 +7,9 @@ bool WebServer::running = true;
 
 WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	std::memset(_events, 0, sizeof(_events));
-	_epollFd = epoll_create(true);
+	_epollFd = epoll_create1(EPOLL_CLOEXEC);
 	if (_epollFd == -1)
 		ERROR_LOG("epoll_create", "failed to create epoll instance");
-	if (fcntl(_epollFd, F_SETFD, FD_CLOEXEC) == -1)
-		ERROR_LOG("fcntl", "failed to set FD_CLOEXEC");
 	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
