@@ -83,7 +83,7 @@ You can test the server using a standard web browser or command-line tools like 
 - [curl Tutorial](https://curl.se/docs/tutorial.html)
 - [Uniform Resource Identifier (URI)](https://http.dev/uri)
 - [CGI Example: Read Data](https://www.infor.uva.es/~jvegas/cursos/web/cgi-bin/fuentes/readdata.html)
-- [RFC 3875: CGI](https://datatracker.ietf.org/doc/html/rfc3875#section-4.1.4)
+- [RFC 3875: CGI](https://datatracker.ietf.org/doc/html/rfc3875)
 - [HTTP Cookies Crash Course (YouTube)](https://www.youtube.com/watch?v=sovAIX4doOE&list=PLQnljOFTspQU6zO0drAYHFtkkyfNJw1IO&index=12)
 - [HTTP Cookies](https://http.dev/cookies)
 
