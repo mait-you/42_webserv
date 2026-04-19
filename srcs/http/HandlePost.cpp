@@ -18,7 +18,7 @@ void Response::handlePost(const Request& request) {
 	// CGI check FIRST — before upload guard
 	if (request.hasCgi()) {
 		const std::string fullPath = request.resolveFullPath();
-		Cgi				  cgi(request, *request.getServerConf(), locConf, fullPath);
+		Cgi				  cgi(request, *request.getConf(), locConf, fullPath);
 		CgiInfo			  info = cgi.start();
 		if (info.pid == -1) {
 			errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
@@ -33,15 +33,13 @@ void Response::handlePost(const Request& request) {
 		std::string body = request.getBody();
 		std::string username;
 		size_t		pos = body.find("username=");
-		if (pos == std::string::npos)
-		{
+		if (pos == std::string::npos) {
 			setStatus(HTTP_302_FOUND, "Found");
 			setHeader("Location", URI_LOGIN);
 			return;
 		}
 		username = body.substr(pos + 9);
-		if (username.empty())
-		{
+		if (username.empty()) {
 			setStatus(HTTP_302_FOUND, "Found");
 			setHeader("Location", URI_LOGIN);
 			return;

@@ -47,7 +47,7 @@ class Request : public HttpStatus {
 	const HeaderMap&	  getHeaders() const;
 	std::string			  getHeader(const std::string& key) const;
 	const LocationConfig* getLocationConf() const;
-	const ServerConfig*	  getServerConf() const;
+	const ServerConfig*	  getConf() const;
 	bool				  hasCgi() const;
 	std::string			  resolvePath() const;
 	std::string			  resolveFullPath() const;
@@ -64,7 +64,7 @@ class Request : public HttpStatus {
 
 	void detectCgi();
 
-	bool setError(codeStatus code);  // throws
+	bool setError(codeStatus code);	 // throws
 	void setParseState(ParseState state);
 
 	bool matchedLocation();

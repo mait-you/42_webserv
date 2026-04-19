@@ -3,8 +3,8 @@
 #include "../../includes/utils/Utils.hpp"
 
 std::string extractId(std::string& cookie) {
-	std::stringstream	ss(cookie);
-	std::string			str;
+	std::stringstream ss(cookie);
+	std::string		  str;
 
 	while (std::getline(ss, str, ';')) {
 		size_t pos = str.find("session_id=");
@@ -74,7 +74,7 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 		return;
 	}
 	if (request.hasCgi()) {
-		Cgi cgi(request, *request.getServerConf(), locConf, fullPath);
+		Cgi cgi(request, *request.getConf(), locConf, fullPath);
 		_runningCgi = cgi.start();
 		if (_runningCgi.pid == -1)
 			errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
@@ -112,7 +112,7 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 	if (locConf && !locConf->index.empty())
 		index = locConf->index;
 	else
-		index = request.getServerConf()->index;
+		index = request.getConf()->index;
 	if (!index.empty()) {
 		std::string indexPath = fullPath + index;
 		struct stat st;
@@ -122,7 +122,7 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 		}
 	}
 	if (request.hasCgi()) {
-		Cgi cgi(request, *request.getServerConf(), locConf, fullPath);
+		Cgi cgi(request, *request.getConf(), locConf, fullPath);
 		_runningCgi = cgi.start();
 		if (_runningCgi.pid == -1)
 			errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);

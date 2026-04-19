@@ -16,6 +16,7 @@ class Client {
 
   private:
 	Socket		_socket;
+	Socket		_serverSock;
 	std::string _recvBuffer;
 	std::string _sendBuffer;
 	std::size_t _bytesSent;
@@ -24,7 +25,7 @@ class Client {
 
   public:
 	Client();
-	Client(const Socket& socket, const ServerConfig* config,
+	Client(const Socket& socket, const Socket& serverSock,
 		   std::map<std::string, SessionInfo>* _session);
 	Client(const Client& other);
 	Client& operator=(const Client& other);
@@ -38,10 +39,10 @@ class Client {
 
 	bool hasCgiRunning() const;
 
-	Socket&			getSocket();
-	Request&		getRequest();
-	Response&		getResponse();
-	
+	Socket&	  getSocket();
+	Request&  getRequest();
+	Response& getResponse();
+
 	const Socket&	getSocket() const;
 	const Request&	getRequest() const;
 	const Response& getResponse() const;

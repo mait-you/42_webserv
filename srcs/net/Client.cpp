@@ -3,10 +3,10 @@
 Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response() {}
 
-Client::Client(const Socket& socket, const ServerConfig* serverConfig,
+Client::Client(const Socket& socket, const Socket& serverSock,
 			   std::map<std::string, SessionInfo>* session)
-		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(serverConfig),
-		  _response(session) {}
+		: _socket(socket), _serverSock(serverSock), _recvBuffer(), _sendBuffer(), _bytesSent(0),
+		  _request(serverSock.getConf()), _response(session) {}
 
 Client::Client(const Client& other)
 		: _socket(other._socket), _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),

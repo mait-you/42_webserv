@@ -24,7 +24,7 @@ class Socket {
 	Socket& operator=(const Socket& other);
 	~Socket();
 
-	void   setup();	// bind + nonblocking + listen
+	void   setup();	 // bind + nonblocking + listen
 	Socket accept();
 	void   close();
 
@@ -35,9 +35,7 @@ class Socket {
 	const std::string&	getIp() const;
 	const std::string&	getPort() const;
 	bool				isValid() const;
-	const ServerConfig* getServerConf() const;
+	const ServerConfig* getConf() const;
 };
-
-
 
 #endif

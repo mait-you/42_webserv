@@ -183,7 +183,7 @@ const LocationConfig* Request::getLocationConf() const {
 	return _locConf;
 }
 
-const ServerConfig* Request::getServerConf() const {
+const ServerConfig* Request::getConf() const {
 	return _srvConf;
 }
 

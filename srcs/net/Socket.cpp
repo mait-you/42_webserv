@@ -131,6 +131,6 @@ bool Socket::isValid() const {
 	return _fd != -1;
 }
 
-const ServerConfig* Socket::getServerConf() const {
+const ServerConfig* Socket::getConf() const {
 	return _serverConfig;
 }

@@ -1,10 +1,9 @@
 #include "../../includes/http/Response.hpp"
 #include "../../includes/utils/Utils.hpp"
 
-
 void Response::errorPage(const Request& request, codeStatus code) {
 	const LocationConfig* locConf = request.getLocationConf();
-	const ServerConfig*	  srvConf = request.getServerConf();
+	const ServerConfig*	  srvConf = request.getConf();
 
 	setStatus(code);
 	if (locConf) {
@@ -15,8 +14,7 @@ void Response::errorPage(const Request& request, codeStatus code) {
 	if (srvConf) {
 		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(code);
 
-		if (it != srvConf->error_pages.end())
-		{
+		if (it != srvConf->error_pages.end()) {
 			std::string path;
 			std::string root = !locConf->root.empty() ? locConf->root : srvConf->root;
 			if (root[root.length() - 1] == '/' && it->second[0] == '/')
@@ -25,7 +23,7 @@ void Response::errorPage(const Request& request, codeStatus code) {
 				path = root + "/" + it->second;
 			else
 				path = root + it->second;
-			 if (handleErrorFile(path))
+			if (handleErrorFile(path))
 				return;
 		}
 	}
