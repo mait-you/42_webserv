@@ -4,7 +4,7 @@ OBJ_DIR = obj
 INC_DIR = includes
 
 CXX      = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 HEADERS = \
 	$(INC_DIR)/Head.hpp                     \
@@ -41,6 +41,7 @@ SRCS = \
 	$(SRC_DIR)/http/MimeTypes.cpp           \
 	$(SRC_DIR)/http/HttpStatus.cpp          \
 	$(SRC_DIR)/cgi/Cgi.cpp                  \
+	$(SRC_DIR)/utils/Logger.cpp             \
 	$(SRC_DIR)/utils/Utils.cpp
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)

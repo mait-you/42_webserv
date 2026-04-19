@@ -1,4 +1,5 @@
 #include "../../includes/http/Response.hpp"
+
 #include "../../includes/http/MimeTypes.hpp"
 
 Response::Response()
@@ -213,33 +214,4 @@ std::string Response::buildSendBuffer() {
 
 	_isComplete = true;
 	return oss.str();
-}
-
-void printResponse(std::ostream& out, const Response& res, const std::string& pre,
-				   const std::string& last) {
-	const Response::HeaderMap& hdrs = res.getHeaders();
-
-	out << pre << GRY "├─ " WHT "Status " RST "  ";
-	if (res.getStatusCode() == 0)
-		out << GRY "(none)" RST "\n";
-	else
-		out << YEL << res.getStatusCode() << RST " " << res.getStatusMessage() << "\n";
-
-	out << pre << GRY "├─ " WHT "Headers" GRY " [" RST << hdrs.size() << GRY "]" RST "\n";
-	for (Response::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
-		out << pre << GRY "│   " RST << it->first << GRY ": " RST << it->second << "\n";
-
-	out << pre << GRY "├─ " WHT "Body   " RST "  ";
-	if (res.getBody().empty())
-		out << GRY "(empty)" RST "\n";
-	else
-		out << GRY "[" RST << res.getBody().size() << GRY " bytes]" RST "\n";
-
-	out << pre << last << WHT "CGI    " RST "  "
-		<< (res.hasCgiRunning() ? CYN "running" RST : GRY "idle" RST) << "\n";
-}
-
-std::ostream& operator<<(std::ostream& out, const Response& res) {
-	printResponse(out, res, GRY "│   " RST, GRY "└─ " RST);
-	return out;
 }

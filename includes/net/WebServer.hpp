@@ -1,11 +1,10 @@
 #ifndef WEBSERVER_HPP
 #define WEBSERVER_HPP
 
-
 #include "Client.hpp"
 
-typedef struct epoll_event t_ev;
-#define MAX_EVENTS 10
+typedef epoll_event t_ev;
+#define MAX_EVENTS 1024
 #define EPOLL_EVENT(name)                                                                          \
 	t_ev name;                                                                                     \
 	std::memset(&name, 0, sizeof(name));
@@ -38,9 +37,6 @@ class WebServer {
 	bool handleRequest(Client& client);
 	bool handleResponse(Client& client);
 	void removeClient(Client& client);
-
-	void printPrefix();
-	void printEvent(const char* event);
 
   private:
 	WebServer();

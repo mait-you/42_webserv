@@ -7,11 +7,9 @@ bool WebServer::running = true;
 
 WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	std::memset(_events, 0, sizeof(_events));
-	_epollFd = epoll_create(true);
+	_epollFd = epoll_create1(EPOLL_CLOEXEC);
 	if (_epollFd == -1)
 		ERROR_LOG("epoll_create", "failed to create epoll instance");
-	if (fcntl(_epollFd, F_SETFD, FD_CLOEXEC) == -1)
-		ERROR_LOG("fcntl", "failed to set FD_CLOEXEC");
 	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
@@ -91,7 +89,7 @@ bool WebServer::handleResponse(Client& client) {
 }
 
 void WebServer::run() {
-	printPrefix();
+	printPrefix(*this);
 
 	while (running) {
 		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
@@ -106,7 +104,7 @@ void WebServer::run() {
 
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
-				printEvent(GRN "Client connected" RST);
+				printEvent(*this, GRN "Client connected" RST);
 				continue;
 			}
 
@@ -123,65 +121,22 @@ void WebServer::run() {
 					ev.events  = EPOLLIN | EPOLLOUT;
 					ev.data.fd = fd;
 					epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
-					printEvent(CYN "Request received" RST);
+					printEvent(*this, CYN "Request received" RST);
 				}
 			}
 
 			if (keep && (_events[i].events & EPOLLOUT)) {
 				keep = handleResponse(client);
 				if (client.getResponse().isComplete())
-					printEvent(YEL "Response sent" RST);
+					printEvent(*this, YEL "Response sent" RST);
 			}
 
 			if (!keep) {
 				removeClient(client);
-				printEvent(GRY "Client disconnected" RST);
+				printEvent(*this, GRY "Client disconnected" RST);
 			}
 		}
 	}
-	printEvent(GRY "Server shutdown" RST);
+	printEvent(*this, GRY "Server shutdown" RST);
 	std::cout << GRY "\r└─── ─ ─ ─ " RST "\n";
-}
-
-void WebServer::printEvent(const char* event) {
-	std::cout << GRY "│ \n│── " RST << event << GRY " ──\n│ \n" RST;
-	std::cout << *this;
-}
-
-void WebServer::printPrefix() {
-	std::cout << _config;
-	std::cout << "\n" GRY "┌─ WebServer" RST "\n";
-	std::cout << GRY "│ " WHT "Server Sockets" GRY " [" RST << _serverSockets.size()
-			  << GRY "]" RST "\n";
-	if (_serverSockets.empty()) {
-		std::cout << GRY "│   (none)\n" RST;
-	} else {
-		for (Socket::Map::const_iterator it = _serverSockets.begin(); it != _serverSockets.end();
-			 ++it) {
-			Socket::Map::const_iterator next = it;
-			++next;
-			bool isLast = (next == _serverSockets.end());
-			std::cout << GRY "│   " RST << (isLast ? GRY "└─ " RST : GRY "├─ " RST) << it->second
-					  << "\n";
-		}
-	}
-
-	std::cout << GRY "│\n";
-}
-std::ostream& operator<<(std::ostream& out, const WebServer& ws) {
-	const Client::Map& clients = ws.getClients();
-	out << GRY "│ " WHT "Clients" GRY " [" RST << clients.size() << GRY "]" RST "\n";
-	if (clients.empty()) {
-		out << GRY "│   (none)\n" RST;
-	} else {
-		for (Client::Map::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-			Client::Map::const_iterator next = it;
-			++next;
-			bool isLast = (next == clients.end());
-			printClient(out, it->second, isLast ? GRY "└─ " RST : GRY "├─ " RST,
-						isLast ? GRY "    " RST : GRY "│   " RST);
-		}
-	}
-
-	return out;
 }

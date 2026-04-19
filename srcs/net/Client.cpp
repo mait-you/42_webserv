@@ -73,51 +73,23 @@ bool Client::buildResponse() {
 Socket& Client::getSocket() {
 	return _socket;
 }
-
 Request& Client::getRequest() {
 	return _request;
 }
-
-const Request& Client::getRequest() const {
-	return _request;
-}
-
 Response& Client::getResponse() {
 	return _response;
 }
 
+const Socket& Client::getSocket() const {
+	return _socket;
+}
+const Request& Client::getRequest() const {
+	return _request;
+}
 const Response& Client::getResponse() const {
 	return _response;
 }
 
 bool Client::hasCgiRunning() const {
 	return _response.hasCgiRunning();
-}
-
-void printClient(std::ostream& out, const Client& client, const std::string& connector,
-				 const std::string& pre) {
-	const Socket&	s	= const_cast<Client&>(client).getSocket();
-	const Request&	req = client.getRequest();
-	const Response& res = client.getResponse();
-
-	bool hasReq = req.isComplete();
-	bool hasRes = res.isComplete();
-
-	out << GRY "│  " RST << connector << s << "\n";
-
-	if (hasReq) {
-		std::string reqConn = (hasRes ? GRY "├─ " RST : GRY "└─ " RST);
-		out << GRY "│  " RST << pre << reqConn << WHT "Request" RST "\n";
-		printRequest(out, req, GRY "│  " RST + pre + (hasRes ? GRY "│   " RST : GRY "    " RST),
-					 GRY "└─ " RST);
-	}
-	if (hasRes) {
-		out << GRY "│  " RST << pre << GRY "└─ " RST << WHT "Response" RST "\n";
-		printResponse(out, res, GRY "│  " RST + pre + GRY "    " RST, GRY "└─ " RST);
-	}
-}
-
-std::ostream& operator<<(std::ostream& out, const Client& client) {
-	printClient(out, client, GRY "├─ " RST, GRY "│   " RST);
-	return out;
 }

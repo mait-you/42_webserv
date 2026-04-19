@@ -197,8 +197,8 @@ std::string Request::resolveFullPath() const {
 	std::string loc	 = _locConf->path;
 
 	if (_locConf->isAlias) {
-		if (loc != "/" && rest.find(loc) == 0 &&
-			(rest.length() == loc.length() || rest[loc.length()] == '/')) {
+		if (loc != "/" && rest.find(loc) == 0
+			&& (rest.length() == loc.length() || rest[loc.length()] == '/')) {
 			rest = rest.substr(loc.length());
 			if (rest.empty()) {
 				rest = "/";
@@ -264,43 +264,4 @@ bool Request::setError(codeStatus code) {
 }
 void Request::setParseState(ParseState state) {
 	_state = state;
-}
-
-void printRequest(std::ostream& out, const Request& req, const std::string& pre,
-				  const std::string& last) {
-	const std::string& m = req.getMethod();
-	const std::string& u = req.getUri();
-	const std::string& v = req.getVersion();
-
-	out << pre << GRY "├─ " WHT "Method " RST << (m.empty() ? GRY "(none)" RST : m.c_str()) << "\n";
-	out << pre << GRY "├─ " WHT "URI    " RST << (u.empty() ? GRY "(none)" RST : u.c_str()) << "\n";
-	out << pre << GRY "├─ " WHT "Version" RST " " << (v.empty() ? GRY "(none)" RST : v.c_str())
-		<< "\n";
-
-	const Request::HeaderMap& hdrs = req.getHeaders();
-	out << pre << GRY "├─ " WHT "Headers" GRY " [" RST << hdrs.size() << GRY "]" RST "\n";
-	for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
-		out << pre << GRY "│   " RST << it->first << GRY ": " RST << it->second << "\n";
-
-	const std::string& body = req.getBody();
-	out << pre << GRY "├─ " WHT "Body   " RST " ";
-	if (body.empty()) {
-		out << GRY "(empty)" RST "\n";
-	} else {
-		out << GRY "[" RST << body.size() << GRY " bytes] " RST;
-		out << std::hex << std::setfill('0');
-		for (size_t i = 0; i < body.size() && i < 16; ++i)
-			out << std::setw(2) << (unsigned int) (unsigned char) body[i] << " ";
-		if (body.size() > 16)
-			out << GRY "..." RST;
-		out << std::dec << "\n";
-	}
-
-	out << pre << last << WHT "Type   " RST " "
-		<< (req.hasCgi() ? CYN "dynamic" RST : GRY "static" RST) << "\n";
-}
-
-std::ostream& operator<<(std::ostream& out, const Request& req) {
-	printRequest(out, req, GRY "│   " RST, GRY "└─ " RST);
-	return out;
 }

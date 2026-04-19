@@ -38,6 +38,6 @@ class Socket {
 	const ServerConfig* getServerConf() const;
 };
 
-std::ostream& operator<<(std::ostream& out, const Socket& socket);
+
 
 #endif

@@ -30,10 +30,9 @@ Socket& Socket::operator=(const Socket& other) {
 Socket::~Socket() {}
 
 void Socket::setup() {
-	struct addrinfo	 hints;
-	struct addrinfo* result = NULL;
-	struct addrinfo* rp		= NULL;
-	bool			 bound	= false;
+	addrinfo  hints;
+	addrinfo *result = NULL, *rp = NULL;
+	bool	  bound = false;
 
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family	  = AF_INET;
@@ -79,11 +78,11 @@ void Socket::setup() {
 }
 
 Socket Socket::accept() {
-	struct sockaddr_in client_addr;
-	socklen_t		   addr_len = sizeof(client_addr);
+	sockaddr_in client_addr;
+	socklen_t	addr_len = sizeof(client_addr);
 	std::memset(&client_addr, 0, sizeof(client_addr));
 
-	int clientFd = ::accept(_fd, (struct sockaddr*) &client_addr, &addr_len);
+	int clientFd = ::accept(_fd, (sockaddr*) &client_addr, &addr_len);
 	if (clientFd == -1)
 		ERROR_LOG("Socket::accept", "accept() failed");
 	if (fcntl(clientFd, F_SETFD, FD_CLOEXEC) == -1) {
@@ -134,14 +133,4 @@ bool Socket::isValid() const {
 
 const ServerConfig* Socket::getServerConf() const {
 	return _serverConfig;
-}
-
-std::ostream& operator<<(std::ostream& out, const Socket& s) {
-	out << GRY "[" RST;
-	out << CYN "fd=" RST << YEL << s.getFd() << RST;
-	out << GRY "] " RST;
-	out << WHT << s.getIp() << RST;
-	out << GRY ":" RST;
-	out << WHT << s.getPort() << RST;
-	return out;
 }
