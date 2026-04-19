@@ -25,13 +25,13 @@ ServerConfig::ServerConfig() {
 
 LocationConfig::LocationConfig() {
 	allow_methods.push_back("GET");
-	autoindex		= false;
-	upload			= false;
-	has_redirect	= false;
-	redirect_code	= 0;
-	has_cgi			= false;
-	isAlias			= false;
-	has_max			= false;
+	autoindex			 = false;
+	upload				 = false;
+	has_redirect		 = false;
+	redirect_code		 = 0;
+	has_cgi				 = false;
+	isAlias				 = false;
+	has_max				 = false;
 	client_max_body_size = 0;
 }
 
@@ -91,81 +91,4 @@ void Config::parse(const std::string& filename) {
 
 const std::vector<ServerConfig>& Config::getServers() const {
 	return _servers;
-}
-
-std::ostream& operator<<(std::ostream& out, const LocationConfig& loc) {
-	out << GRY "│    " RST << CYN << loc.path << RST "\n";
-
-	out << GRY "│      " RST "methods: ";
-	for (size_t i = 0; i < loc.allow_methods.size(); i++) {
-		out << GRN << loc.allow_methods[i] << RST;
-		if (i + 1 < loc.allow_methods.size())
-			out << GRY ", " RST;
-	}
-	out << "\n";
-
-	if (!loc.root.empty())
-		out << GRY "│      " RST "root:      " << WHT << loc.root << RST "\n";
-	if (!loc.index.empty())
-		out << GRY "│      " RST "index:     " << WHT << loc.index << RST "\n";
-	if (loc.has_redirect)
-		out << GRY "│      " RST "redirect:  " << YEL << loc.redirect_code << " "
-			<< loc.redirect_url << RST "\n";
-
-	out << GRY "│      " RST "autoindex: " << (loc.autoindex ? GRN "on" : GRY "off") << RST "\n";
-	out << GRY "│      " RST "upload:    " << (loc.upload ? GRN "on" : GRY "off") << RST;
-	if (loc.upload)
-		out << "  " << WHT << loc.upload_path << RST;
-	out << "\n";
-
-	if (loc.has_cgi) {
-		for (std::map<std::string, std::string>::const_iterator it = loc.cgi.begin();
-			 it != loc.cgi.end(); ++it)
-			out << GRY "│      " RST "cgi:       " << CYN << it->first << RST " -> " << WHT
-				<< it->second << RST "\n";
-	}
-
-	return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const ServerConfig& server) {
-	out << GRY "│  " RST << WHT << server.host << RST;
-
-	out << GRY ":" RST;
-	for (size_t i = 0; i < server.ports.size(); i++) {
-		out << YEL << server.ports[i] << RST;
-		if (i + 1 < server.ports.size())
-			out << GRY "," RST;
-	}
-
-	if (!server.server_name.empty())
-		out << "  " << GRY "[" RST << server.server_name << GRY "]" RST;
-
-	out << "\n";
-	out << GRY "│    " RST "root:      " << WHT << server.root << RST "\n";
-	out << GRY "│    " RST "index:     " << WHT << server.index << RST "\n";
-	out << GRY "│    " RST "max body:  " << YEL << server.client_max_body_size << RST " bytes\n";
-
-	if (!server.locations.empty()) {
-		out << GRY "│    " RST "locations:\n";
-		for (size_t i = 0; i < server.locations.size(); i++)
-			out << server.locations[i];
-	}
-
-	return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const Config& config) {
-	const std::vector<ServerConfig>& servers = config.getServers();
-
-	out << "\n" GRY "┌─ Config " RST << GRY "[" RST << servers.size()
-		<< GRY "]" RST "\n";
-
-	for (size_t i = 0; i < servers.size(); i++) {
-		out << GRY "│ " RST << WHT "Server" RST << GRY " [" RST << (i + 1) << GRY "]" RST "\n";
-		out << servers[i];
-	}
-
-	out << GRY "└─── ─ ─ ─ " RST "\n";
-	return out;
 }

@@ -89,7 +89,7 @@ bool WebServer::handleResponse(Client& client) {
 }
 
 void WebServer::run() {
-	printPrefix(*this);
+	logServerStart(*this);
 
 	while (running) {
 		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
@@ -104,7 +104,7 @@ void WebServer::run() {
 
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
-				printEvent(*this, GRN "Client connected" RST);
+				logServerEvent(*this, GRN "Client connected" RST);
 				continue;
 			}
 
@@ -121,22 +121,22 @@ void WebServer::run() {
 					ev.events  = EPOLLIN | EPOLLOUT;
 					ev.data.fd = fd;
 					epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
-					printEvent(*this, CYN "Request received" RST);
+					logServerEvent(*this, CYN "Request received" RST);
 				}
 			}
 
 			if (keep && (_events[i].events & EPOLLOUT)) {
 				keep = handleResponse(client);
 				if (client.getResponse().isComplete())
-					printEvent(*this, YEL "Response sent" RST);
+					logServerEvent(*this, YEL "Response sent" RST);
 			}
 
 			if (!keep) {
 				removeClient(client);
-				printEvent(*this, GRY "Client disconnected" RST);
+				logServerEvent(*this, GRY "Client disconnected" RST);
 			}
 		}
 	}
-	printEvent(*this, GRY "Server shutdown" RST);
+	logServerEvent(*this, GRY "Server shutdown" RST);
 	std::cout << GRY "\r└─── ─ ─ ─ " RST "\n";
 }

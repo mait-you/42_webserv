@@ -17,7 +17,7 @@ class Socket;
 class Request;
 class Response;
 
-void printPrefix(const WebServer& ws);
-void printEvent(const WebServer& ws, const char* event);
+void logServerStart(const WebServer& ws);
+void logServerEvent(const WebServer& ws, const char* event);
 
 #endif
