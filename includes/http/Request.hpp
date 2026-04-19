@@ -23,6 +23,7 @@ class Request : public HttpStatus {
 	std::string			  _version;
 	HeaderMap			  _headers;
 	std::string			  _body;
+	std::string			  _clientIp;
 
 	ParseState	_state;
 	std::size_t _parsePos;
@@ -30,7 +31,7 @@ class Request : public HttpStatus {
 
   public:
 	Request();
-	Request(const ServerConfig* serverConfig);
+	Request(const ServerConfig* serverConfig, const std::string& clientIp);
 	Request(const Request& other);
 	Request& operator=(const Request& other);
 	~Request();
@@ -48,6 +49,8 @@ class Request : public HttpStatus {
 	std::string			  getHeader(const std::string& key) const;
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;
+
+	std::string			  getClientIp() const;
 	bool				  hasCgi() const;
 	std::string			  resolvePath() const;
 	std::string			  resolveFullPath() const;

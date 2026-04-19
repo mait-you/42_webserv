@@ -44,8 +44,7 @@ std::vector<std::string> Cgi::createEnv() const {
 		uri = uri.substr(0, pos);
 	}
 	envVec.push_back("DOCUMENT_ROOT=" + root);
-	// envVec.push_back("REMOTE_ADDR=" + _req.getClientIp());
-
+	envVec.push_back("REMOTE_ADDR=" + _req.getClientIp());
 	envVec.push_back("REQUEST_METHOD=" + _req.getMethod());
 	envVec.push_back("QUERY_STRING=" + query);
 	envVec.push_back("CONTENT_TYPE=" + _req.getHeader("content-type"));
