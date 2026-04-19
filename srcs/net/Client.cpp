@@ -5,7 +5,7 @@ Client::Client()
 
 Client::Client(const Socket& socket, const ServerConfig* serverConfig,
 			   std::map<std::string, SessionInfo>* session)
-		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(serverConfig),
+		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(serverConfig, socket.getIp()),
 		  _response(session) {}
 
 Client::Client(const Client& other)
