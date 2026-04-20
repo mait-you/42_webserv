@@ -78,8 +78,7 @@ void WebServer::acceptClient(Socket& serverSock) {
 bool WebServer::handleRequest(Client& client) {
 	if (!client.recvData())
 		return false;
-	client.parseRequest();
-	return true;
+	return client.parseRequest();
 }
 
 bool WebServer::handleResponse(Client& client) {

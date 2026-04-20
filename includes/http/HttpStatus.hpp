@@ -32,8 +32,11 @@ class HttpStatus {
 		HTTP_503_SERVICE_UNAVAILABLE   = 503
 	};
 
+	enum HttpVersion { HTTP_0_9, HTTP_1_0, HTTP_1_1, HTTP_UNKNOWN };
+
   protected:
-	CodeStatus _statusCode;
+	CodeStatus	_statusCode;
+	HttpVersion _httpV;
 
   public:
 	HttpStatus();

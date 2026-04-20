@@ -5,8 +5,8 @@ Client::Client()
 
 Client::Client(const Socket& socket, const Socket& serverSock,
 			   std::map<std::string, SessionInfo>* session)
-		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(serverSock.getConf(), socket.getIp()),
-		  _response(session) {}
+		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0),
+		  _request(serverSock.getConf(), socket.getIp()), _response(session) {}
 
 Client::Client(const Client& other)
 		: _socket(other._socket), _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),
@@ -47,8 +47,10 @@ bool Client::sendData() {
 
 	ssize_t n =
 		send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent, _sendBuffer.size() - _bytesSent, 0);
-	if (n < 0)
+	if (n == 0)
 		return false;
+	if (n < 0)
+		return true;
 
 	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {

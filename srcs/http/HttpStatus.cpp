@@ -1,14 +1,17 @@
 #include "../../includes/http/HttpStatus.hpp"
 
-HttpStatus::HttpStatus() : _statusCode(HTTP_200_OK) {}
+HttpStatus::HttpStatus() : _statusCode(HTTP_200_OK), _httpV(HTTP_UNKNOWN) {}
 
-HttpStatus::HttpStatus(CodeStatus statusCode) : _statusCode(statusCode) {}
+HttpStatus::HttpStatus(CodeStatus statusCode) : _statusCode(statusCode), _httpV(HTTP_UNKNOWN) {}
 
-HttpStatus::HttpStatus(const HttpStatus& other) : _statusCode(other._statusCode) {}
+HttpStatus::HttpStatus(const HttpStatus& other)
+		: _statusCode(other._statusCode), _httpV(other._httpV) {}
 
 HttpStatus& HttpStatus::operator=(const HttpStatus& other) {
-	if (this != &other)
+	if (this != &other) {
 		_statusCode = other._statusCode;
+		_httpV		= other._httpV;
+	}
 	return *this;
 }
 
