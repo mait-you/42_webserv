@@ -72,7 +72,7 @@ std::vector<std::string> Cgi::createEnv() const {
 		envVec.push_back("PATH_TRANSLATED=" + root + pathInfo);
 	}
 	envVec.push_back("SERVER_NAME=" + _srv.host);
-	envVec.push_back("SERVER_PORT=" + _srv.ports[0]);
+	envVec.push_back("SERVER_PORT=" + _req.getServerPort());
 	envVec.push_back("SERVER_PROTOCOL=" + _req.getVersion());
 	envVec.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	envVec.push_back("REDIRECT_STATUS=200");

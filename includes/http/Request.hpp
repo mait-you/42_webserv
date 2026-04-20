@@ -24,6 +24,7 @@ class Request : public HttpStatus {
 	HeaderMap			  _headers;
 	std::string			  _body;
 	std::string			  _clientIp;
+	std::string			  _serverPort;
 
 	ParseState	_state;
 	std::size_t _parsePos;
@@ -31,7 +32,7 @@ class Request : public HttpStatus {
 
   public:
 	Request();
-	Request(const ServerConfig* serverConfig, const std::string& clientIp);
+	Request(const ServerConfig* serverConfig, const std::string& clientIp, const std::string& serverPort);
 	Request(const Request& other);
 	Request& operator=(const Request& other);
 	~Request();
@@ -49,8 +50,9 @@ class Request : public HttpStatus {
 	std::string			  getHeader(const std::string& key) const;
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;
-
 	std::string getClientIp() const;
+	std::string getServerPort() const;
+
 	bool		hasCgi() const;
 	std::string resolvePath() const;
 	std::string resolveFullPath() const;
@@ -67,7 +69,7 @@ class Request : public HttpStatus {
 
 	void detectCgi();
 
-	bool setError(CodeStatus code);	 // throws
+	bool setError(CodeStatus code);
 	void setParseState(ParseState state);
 
 	bool matchedLocation();
