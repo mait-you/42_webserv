@@ -1,7 +1,7 @@
 #include "../../includes/http/Response.hpp"
 #include "../../includes/utils/Utils.hpp"
 
-void Response::errorPage(const Request& request, codeStatus code) {
+void Response::errorPage(const Request& request, CodeStatus code) {
 	const LocationConfig* locConf = request.getLocationConf();
 	const ServerConfig*	  srvConf = request.getConf();
 
@@ -29,7 +29,7 @@ void Response::errorPage(const Request& request, codeStatus code) {
 	}
 	setHeader("Content-type", "text/html");
 	std::string defaultErr = "<html><body style='display:flex;justify-content:center;'><h1>";
-	defaultErr += defaultMessage(code);
+	defaultErr += getStatusMessage();
 	defaultErr += "</h1></body></html>\n";
 	setBody(defaultErr);
 }

@@ -5,7 +5,7 @@
 
 class HttpStatus {
   public:
-	enum codeStatus {
+	enum CodeStatus {
 		// 2xx Success
 		HTTP_200_OK			= 200,
 		HTTP_201_CREATED	= 201,
@@ -18,11 +18,11 @@ class HttpStatus {
 		HTTP_304_NOT_MODIFIED	   = 304,
 
 		// 4xx Client Error
-		HTTP_400_BAD_REQUEST  = 400,
-		HTTP_401_UNAUTHORIZED = 401,
-		HTTP_403_FORBIDDEN	  = 403,
-		HTTP_404_NOT_FOUND	  = 404,
-		HTTP_405_METHOD_NOT_ALLOWED = 405,
+		HTTP_400_BAD_REQUEST			  = 400,
+		HTTP_401_UNAUTHORIZED			  = 401,
+		HTTP_403_FORBIDDEN				  = 403,
+		HTTP_404_NOT_FOUND				  = 404,
+		HTTP_405_METHOD_NOT_ALLOWED		  = 405,
 		HTTP_413_REQUEST_ENTITY_TOO_LARGE = 413,
 
 		// 5xx Server Error
@@ -33,24 +33,25 @@ class HttpStatus {
 	};
 
   protected:
-	codeStatus	_statusCode;
-	std::string _statusMessage;
+	CodeStatus _statusCode;
 
   public:
 	HttpStatus();
-	HttpStatus(codeStatus codeStatus, const std::string &message);
-	HttpStatus(const HttpStatus &other);
-	HttpStatus &operator=(const HttpStatus &other);
+	HttpStatus(CodeStatus statusCode);
+	HttpStatus(const HttpStatus& other);
+	HttpStatus& operator=(const HttpStatus& other);
 	virtual ~HttpStatus();
 
-	codeStatus	getStatusCode() const;
-	std::string getStatusMessage() const;
-	void		setStatus(codeStatus codeStatus, const std::string &message);
-	void		setStatus(codeStatus codeStatus);
-	bool		isError() const;
-	bool		isSuccess() const;
+	void setStatus(CodeStatus CodeStatus);
 
-	static std::string defaultMessage(codeStatus codeStatus);
+	CodeStatus	getStatusCode() const;
+	std::string getStatusMessage() const;
+
+	bool isError() const;
+	bool isSuccess() const;
+
+  private:
+	std::string defaultMessage() const;
 };
 
 #endif

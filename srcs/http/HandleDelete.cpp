@@ -58,6 +58,6 @@ void Response::handleDelete(const Request& request) {
 	else if (std::remove(fullPath.c_str()) != 0)
 		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 	else
-		setStatus(HTTP_204_NO_CONTENT, "No Content");
+		setStatus(HTTP_204_NO_CONTENT);
 	setBody("");
 }

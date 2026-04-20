@@ -34,13 +34,13 @@ void Response::handlePost(const Request& request) {
 		std::string username;
 		size_t		pos = body.find("username=");
 		if (pos == std::string::npos) {
-			setStatus(HTTP_302_FOUND, "Found");
+			setStatus(HTTP_302_FOUND);
 			setHeader("Location", URI_LOGIN);
 			return;
 		}
 		username = body.substr(pos + 9);
 		if (username.empty()) {
-			setStatus(HTTP_302_FOUND, "Found");
+			setStatus(HTTP_302_FOUND);
 			setHeader("Location", URI_LOGIN);
 			return;
 		}
@@ -70,7 +70,7 @@ void Response::handlePost(const Request& request) {
 			(*_sessions)[sessionId] = info;
 			setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly");
 		}
-		setStatus(HTTP_302_FOUND, "Found");
+		setStatus(HTTP_302_FOUND);
 		setHeader("Location", URI_DASHBOARD);
 		return;
 	}
@@ -103,7 +103,7 @@ void Response::handlePost(const Request& request) {
 	file.write(body.c_str(), body.size());
 	file.close();
 
-	setStatus(HTTP_201_CREATED, "Created");
+	setStatus(HTTP_201_CREATED);
 	setHeader("Content-Type", "text/plain");
 	setBody("File uploaded: " + filePath + "\n");
 }

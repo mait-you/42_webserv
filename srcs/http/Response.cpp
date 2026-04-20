@@ -3,11 +3,11 @@
 #include "../../includes/http/MimeTypes.hpp"
 
 Response::Response()
-		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false), _sessions(NULL),
+		: HttpStatus(), _hasCgiRunning(false), _sessions(NULL),
 		  _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
-		: HttpStatus(HTTP_200_OK, "OK"), _hasCgiRunning(false), _sessions(session),
+		: HttpStatus(), _hasCgiRunning(false), _sessions(session),
 		  _isComplete(false) {}
 
 Response::Response(const Response& other)
@@ -30,11 +30,11 @@ Response& Response::operator=(const Response& other) {
 
 Response::~Response() {}
 
-HttpStatus::codeStatus Response::getStatusCode() const {
+HttpStatus::CodeStatus Response::getStatusCode() const {
 	return _statusCode;
 }
-const std::string& Response::getStatusMessage() const {
-	return _statusMessage;
+std::string Response::getStatusMessage() const {
+	return HttpStatus::getStatusMessage();
 }
 const Response::HeaderMap& Response::getHeaders() const {
 	return _headers;
@@ -59,8 +59,7 @@ bool Response::isComplete() const {
 	return _isComplete;
 }
 
-void Response::applyCgiHeaders(const std::string& rawHeaders, codeStatus& outStatus,
-							   std::string& outMsg) {
+void Response::applyCgiHeaders(const std::string& rawHeaders, CodeStatus& outStatus) {
 	std::istringstream stream(rawHeaders);
 	std::string		   line;
 
@@ -83,10 +82,8 @@ void Response::applyCgiHeaders(const std::string& rawHeaders, codeStatus& outSta
 		if (key == "Content-Length")
 			continue;
 		else if (key == "Status") {
-			if (val.size() >= 4) {
-				outStatus = static_cast<codeStatus>(std::atoi(val.c_str()));
-				outMsg	  = val.substr(4);
-			}
+			if (val.size() >= 4)
+				outStatus = static_cast<CodeStatus>(std::atoi(val.c_str()));
 		} else
 			setHeader(key, val);
 	}
@@ -114,16 +111,15 @@ bool Response::processCgiOutput(const Request& request) {
 	}
 
 	if (sepPos == std::string::npos) {
-		setStatus(HTTP_200_OK, "OK");
+		setStatus(HTTP_200_OK);
 		setBody(raw);
 		return true;
 	}
 
-	codeStatus	cgiStatus = HTTP_200_OK;
-	std::string cgiMsg	  = "OK";
+	CodeStatus	cgiStatus = HTTP_200_OK;
 
-	applyCgiHeaders(raw.substr(0, sepPos), cgiStatus, cgiMsg);
-	setStatus(cgiStatus, cgiMsg);
+	applyCgiHeaders(raw.substr(0, sepPos), cgiStatus);
+	setStatus(cgiStatus);
 	setBody(raw.substr(sepPos + skip));
 	return true;
 }
@@ -163,7 +159,7 @@ bool Response::pollCgi(const Request& request) {
 
 void Response::handleRedirect(const Request& request) {
 	const LocationConfig* loc = request.getLocationConf();
-	setStatus(static_cast<codeStatus>(loc->redirect_code));
+	setStatus(static_cast<CodeStatus>(loc->redirect_code));
 	setHeader("Location", loc->redirect_url);
 }
 
@@ -197,7 +193,7 @@ std::string Response::build(Request& request) {
 std::string Response::buildSendBuffer() {
 	std::ostringstream oss;
 
-	oss << HTTP_VERSION << " " << _statusCode << " " << _statusMessage << "\r\n";
+	oss << HTTP_VERSION << " " << _statusCode << " " << getStatusMessage() << "\r\n";
 
 	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
 		oss << it->first << ": " << it->second << "\r\n";

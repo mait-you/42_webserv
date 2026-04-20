@@ -92,7 +92,7 @@ void parseErrorPage(size_t& i, std::vector<Token>& tokens, LocationConfig& locat
 	std::stringstream ss(tokens[i].value);
 	ss >> errorCode;
 	if (ss.fail() || !ss.eof()) {
-		throw std::runtime_error("Invalid config: Expected error codeStatus");
+		throw std::runtime_error("Invalid config: Expected error CodeStatus");
 	}
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
@@ -129,16 +129,16 @@ void parseCgi(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 void parseredirection(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
-		throw std::runtime_error("Invalid config: Expected redirection status codeStatus");
+		throw std::runtime_error("Invalid config: Expected redirection status CodeStatus");
 	}
 	unsigned int	  statusCode;
 	std::stringstream ss(tokens[i].value);
 	ss >> statusCode;
 	if (ss.fail() || !ss.eof()) {
-		throw std::runtime_error("Invalid config: Expected redirection status codeStatus");
+		throw std::runtime_error("Invalid config: Expected redirection status CodeStatus");
 	}
 	if (statusCode != 301 && statusCode != 302) {
-		throw std::runtime_error("Invalid config: status codeStatus not allowed");
+		throw std::runtime_error("Invalid config: status CodeStatus not allowed");
 	}
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {

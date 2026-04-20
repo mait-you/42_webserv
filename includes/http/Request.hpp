@@ -50,10 +50,10 @@ class Request : public HttpStatus {
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;
 
-	std::string			  getClientIp() const;
-	bool				  hasCgi() const;
-	std::string			  resolvePath() const;
-	std::string			  resolveFullPath() const;
+	std::string getClientIp() const;
+	bool		hasCgi() const;
+	std::string resolvePath() const;
+	std::string resolveFullPath() const;
 
   private:
 	bool parseRequestLine(const std::string& buf);
@@ -67,7 +67,7 @@ class Request : public HttpStatus {
 
 	void detectCgi();
 
-	bool setError(codeStatus code);	 // throws
+	bool setError(CodeStatus code);	 // throws
 	void setParseState(ParseState state);
 
 	bool matchedLocation();

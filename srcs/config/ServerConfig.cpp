@@ -92,7 +92,7 @@ void parseErrorPage(size_t& i, std::vector<Token>& tokens, ServerConfig& server)
 	std::stringstream ss(tokens[i].value);
 	ss >> errorCode;
 	if (ss.fail() || !ss.eof()) {
-		throw std::runtime_error("Invalid config:Expected error codeStatus ");
+		throw std::runtime_error("Invalid config:Expected error CodeStatus ");
 	}
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {

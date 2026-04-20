@@ -52,7 +52,7 @@ int Response::handleLogout(const Request& request) {
 			for (it = _sessions->begin(); it != _sessions->end(); it++) {
 				if (it->first == sessionId) {
 					it->second.isLogged = false;
-					setStatus(HTTP_302_FOUND, "Found");
+					setStatus(HTTP_302_FOUND);
 					setHeader("Location", URI_LOGIN);
 					return 1;
 				}
@@ -131,7 +131,7 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 	} else if (locConf->autoindex) {
 		std::string dirList = getList(fullPath, request.resolvePath());
 		if (!dirList.empty()) {
-			setStatus(HTTP_200_OK, "OK");
+			setStatus(HTTP_200_OK);
 			setHeader("Content-type", "text/html");
 			setBody(dirList);
 		} else {

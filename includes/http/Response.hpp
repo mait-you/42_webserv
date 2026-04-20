@@ -28,8 +28,8 @@ class Response : public HttpStatus {
 	Response& operator=(const Response& other);
 	~Response();
 
-	codeStatus		   getStatusCode() const;
-	const std::string& getStatusMessage() const;
+	CodeStatus		   getStatusCode() const;
+	std::string		   getStatusMessage() const;
 	const HeaderMap&   getHeaders() const;
 	const std::string& getBody() const;
 
@@ -57,9 +57,9 @@ class Response : public HttpStatus {
 	int	 handleErrorFile(const std::string& fullPath);
 
 	void deleteFolder(const Request& request, const std::string& fullPath);
-	void errorPage(const Request& request, HttpStatus::codeStatus code);
+	void errorPage(const Request& request, HttpStatus::CodeStatus code);
 
-	void applyCgiHeaders(const std::string& rawHeaders, codeStatus& outStatus, std::string& outMsg);
+	void applyCgiHeaders(const std::string& rawHeaders, CodeStatus& outStatus);
 	bool processCgiOutput(const Request& request);
 
 	void handleGet(const Request& request);
@@ -69,7 +69,5 @@ class Response : public HttpStatus {
 	int handleDashboard(const Request& request, const std::string& fullPath);
 	int handleLogout(const Request& request);
 };
-
-
 
 #endif
