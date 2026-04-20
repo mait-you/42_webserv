@@ -1,76 +1,101 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
+#include "../Head.hpp"
 #include "../config/Config.hpp"
 #include "../http/HttpStatus.hpp"
 
+/*
+ * RFC 1945 §3.2 — URI length is not specified, 8192 is a safe server limit.
+ * RFC 1945 §5   — A Request is a Request-Line, headers, and optional body.
+ */
 #define MAX_URI_LENGTH 8192
-#define END_OF_HEADERS "\r\n\r\n"
 
 class Request : public HttpStatus {
   public:
 	typedef std::map<std::string, std::string> HeaderMap;
-	typedef HeaderMap::iterator				   HeaderIt;
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
 
-	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_COMPLETE };
+	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_DONE, PARSE_ERROR };
 
   private:
 	const ServerConfig*	  _srvConf;
 	const LocationConfig* _locConf;
-	std::string			  _method;
-	std::string			  _uri;
-	std::string			  _version;
-	HeaderMap			  _headers;
-	std::string			  _body;
-	std::string			  _clientIp;
 
-	ParseState	_state;
-	std::size_t _parsePos;
-	bool		_hasCgi;
+	std::string _method;
+	std::string _uri;
+	std::string _version;
+	HeaderMap	_headers;
+	std::string _body;
+	std::string _clientIp;
+	std::size_t _contentLength;
+
+	ParseState _parseState;
+	bool	   _hasCgi;
 
   public:
 	Request();
-	Request(const ServerConfig* serverConfig, const std::string& clientIp);
+	Request(const ServerConfig* srvConf, const std::string& clientIp);
 	Request(const Request& other);
 	Request& operator=(const Request& other);
 	~Request();
 
-	bool parse(const std::string& recvBuffer);
+	/*
+	 * RFC 1945 §5 — Feed raw received bytes. Returns true when the request
+	 * is fully parsed (PARSE_DONE or PARSE_ERROR).
+	 * The buffer is consumed as lines are extracted.
+	 */
+	bool parse(std::string& buffer);
 
-	// getters
-	bool				  isValid() const;
-	bool				  isComplete() const;
-	std::string			  getMethod() const;
-	std::string			  getUri() const;
-	std::string			  getVersion() const;
-	std::string			  getBody() const;
-	const HeaderMap&	  getHeaders() const;
-	std::string			  getHeader(const std::string& key) const;
+	/* Getters */
+	bool isComplete() const;
+	bool isValid() const;
+	bool hasCgi() const;
+
+	std::string		 getMethod() const;
+	std::string		 getUri() const;
+	std::string		 getVersion() const;
+	std::string		 getBody() const;
+	std::string		 getClientIp() const;
+	std::string		 getHeader(const std::string& key) const;
+	const HeaderMap& getHeaders() const;
+
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;
 
-	std::string getClientIp() const;
-	bool		hasCgi() const;
-	std::string resolvePath() const;
-	std::string resolveFullPath() const;
+	/*
+	 * Path utilities — public because Response also needs them.
+	 */
+	std::string resolvePath() const;	 /* URI → clean relative path        */
+	std::string resolveFullPath() const; /* clean path + root → full fs path */
 
   private:
-	bool parseRequestLine(const std::string& buf);
-	bool parseHeaders(const std::string& buf);
-	bool parseBody(const std::string& buf);
+	/* --- parsing pipeline --- */
+	void processLine(const std::string& line);
 
-	bool isValidMethod(const std::string& method) const;
+	/*
+	 * RFC 1945 §5.1   — Request-Line = Method SP Request-URI SP HTTP-Version CRLF
+	 */
+	void parseRequestLine(const std::string& line);
+
+	/*
+	 * RFC 1945 §4.2   — Message-Header = field-name ":" [ field-value ]
+	 */
+	void parseHeaderLine(const std::string& line);
+
+	/* --- validation helpers --- */
+
+	/*
+	 * RFC 1945 §3.2   — URI must be non-empty printable US-ASCII, no CTL chars.
+	 */
 	bool isValidUri(const std::string& uri) const;
-	bool isValidVersion(const std::string& version) const;
-	bool isValidHeaders() const;
 
+	/* --- location and CGI --- */
+	bool matchLocation();
 	void detectCgi();
 
-	bool setError(CodeStatus code);	 // throws
-	void setParseState(ParseState state);
-
-	bool matchedLocation();
+	/* Mark the request as failed and stop parsing. */
+	void setError(CodeStatus code);
 };
 
-#endif
+#endif 

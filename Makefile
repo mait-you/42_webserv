@@ -31,7 +31,6 @@ SRCS = \
 	$(SRC_DIR)/config/ParseLocation.cpp     \
 	$(SRC_DIR)/config/ServerConfig.cpp      \
 	$(SRC_DIR)/http/Request.cpp             \
-	$(SRC_DIR)/http/RequestValidtion.cpp    \
 	$(SRC_DIR)/http/ResponseHelpers.cpp     \
 	$(SRC_DIR)/http/ResponseHandlers.cpp    \
 	$(SRC_DIR)/http/HandlePost.cpp          \

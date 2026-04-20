@@ -1,5 +1,5 @@
 #include "../../includes/net/Client.hpp"
-
+// it call only for Map
 Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response() {}
 

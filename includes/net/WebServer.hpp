@@ -44,6 +44,5 @@ class WebServer {
 	WebServer& operator=(const WebServer&);
 };
 
-std::ostream& operator<<(std::ostream& out, const WebServer& webServer);
 
 #endif
