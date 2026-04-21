@@ -13,8 +13,8 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
-		for (std::size_t j = 0; j < srv.ports.size(); ++j) {
-			Socket sock(srv.host, srv.ports[j], &srv);
+		for (std::size_t j = 0; j < srv.listens.size(); ++j) {
+			Socket sock(srv.listens[j].host, srv.listens[j].port, &srv);
 			sock.setup();
 			EPOLL_EVENT(ev);
 			ev.events  = EPOLLIN;
