@@ -2,13 +2,10 @@
 
 #include "../../includes/http/MimeTypes.hpp"
 
-Response::Response()
-		: HttpStatus(), _hasCgiRunning(false), _sessions(NULL),
-		  _isComplete(false) {}
+Response::Response() : HttpStatus(), _hasCgiRunning(false), _sessions(NULL), _isComplete(false) {}
 
 Response::Response(std::map<std::string, SessionInfo>* session)
-		: HttpStatus(), _hasCgiRunning(false), _sessions(session),
-		  _isComplete(false) {}
+		: HttpStatus(), _hasCgiRunning(false), _sessions(session), _isComplete(false) {}
 
 Response::Response(const Response& other)
 		: HttpStatus(other), _headers(other._headers), _body(other._body),
@@ -116,7 +113,7 @@ bool Response::processCgiOutput(const Request& request) {
 		return true;
 	}
 
-	CodeStatus	cgiStatus = HTTP_200_OK;
+	CodeStatus cgiStatus = HTTP_200_OK;
 
 	applyCgiHeaders(raw.substr(0, sepPos), cgiStatus);
 	setStatus(cgiStatus);
@@ -174,6 +171,7 @@ void Response::handleByMethod(const Request& request) {
 }
 
 std::string Response::build(Request& request) {
+	std::cerr << "wiiiiiiiiiiiiiiiiiii3 = " << !request.isValid() << std::endl;
 	if (!request.isValid())
 		errorPage(request, request.getStatusCode());
 	else if (!request.getLocationConf())
@@ -193,10 +191,12 @@ std::string Response::build(Request& request) {
 std::string Response::buildSendBuffer() {
 	std::ostringstream oss;
 
-	oss << HTTP_VERSION << " " << _statusCode << " " << getStatusMessage() << "\r\n";
+	if (_httpVersion != HTTP_0_9)
+		oss << HTTP_VERSION << " " << _statusCode << " " << getStatusMessage() << "\r\n";
 
-	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
-		oss << it->first << ": " << it->second << "\r\n";
+	if (_httpVersion != HTTP_0_9)
+		for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
+			oss << it->first << ": " << it->second << "\r\n";
 
 	bool noBody = (_statusCode == HTTP_204_NO_CONTENT || _statusCode == HTTP_304_NOT_MODIFIED);
 

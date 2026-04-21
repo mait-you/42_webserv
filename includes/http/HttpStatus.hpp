@@ -36,7 +36,7 @@ class HttpStatus {
 
   protected:
 	CodeStatus	_statusCode;
-	HttpVersion _httpV;
+	HttpVersion _httpVersion;
 
   public:
 	HttpStatus();
@@ -53,8 +53,6 @@ class HttpStatus {
 	bool isError() const;
 	bool isSuccess() const;
 
-  private:
-	std::string defaultMessage() const;
 };
 
 #endif

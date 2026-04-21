@@ -1,16 +1,17 @@
 #include "../../includes/http/HttpStatus.hpp"
 
-HttpStatus::HttpStatus() : _statusCode(HTTP_200_OK), _httpV(HTTP_UNKNOWN) {}
+HttpStatus::HttpStatus() : _statusCode(HTTP_200_OK), _httpVersion(HTTP_UNKNOWN) {}
 
-HttpStatus::HttpStatus(CodeStatus statusCode) : _statusCode(statusCode), _httpV(HTTP_UNKNOWN) {}
+HttpStatus::HttpStatus(CodeStatus statusCode)
+		: _statusCode(statusCode), _httpVersion(HTTP_UNKNOWN) {}
 
 HttpStatus::HttpStatus(const HttpStatus& other)
-		: _statusCode(other._statusCode), _httpV(other._httpV) {}
+		: _statusCode(other._statusCode), _httpVersion(other._httpVersion) {}
 
 HttpStatus& HttpStatus::operator=(const HttpStatus& other) {
 	if (this != &other) {
-		_statusCode = other._statusCode;
-		_httpV		= other._httpV;
+		_statusCode	 = other._statusCode;
+		_httpVersion = other._httpVersion;
 	}
 	return *this;
 }
@@ -22,22 +23,6 @@ HttpStatus::CodeStatus HttpStatus::getStatusCode() const {
 }
 
 std::string HttpStatus::getStatusMessage() const {
-	return defaultMessage();
-}
-
-void HttpStatus::setStatus(CodeStatus CodeStatus) {
-	_statusCode = CodeStatus;
-}
-
-bool HttpStatus::isError() const {
-	return _statusCode >= HTTP_400_BAD_REQUEST;
-}
-
-bool HttpStatus::isSuccess() const {
-	return _statusCode >= HTTP_200_OK && _statusCode <= HTTP_204_NO_CONTENT;
-}
-
-std::string HttpStatus::defaultMessage() const {
 	switch (_statusCode) {
 		case HTTP_200_OK:
 			return "OK";
@@ -76,4 +61,16 @@ std::string HttpStatus::defaultMessage() const {
 		default:
 			return "Unknown";
 	}
+}
+
+void HttpStatus::setStatus(CodeStatus CodeStatus) {
+	_statusCode = CodeStatus;
+}
+
+bool HttpStatus::isError() const {
+	return _statusCode >= HTTP_400_BAD_REQUEST;
+}
+
+bool HttpStatus::isSuccess() const {
+	return _statusCode >= HTTP_200_OK && _statusCode <= HTTP_204_NO_CONTENT;
 }

@@ -42,10 +42,11 @@ bool Request::parse(std::string& buffer) {
 		/* RFC 1945 §2.2 — lines end with CRLF */
 		std::size_t pos = buffer.find("\r\n");
 		if (pos == std::string::npos)
-			break; /* wait for more data */
+			break;
 
 		std::string line = buffer.substr(0, pos);
 		buffer.erase(0, pos + 2);
+
 		processLine(line);
 	}
 	if (_parseState == PARSE_BODY) {
@@ -55,15 +56,13 @@ bool Request::parse(std::string& buffer) {
 			_parseState = PARSE_DONE;
 		}
 	}
-	return isComplete();
+	return true;
 }
 
 void Request::processLine(const std::string& line) {
 	if (_parseState == PARSE_REQUEST_LINE) {
-		parseRequestLine(line);
-		return;
+		return parseRequestLine(line);
 	}
-
 	if (_parseState == PARSE_HEADERS) {
 		if (line.empty()) {
 			std::string cl = getHeader("content-length");
@@ -76,9 +75,8 @@ void Request::processLine(const std::string& line) {
 				_contentLength = 0;
 				_parseState	   = PARSE_DONE;
 			}
-		} else {
+		} else
 			parseHeaderLine(line);
-		}
 	}
 }
 
@@ -100,12 +98,14 @@ void Request::parseRequestLine(const std::string& line) {
 	/* RFC 1945 §3.1 — only full HTTP/x.x requests accepted */
 	ss >> _version;
 	if (_version.empty())
-		_httpV = HTTP_0_9;
+		_httpVersion = HTTP_0_9;
 	else if (_version == "HTTP/1.0")
-		_httpV = HTTP_1_0;
+		_httpVersion = HTTP_1_0;
 	else if (_version == "HTTP/1.1")
-		_httpV = HTTP_1_1;
+		_httpVersion = HTTP_1_1;
 	else
+		return setError(HTTP_400_BAD_REQUEST);
+	if (_httpVersion == HTTP_0_9 && _method != "GET")
 		return setError(HTTP_400_BAD_REQUEST);
 
 	std::string extra;
@@ -121,6 +121,9 @@ void Request::parseRequestLine(const std::string& line) {
 }
 
 void Request::parseHeaderLine(const std::string& line) {
+	/* RFC 1945 §4 —  Simple-Request do not allow the use of any header */
+	if (_httpVersion == HTTP_0_9)
+		return setError(HTTP_400_BAD_REQUEST);
 	std::size_t colon = line.find(':');
 	if (colon == std::string::npos)
 		return setError(HTTP_400_BAD_REQUEST);
