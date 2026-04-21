@@ -3,6 +3,7 @@
 
 #include "../config/Config.hpp"
 #include "../http/HttpStatus.hpp"
+#include "../net/Socket.hpp"
 
 #define MAX_URI_LENGTH 8192
 #define END_OF_HEADERS "\r\n\r\n"
@@ -25,6 +26,7 @@ class Request : public HttpStatus {
 	std::string			  _body;
 	std::string			  _clientIp;
 	std::string			  _serverPort;
+	std::string			  _serverIp;
 
 	ParseState	_state;
 	std::size_t _parsePos;
@@ -32,7 +34,7 @@ class Request : public HttpStatus {
 
   public:
 	Request();
-	Request(const ServerConfig* serverConfig, const std::string& clientIp, const std::string& serverPort);
+	Request(const Socket* servSocket, const std::string& clientIp);
 	Request(const Request& other);
 	Request& operator=(const Request& other);
 	~Request();
@@ -52,6 +54,7 @@ class Request : public HttpStatus {
 	const ServerConfig*	  getConf() const;
 	std::string getClientIp() const;
 	std::string getServerPort() const;
+	std::string getServerIp() const;
 
 	bool		hasCgi() const;
 	std::string resolvePath() const;

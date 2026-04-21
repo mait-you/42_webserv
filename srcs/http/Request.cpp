@@ -6,14 +6,15 @@ Request::Request()
 		: HttpStatus(), _srvConf(NULL), _locConf(NULL), _state(PARSE_REQUEST_LINE),
 		  _parsePos(0), _hasCgi(false) {}
 
-Request::Request(const ServerConfig* serverConfig, const std::string& clientIp, const std::string& serverPort)
-		: HttpStatus(), _srvConf(serverConfig), _locConf(NULL),
-		  _clientIp(clientIp), _serverPort(serverPort), _state(PARSE_REQUEST_LINE), _parsePos(0), _hasCgi(false) {}
+Request::Request(const Socket* servSocket, const std::string& clientIp)
+		: HttpStatus(), _srvConf(servSocket->getConf()), _locConf(NULL),
+		  _clientIp(clientIp), _serverPort(servSocket->getPort()), _serverIp(servSocket->getIp()), _state(PARSE_REQUEST_LINE), _parsePos(0), _hasCgi(false) {}
 
 Request::Request(const Request& other)
 		: HttpStatus(other), _srvConf(other._srvConf), _locConf(other._locConf),
 		  _method(other._method), _uri(other._uri), _version(other._version),
-		  _headers(other._headers), _body(other._body), _clientIp(other._clientIp), _serverPort(other._serverPort),
+		  _headers(other._headers), _body(other._body), _clientIp(other._clientIp),
+		  _serverPort(other._serverPort), _serverIp(other._serverIp),
 		  _state(other._state), _parsePos(other._parsePos), _hasCgi(other._hasCgi) {}
 
 Request& Request::operator=(const Request& other) {
@@ -28,6 +29,7 @@ Request& Request::operator=(const Request& other) {
 		_body	  = other._body;
 		_clientIp = other._clientIp;
 		_serverPort = other._serverPort;
+		_serverIp = other._serverIp;
 		_state	  = other._state;
 		_parsePos = other._parsePos;
 		_hasCgi	  = other._hasCgi;
@@ -174,6 +176,10 @@ std::string Request::getClientIp() const {
 
 std::string Request::getServerPort() const {
 	return _serverPort;
+}
+
+std::string Request::getServerIp() const {
+	return _serverIp;
 }
 
 std::string Request::getBody() const {
