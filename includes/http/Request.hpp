@@ -21,21 +21,22 @@ class Request : public HttpStatus {
   private:
 	const ServerConfig*	  _srvConf;
 	const LocationConfig* _locConf;
-
-	std::string _method;
-	std::string _uri;
-	std::string _version;
-	HeaderMap	_headers;
-	std::string _body;
-	std::string _clientIp;
+	std::string			  _method;
+	std::string			  _uri;
+	std::string			  _version;
+	HeaderMap			  _headers;
+	std::string			  _body;
+	std::string			  _clientIp;
+	std::string			  _serverPort;
 	std::size_t _contentLength;
 
-	ParseState _parseState;
-	bool	   _hasCgi;
+	ParseState	_parseState;
+
+	bool		_hasCgi;
 
   public:
 	Request();
-	Request(const ServerConfig* srvConf, const std::string& clientIp);
+	Request(const ServerConfig* srvConf, const std::string& clientIp, const std::string& serverPort);
 	Request(const Request& other);
 	Request& operator=(const Request& other);
 	~Request();
@@ -62,12 +63,12 @@ class Request : public HttpStatus {
 
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;
+	std::string getClientIp() const;
+	std::string getServerPort() const;
 
-	/*
-	 * Path utilities — public because Response also needs them.
-	 */
-	std::string resolvePath() const;	 /* URI → clean relative path        */
-	std::string resolveFullPath() const; /* clean path + root → full fs path */
+	bool		hasCgi() const;
+	std::string resolvePath() const;
+	std::string resolveFullPath() const;
 
   private:
 	/* --- parsing pipeline --- */
@@ -98,4 +99,4 @@ class Request : public HttpStatus {
 	void setError(CodeStatus code);
 };
 
-#endif 
+#endif
