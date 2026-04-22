@@ -17,7 +17,6 @@ Config& Config::operator=(const Config& other) {
 Config::~Config() {}
 
 ServerConfig::ServerConfig() {
-	host				 = "0.0.0.0";
 	root				 = "./www";
 	index				 = "index.html";
 	client_max_body_size = 1 * 1024 * 1024;
@@ -35,11 +34,18 @@ LocationConfig::LocationConfig() {
 	client_max_body_size = 0;
 }
 
-bool hasSamePort(const ServerConfig& a, const ServerConfig& b) {
-	for (size_t i = 0; i < a.ports.size(); i++) {
-		for (size_t j = 0; j < b.ports.size(); j++) {
-			if (a.ports[i] == b.ports[j])
-				return true;
+bool hasSameHostPort(const ServerConfig& a, const ServerConfig& b) {
+	for (size_t i = 0; i < a.listens.size(); i++) {
+		for (size_t j = 0; j < b.listens.size(); j++) {
+			if (a.listens[i].port == b.listens[j].port)
+			{
+				if (a.listens[i].host == b.listens[j].host)
+					return true;
+				else if (a.listens[i].host == "0.0.0.0" || b.listens[j].host == "0.0.0.0")
+					return true;
+				else
+					continue;
+			}
 		}
 	}
 	return false;
@@ -58,8 +64,12 @@ void Config::parse(const std::string& filename) {
 			i++;
 			ServerConfig server;
 			parseServer(tokens, i, server);
-			if (server.ports.empty())
-				server.ports.push_back("8080");
+			if (server.listens.empty())
+			{
+				Listen defaultListen;
+				defaultListen.host = "0.0.0.0";
+				defaultListen.port = "8080";
+			}
 			if (server.locations.empty()) {
 				LocationConfig location;
 				location.path = "/";
@@ -67,11 +77,7 @@ void Config::parse(const std::string& filename) {
 			}
 			for (size_t s = 0; s < _servers.size(); s++) {
 				ServerConfig& current = _servers[s];
-				if (hasSamePort(server, current)) {
-					if (server.host == current.host) {
-						throw std::runtime_error("Invalid config: Invalid server config");
-					}
-					if (server.host == "0.0.0.0" || current.host == "0.0.0.0")
+				if (hasSameHostPort(server, current)) {
 						throw std::runtime_error("Invalid config: Invalid server config");
 				}
 			}

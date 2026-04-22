@@ -171,7 +171,6 @@ void Response::handleByMethod(const Request& request) {
 }
 
 std::string Response::build(Request& request) {
-	std::cerr << "wiiiiiiiiiiiiiiiiiii3 = " << !request.isValid() << std::endl;
 	if (!request.isValid())
 		errorPage(request, request.getStatusCode());
 	else if (!request.getLocationConf())

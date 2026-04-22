@@ -10,6 +10,11 @@ struct Token {
 	std::string	value;
 };
 
+struct Listen {
+	std::string host;
+	std::string port;
+};
+
 struct LocationConfig {
 	std::string						 	path;
 	std::vector<std::string>		 	allow_methods;
@@ -31,8 +36,7 @@ struct LocationConfig {
 };
 
 struct ServerConfig {
-	std::vector<std::string>	ports;
-	std::string					host;
+	std::vector<Listen>			listens;
 	std::string					server_name;
 	std::string					root;
 	std::string					index;

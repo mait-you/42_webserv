@@ -159,12 +159,13 @@ static void logLocationConfig(const LocationConfig& loc, bool last) {
 }
 
 static void logServerConfig(const ServerConfig& server) {
-	std::cout << GRY "│  " RST << WHT << server.host << RST;
+	// std::cout << GRY "│  " RST << WHT << server.host << RST;
 
 	std::cout << GRY ":" RST;
-	for (size_t i = 0; i < server.ports.size(); i++) {
-		std::cout << YEL << server.ports[i] << RST;
-		if (i + 1 < server.ports.size())
+	for (size_t i = 0; i < server.listens.size(); i++) {
+		std::cout << GRY "│  " RST << WHT << server.listens[i].host << RST;
+		std::cout << YEL << server.listens[i].port << RST;
+		if (i + 1 < server.listens.size())
 			std::cout << GRY "," RST;
 	}
 

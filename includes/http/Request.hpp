@@ -4,6 +4,7 @@
 #include "../Head.hpp"
 #include "../config/Config.hpp"
 #include "../http/HttpStatus.hpp"
+#include "../net/Socket.hpp"
 
 /*
  * RFC 1945 §3.2 — URI length is not specified, 8192 is a safe server limit.
@@ -26,17 +27,16 @@ class Request : public HttpStatus {
 	std::string			  _version;
 	HeaderMap			  _headers;
 	std::string			  _body;
-	std::string			  _clientIp;
 	std::string			  _serverPort;
-	std::size_t _contentLength;
-
-	ParseState	_parseState;
-
-	bool		_hasCgi;
+	std::string			  _serverIp;
+	std::string			  _clientIp;
+	std::size_t			  _contentLength;
+	ParseState			  _parseState;
+	bool				  _hasCgi;
 
   public:
 	Request();
-	Request(const ServerConfig* srvConf, const std::string& clientIp, const std::string& serverPort);
+	Request(const Socket* servSocket, const std::string& clientIp);
 	Request(const Request& other);
 	Request& operator=(const Request& other);
 	~Request();
@@ -63,10 +63,9 @@ class Request : public HttpStatus {
 
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;
-	std::string getClientIp() const;
-	std::string getServerPort() const;
+	std::string			  getServerPort() const;
+	std::string			  getServerIp() const;
 
-	bool		hasCgi() const;
 	std::string resolvePath() const;
 	std::string resolveFullPath() const;
 
