@@ -1,9 +1,9 @@
 #include "../../includes/http/MimeTypes.hpp"
 
-Mime::MimeMap Mime::_types = Mime::_initTypes();
+std::map<std::string, std::string> Mime::_types = Mime::_initTypes();
 
-Mime::MimeMap Mime::_initTypes() {
-	Mime::MimeMap t;
+std::map<std::string, std::string> Mime::_initTypes() {
+	std::map<std::string, std::string> t;
 	t["html"]	 = "text/html";
 	t["htm"]	 = "text/html";
 	t["shtml"]	 = "text/html";

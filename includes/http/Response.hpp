@@ -18,7 +18,6 @@ class Response : public HttpStatus {
 	bool								_hasCgiRunning;
 	CgiInfo								_runningCgi;
 	std::map<std::string, SessionInfo>* _sessions;
-	// bool								_responseReady;
 	bool _isComplete;
 
   public:
@@ -49,7 +48,6 @@ class Response : public HttpStatus {
 	void handleRedirect(const Request& request);
 	void handleByMethod(const Request& request);
 
-	// helpers
 	bool		allowedMethods(const Request& request);
 	std::string getList(const std::string& fullPath, const std::string& uri);
 
