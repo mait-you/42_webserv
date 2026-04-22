@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <cctype>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -24,7 +25,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <cctype>
 
 #define RST "\e[0m"
 #define GRY "\e[90m"
@@ -34,7 +34,5 @@
 #define CYN "\e[96m"
 #define RED "\e[91m"
 #define MGT "\e[95m"
-
-#define HTTP_VERSION "HTTP/1.0"
 
 #endif

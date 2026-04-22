@@ -25,6 +25,14 @@ Response& Response::operator=(const Response& other) {
 	return *this;
 }
 
+void Response::operator=(const Request& req) {
+	HttpStatus::operator=(req);
+	if (_httpVersion != HTTP_0_9)
+		_httpVersion = HTTP_1_0;
+	if (_httpVersion == HTTP_0_9)
+		_statusCode = HTTP_000_NO_CODE_STATUS;
+}
+
 Response::~Response() {}
 
 HttpStatus::CodeStatus Response::getStatusCode() const {
@@ -41,10 +49,12 @@ const std::string& Response::getBody() const {
 }
 
 void Response::setHeader(const std::string& key, const std::string& value) {
-	_headers[key] = value;
+	if (_httpVersion != HTTP_0_9)
+		_headers[key] = value;
 }
 
 void Response::setBody(const std::string& body) {
+	// if (_statusCode != HTTP_000_NO_CODE_STATUS && _httpVersion != HTTP_0_9)
 	_body = body;
 }
 
@@ -190,15 +200,16 @@ std::string Response::build(Request& request) {
 std::string Response::buildSendBuffer() {
 	std::ostringstream oss;
 
-	if (_httpVersion != HTTP_0_9)
-		oss << HTTP_VERSION << " " << _statusCode << " " << getStatusMessage() << "\r\n";
-
-	if (_httpVersion != HTTP_0_9)
-		for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
-			oss << it->first << ": " << it->second << "\r\n";
-
+	if (_httpVersion == HTTP_0_9) {
+		_isComplete = true;
+		return _body;
+	}
 	bool noBody = (_statusCode == HTTP_204_NO_CONTENT || _statusCode == HTTP_304_NOT_MODIFIED);
 
+	oss << getHttpVersion() << " " << _statusCode << " " << getStatusMessage() << "\r\n";
+
+	for (ConstHeaderIt it = _headers.begin(); it != _headers.end(); ++it)
+		oss << it->first << ": " << it->second << "\r\n";
 	if (!noBody)
 		oss << "Content-Length: " << _body.size() << "\r\n";
 

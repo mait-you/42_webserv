@@ -60,6 +60,8 @@ bool Request::parse(std::string& buffer) {
 			_parseState = PARSE_DONE;
 		}
 	}
+	if (_parseState == PARSE_DONE)
+		setStatus(HTTP_200_OK);
 	return true;
 }
 
@@ -72,9 +74,9 @@ void Request::processLine(const std::string& line) {
 			std::string cl = getHeader("content-length");
 			if (!cl.empty()) {
 				_contentLength = static_cast<std::size_t>(std::atol(cl.c_str()));
-				_parseState	   = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
 				if (_contentLength > _srvConf->client_max_body_size)  // serve side
 					return setError(HTTP_400_BAD_REQUEST);
+				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
 			} else {
 				_contentLength = 0;
 				_parseState	   = PARSE_DONE;
@@ -85,10 +87,36 @@ void Request::processLine(const std::string& line) {
 }
 
 void Request::parseRequestLine(const std::string& line) {
-	std::istringstream ss(line);
+	std::size_t first = line.find(' ');
+	if (first == std::string::npos)
+		return setError(HTTP_400_BAD_REQUEST);
+	_method = line.substr(0, first);
 
-	ss >> _method >> _uri;
+	std::size_t second = line.find(' ', first + 1);
+	if (second == std::string::npos) {
+		/* no second SP — HTTP/0.9 Simple-Request */
+		_uri = line.substr(first + 1);
+	} else {
+		_uri	 = line.substr(first + 1, second - first - 1);
+		_version = line.substr(second + 1);
+	}
+
+	/* reject extra spaces — double space = empty token */
 	if (_method.empty() || _uri.empty())
+		return setError(HTTP_400_BAD_REQUEST);
+
+	/* reject if version contains a space — extra token */
+	if (!_version.empty() && _version.find(' ') != std::string::npos)
+		return setError(HTTP_400_BAD_REQUEST);
+
+	/* RFC 1945 §3.1 — parse version */
+	if (_version.empty() && _method == "GET")
+		_httpVersion = HTTP_0_9;
+	else if (_version == "HTTP/1.0")
+		_httpVersion = HTTP_1_0;
+	else if (_version == "HTTP/1.1")
+		_httpVersion = HTTP_1_1;
+	else
 		return setError(HTTP_400_BAD_REQUEST);
 
 	/* RFC 1945 §5.1.1 — unsupported method */
@@ -99,24 +127,6 @@ void Request::parseRequestLine(const std::string& line) {
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
 
-	/* RFC 1945 §3.1 — only full HTTP/x.x requests accepted */
-	ss >> _version;
-	if (_version.empty())
-		_httpVersion = HTTP_0_9;
-	else if (_version == "HTTP/1.0")
-		_httpVersion = HTTP_1_0;
-	else if (_version == "HTTP/1.1")
-		_httpVersion = HTTP_1_1;
-	else
-		return setError(HTTP_400_BAD_REQUEST);
-	if (_httpVersion == HTTP_0_9 && _method != "GET")
-		return setError(HTTP_400_BAD_REQUEST);
-
-	std::string extra;
-	if (ss >> extra)
-		return setError(HTTP_400_BAD_REQUEST);
-
-	/* Match URI to a configured location block. */
 	if (!matchLocation())
 		return setError(HTTP_404_NOT_FOUND);
 

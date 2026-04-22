@@ -6,6 +6,8 @@
 class HttpStatus {
   public:
 	enum CodeStatus {
+		HTTP_000_NO_CODE_STATUS,
+
 		// 2xx Success
 		HTTP_200_OK			= 200,
 		HTTP_201_CREATED	= 201,
@@ -32,7 +34,7 @@ class HttpStatus {
 		HTTP_503_SERVICE_UNAVAILABLE   = 503
 	};
 
-	enum HttpVersion { HTTP_0_9, HTTP_1_0, HTTP_1_1, HTTP_UNKNOWN };
+	enum HttpVersion { HTTP_UNKNOWN, HTTP_0_9, HTTP_1_0, HTTP_1_1 };
 
   protected:
 	CodeStatus	_statusCode;
@@ -46,13 +48,14 @@ class HttpStatus {
 	virtual ~HttpStatus();
 
 	void setStatus(CodeStatus CodeStatus);
+	void setVersion(HttpVersion httpVersion);
 
 	CodeStatus	getStatusCode() const;
 	std::string getStatusMessage() const;
+	std::string getHttpVersion() const;
 
 	bool isError() const;
 	bool isSuccess() const;
-
 };
 
 #endif

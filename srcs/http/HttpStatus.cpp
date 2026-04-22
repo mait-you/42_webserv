@@ -1,9 +1,8 @@
 #include "../../includes/http/HttpStatus.hpp"
 
-HttpStatus::HttpStatus() : _statusCode(HTTP_200_OK), _httpVersion(HTTP_UNKNOWN) {}
+HttpStatus::HttpStatus() : _statusCode(HTTP_000_NO_CODE_STATUS), _httpVersion(HTTP_UNKNOWN) {}
 
-HttpStatus::HttpStatus(CodeStatus statusCode)
-		: _statusCode(statusCode), _httpVersion(HTTP_UNKNOWN) {}
+HttpStatus::HttpStatus(CodeStatus statusCode) : _statusCode(statusCode), _httpVersion(HTTP_1_0) {}
 
 HttpStatus::HttpStatus(const HttpStatus& other)
 		: _statusCode(other._statusCode), _httpVersion(other._httpVersion) {}
@@ -63,8 +62,26 @@ std::string HttpStatus::getStatusMessage() const {
 	}
 }
 
+std::string HttpStatus::getHttpVersion() const {
+	switch (_httpVersion) {
+		case HTTP_0_9:
+			return "HTTP/0.9";
+		case HTTP_1_0:
+			return "HTTP/1.0";
+		case HTTP_1_1:
+			return "HTTP/1.1";
+		default:
+			return "Unknown";
+	}
+}
+
 void HttpStatus::setStatus(CodeStatus CodeStatus) {
-	_statusCode = CodeStatus;
+	if (_httpVersion != HTTP_0_9)
+		_statusCode = CodeStatus;
+}
+
+void HttpStatus::setVersion(HttpVersion httpVersion) {
+	_httpVersion = httpVersion;
 }
 
 bool HttpStatus::isError() const {
@@ -72,5 +89,7 @@ bool HttpStatus::isError() const {
 }
 
 bool HttpStatus::isSuccess() const {
+	if (_httpVersion == HTTP_0_9)
+		return true;
 	return _statusCode >= HTTP_200_OK && _statusCode <= HTTP_204_NO_CONTENT;
 }

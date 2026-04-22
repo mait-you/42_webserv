@@ -26,6 +26,7 @@ class Response : public HttpStatus {
 	Response(std::map<std::string, SessionInfo>* session);
 	Response(const Response& other);
 	Response& operator=(const Response& other);
+	void operator=(const Request& req);
 	~Response();
 
 	CodeStatus		   getStatusCode() const;

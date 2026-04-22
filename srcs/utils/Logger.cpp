@@ -98,11 +98,14 @@ static void logClient(const Client& client) {
 	std::cout << "\n";
 
 	if (hasReq) {
-		std::cout << GRY "│  " RST << (hasRes ? GRY "├─ " : GRY "└─ ") << WHT "Request\n" RST;
+		std::cout << GRY "│  " RST << (hasRes ? GRY "├─ " : GRY "└─ ") << WHT "Request | "
+				  << client.getRequest().getHttpVersion() << " "
+				  << client.getRequest().getStatusCode() << "\n" RST;
 		logRequest(client.getRequest(), hasRes);
 	}
 	if (hasRes) {
-		std::cout << GRY "│  └─ " WHT "Response\n" RST;
+		std::cout << GRY "│  └─ " WHT "Response | " << client.getResponse().getHttpVersion() << " "
+				  << client.getResponse().getStatusCode() << "\n" RST;
 		logResponse(client.getResponse());
 	}
 }

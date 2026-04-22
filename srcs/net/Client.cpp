@@ -62,6 +62,7 @@ bool Client::sendData() {
 }
 
 bool Client::buildResponse() {
+	_response = _request;
 	if (_response.hasCgiRunning()) {
 		if (!_response.pollCgi(_request))
 			return false;  // CGI not done yet

@@ -2,6 +2,8 @@
 #include "../../includes/utils/Utils.hpp"
 
 void Response::errorPage(const Request& request, CodeStatus code) {
+	if (_httpVersion == HTTP_0_9)
+		return;
 	const LocationConfig* locConf = request.getLocationConf();
 	const ServerConfig*	  srvConf = request.getConf();
 
