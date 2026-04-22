@@ -4,23 +4,16 @@
 #include "../Head.hpp"
 
 class Mime {
-  private:
-	typedef std::map<std::string, std::string> MimeMap;
-	typedef MimeMap::iterator				   MimeIt;
-	typedef MimeMap::const_iterator			   ConstMimeIt;
+	private:
+	typedef std::map<std::string, std::string>::iterator MimeIt;
+	static std::map<std::string, std::string> _types;
+	static std::map<std::string, std::string> _initTypes();
 
-  private:
-	static MimeMap _types;
-	static MimeMap _initTypes();
-
-  public:
+	public:
 	static std::string getType(const std::string& extension);
 	static std::string getExtension(const std::string& mimeType);
 
-  private:
+	private:
 	Mime();
-	Mime(const Mime&);
-	Mime& operator=(const Mime&);
-	~Mime();
 };
 #endif
