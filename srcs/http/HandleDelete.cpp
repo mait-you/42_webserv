@@ -46,7 +46,7 @@ void Response::deleteFolder(const Request& request, const std::string& fullPath)
 void Response::handleDelete(const Request& request) {
 	struct stat info;
 
-	std::string fullPath = request.resolveFullPath();
+	std::string fullPath = request.getResolveFullPath();
 	if (stat(fullPath.c_str(), &info) == -1)
 		errorPage(request, HTTP_404_NOT_FOUND);
 	else if (S_ISDIR(info.st_mode)) {

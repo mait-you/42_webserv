@@ -77,8 +77,6 @@ std::string getExtension(const std::string& fullPath) {
 	return "";
 }
 
-
-
 std::string toString(int val) {
 	std::ostringstream ss;
 	ss << val;
@@ -110,4 +108,36 @@ std::string htmlEscape(const std::string& s) {
 		}
 	}
 	return out;
+}
+
+std::string resolvePath(const std::string& uri) {
+	if (uri.empty())
+		return "/";
+	std::string path = uri;
+	std::size_t q	 = path.find('?');
+	if (q != std::string::npos)
+		path = path.substr(0, q);
+
+	std::vector<std::string> parts;
+	std::stringstream		 ss(path);
+	std::string				 seg;
+
+	while (std::getline(ss, seg, '/')) {
+		if (seg.empty() || seg == ".")
+			continue;
+		if (seg == "..") {
+			if (!parts.empty())
+				parts.pop_back();
+		} else
+			parts.push_back(seg);
+	}
+
+	std::string clean;
+	for (std::size_t i = 0; i < parts.size(); ++i)
+		clean += "/" + parts[i];
+
+	if (clean.empty() || uri[uri.size() - 1] == '/')
+		clean += "/";
+
+	return clean;
 }

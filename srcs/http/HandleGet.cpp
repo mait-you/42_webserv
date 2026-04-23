@@ -129,7 +129,7 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 		else
 			_hasCgiRunning = true;
 	} else if (locConf->autoindex) {
-		std::string dirList = getList(fullPath, request.resolvePath());
+		std::string dirList = getList(fullPath, request.getResolvePath());
 		if (!dirList.empty()) {
 			setStatus(HTTP_200_OK);
 			setHeader("Content-type", "text/html");
@@ -143,7 +143,7 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 }
 
 void Response::handleGet(const Request& request) {
-	std::string fullPath = request.resolveFullPath();
+	std::string fullPath = request.getResolveFullPath();
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {

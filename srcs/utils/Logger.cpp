@@ -162,18 +162,12 @@ static void logLocationConfig(const LocationConfig& loc, bool last) {
 }
 
 static void logServerConfig(const ServerConfig& server) {
-	// std::cout << GRY "│  " RST << WHT << server.host << RST;
-
-	std::cout << GRY ":" RST;
 	for (size_t i = 0; i < server.listens.size(); i++) {
-		std::cout << GRY "│  " RST << WHT << server.listens[i].host << RST;
-		std::cout << YEL << server.listens[i].port << RST;
+		std::cout << GRY "│  " RST << WHT << server.listens[i].host << RST ":" YEL
+				  << server.listens[i].port << RST;
 		if (i + 1 < server.listens.size())
-			std::cout << GRY "," RST;
+			std::cout << GRY "\n" RST;
 	}
-
-	if (!server.server_name.empty())
-		std::cout << "  " << GRY "[" RST << server.server_name << GRY "]" RST;
 
 	std::cout << "\n";
 	std::cout << GRY "│    " RST "root:      " << WHT << server.root << RST "\n";
@@ -193,8 +187,9 @@ static void logConfig(const Config& config) {
 
 	std::cout << "\n" GRY "┌─ Config " RST << GRY "[" RST << servers.size() << GRY "]" RST "\n";
 	for (size_t i = 0; i < servers.size(); i++) {
-		std::cout << GRY "│ " RST << WHT "Server" RST << GRY " [" RST << (i + 1)
-				  << GRY "]" RST "\n";
+		std::cout << GRY "│ " RST << WHT "Server" RST << GRY " [" RST << (i + 1) << GRY "] ";
+		if (!servers[i].server_name.empty())
+			std::cout << MGT << servers[i].server_name << RST "\n";
 		logServerConfig(servers[i]);
 	}
 	std::cout << GRY "└─── ─ ─ ─ " RST "\n";

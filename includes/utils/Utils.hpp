@@ -16,4 +16,6 @@ std::string getExtension(const std::string& fullPath);
 std::string toString(int val);
 std::string htmlEscape(const std::string& s);
 
+std::string resolvePath(const std::string& uri);
+
 #endif

@@ -17,7 +17,7 @@ void Response::handlePost(const Request& request) {
 
 	// CGI check FIRST — before upload guard
 	if (request.hasCgi()) {
-		const std::string fullPath = request.resolveFullPath();
+		const std::string fullPath = request.getResolveFullPath();
 		Cgi				  cgi(request, *request.getConf(), locConf, fullPath);
 		CgiInfo			  info = cgi.start();
 		if (info.pid == -1) {

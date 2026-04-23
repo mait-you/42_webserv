@@ -127,8 +127,10 @@ void Request::parseRequestLine(const std::string& line) {
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
 
+	_resolveUri = resolvePath(_uri);
 	if (!matchLocation())
-		return setError(HTTP_404_NOT_FOUND);
+		return setError(HTTP_400_BAD_REQUEST);
+	_resolveFullUri = resolveFullPath();
 
 	detectCgi();
 	_parseState = PARSE_HEADERS;
@@ -183,7 +185,7 @@ bool Request::matchLocation() {
 	if (!_srvConf)
 		return false;
 
-	const std::string& uri	   = resolvePath();
+	const std::string& uri	   = _resolveUri;
 	std::size_t		   bestLen = 0;
 
 	for (std::size_t i = 0; i < _srvConf->locations.size(); ++i) {
@@ -208,7 +210,7 @@ void Request::detectCgi() {
 	if (!_locConf || !_locConf->has_cgi)
 		return;
 
-	std::string path = resolveFullPath();
+	std::string path = _resolveFullUri;
 
 	for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
 		 it != _locConf->cgi.end(); ++it) {
@@ -231,48 +233,12 @@ void Request::setError(CodeStatus code) {
 }
 
 /*
- * Example: "/a/../b?x=1" → "/b"
- */
-std::string Request::resolvePath() const {
-	if (_uri.empty())
-		return "/";
-	std::string path = _uri;
-	std::size_t q	 = path.find('?');
-	if (q != std::string::npos)
-		path = path.substr(0, q);
-
-	std::vector<std::string> parts;
-	std::stringstream		 ss(path);
-	std::string				 seg;
-
-	while (std::getline(ss, seg, '/')) {
-		if (seg.empty() || seg == ".")
-			continue;
-		if (seg == "..") {
-			if (!parts.empty())
-				parts.pop_back();
-		} else {
-			parts.push_back(seg);
-		}
-	}
-
-	std::string clean;
-	for (std::size_t i = 0; i < parts.size(); ++i)
-		clean += "/" + parts[i];
-
-	if (clean.empty() || _uri[_uri.size() - 1] == '/')
-		clean += "/";
-
-	return clean;
-}
-
-/*
  * Example (normal): root="/var/www", URI="/img/a.png" → "/var/www/img/a.png"
  * Example (alias):  root="/data",   loc="/img", URI="/img/a.png" → "/data/a.png"
  */
 std::string Request::resolveFullPath() const {
 	const std::string& root	   = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
-	std::string		   relPath = resolvePath();
+	std::string		   relPath = _resolveUri;
 	const std::string& locPath = _locConf->path;
 
 	if (_locConf->isAlias) {
@@ -316,32 +282,40 @@ bool Request::isValid() const {
 bool Request::hasCgi() const {
 	return _hasCgi;
 }
-std::string Request::getMethod() const {
+const std::string& Request::getMethod() const {
 	return _method;
 }
-std::string Request::getUri() const {
+const std::string& Request::getUri() const {
 	return _uri;
 }
-std::string Request::getVersion() const {
+const std::string& Request::getVersion() const {
 	return _version;
 }
-std::string Request::getBody() const {
+const std::string& Request::getBody() const {
 	return _body;
 }
-std::string Request::getClientIp() const {
+const std::string& Request::getClientIp() const {
 	return _clientIp;
 }
 
-std::string Request::getServerPort() const {
+const std::string& Request::getServerPort() const {
 	return _serverPort;
 }
 
-std::string Request::getServerIp() const {
+const std::string& Request::getServerIp() const {
 	return _serverIp;
 }
 
 const Request::HeaderMap& Request::getHeaders() const {
 	return _headers;
+}
+
+const std::string& Request::getResolvePath() const {
+	return _resolveUri;
+}
+
+const std::string& Request::getResolveFullPath() const {
+	return _resolveFullUri;
 }
 
 const LocationConfig* Request::getLocationConf() const {

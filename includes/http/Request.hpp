@@ -33,6 +33,8 @@ class Request : public HttpStatus {
 	std::size_t			  _contentLength;
 	ParseState			  _parseState;
 	bool				  _hasCgi;
+	std::string			  _resolveUri;
+	std::string			  _resolveFullUri;
 
   public:
 	Request();
@@ -53,21 +55,20 @@ class Request : public HttpStatus {
 	bool isValid() const;
 	bool hasCgi() const;
 
-	std::string		 getMethod() const;
-	std::string		 getUri() const;
-	std::string		 getVersion() const;
-	std::string		 getBody() const;
-	std::string		 getClientIp() const;
-	std::string		 getHeader(const std::string& key) const;
-	const HeaderMap& getHeaders() const;
+	const std::string& getMethod() const;
+	const std::string& getUri() const;
+	const std::string& getVersion() const;
+	const std::string& getBody() const;
+	const std::string& getClientIp() const;
+	std::string		   getHeader(const std::string& key) const;
+	const HeaderMap&   getHeaders() const;
+	const std::string& getResolvePath() const;
+	const std::string& getResolveFullPath() const;
 
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;
-	std::string			  getServerPort() const;
-	std::string			  getServerIp() const;
-
-	std::string resolvePath() const;
-	std::string resolveFullPath() const;
+	const std::string&	  getServerPort() const;
+	const std::string&	  getServerIp() const;
 
   private:
 	/* --- parsing pipeline --- */
@@ -96,6 +97,8 @@ class Request : public HttpStatus {
 
 	/* Mark the request as failed and stop parsing. */
 	void setError(CodeStatus code);
+
+	std::string resolveFullPath() const;
 };
 
 #endif
