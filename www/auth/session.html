@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Session · webserv</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="alternate icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="brand" style="margin-bottom:18px;">
+            <span class="logo-dot"></span>
+            <span class="brand-name">webserv<span class="muted">/cloud</span></span>
+        </div>
+        <h1>Your session</h1>
+        <p class="sub">Inspect the cookie the server has set in your browser.</p>
+
+        <div class="notice" id="cookie-box">Reading cookies…</div>
+
+        <a class="btn btn-primary btn-block" href="/cgi-bin/session.py">Refresh from CGI</a>
+        <div class="auth-foot">
+            <a href="/dashboard/file-manager.html">← Back to dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const box = document.getElementById("cookie-box");
+    const c = document.cookie.trim();
+    box.textContent = c ? c : "No cookies set yet — sign in to create a session.";
+</script>
+</body>
+</html>

@@ -1,20 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webserv - Site 1</title>
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>webserv — File Manager</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="alternate icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/assets/css/styles.css" />
 </head>
-<body>
-    <h1>Welcome to Webserv!</h1>
-    <p>This is a C++98 HTTP server implementation.</p>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/login.html">Login</a>
-        <a href="/dashboard.html">dashboard</a>
-        <a href="/about.html">About</a>
+<body class="landing">
+<header class="topbar">
+    <div class="brand">
+        <span class="logo-dot"></span>
+        <span class="brand-name">webserv<span class="muted">/cloud</span></span>
+    </div>
+    <nav class="nav">
+        <a href="/dashboard/file-manager.html">Dashboard</a>
+        <a href="/auth/login.html">Login</a>
+        <a href="/uploads/">Uploads</a>
     </nav>
-    <script src="js/script.js"></script>
+</header>
+
+<main class="hero">C:\Users\<YourUser>\AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Cache
+    <div class="hero-inner">
+        <p class="eyebrow">42 · webserv project</p>
+        <h1>Your storage,<br/>served straight from C++.</h1>
+        <p class="lede">
+            A self-hosted file manager backed by a hand-written HTTP/1.0 server.
+            Upload, browse, run CGI scripts, and manage your PC storage from any browser.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="/dashboard/file-manager.html">Open File Manager</a>
+            <a class="btn btn-ghost" href="/auth/login.html">Sign in</a>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-ico">↑</div>
+                <h3>Upload</h3>
+                <p>Multipart POST to <code>/uploads</code> with progress bar.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-ico">↓</div>
+                <h3>Download</h3>
+                <p>Direct GET from <code>upload_path</code> on disk.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-ico">×</div>
+                <h3>Delete</h3>
+                <p>HTTP DELETE wired to real filesystem entries.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-ico">⚙</div>
+                <h3>CGI</h3>
+                <p>Python, PHP and Shell handlers via <code>cgi_pass</code>.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="foot">
+    <span>© webserv · built in C++98</span>
+    <span class="muted">poll() · non-blocking I/O · HTTP/1.0</span>
+</footer>
 </body>
 </html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard · webserv File Manager</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="alternate icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="logo-dot"></span>
+            <span class="brand-name">webserv<span class="muted">/cloud</span></span>
+        </div>
+
+        <div class="side-section">Storage</div>
+        <a class="side-link active" href="/dashboard/file-manager.html"><span class="ico">▣</span> File Manager</a>
+        <a class="side-link" href="/uploads/"><span class="ico">↗</span> Raw Index</a>
+
+        <div class="side-section">Tools</div>
+        <a class="side-link" href="/cgi-bin/session.py"><span class="ico">◈</span> Session Info</a>
+        <a class="side-link" href="/cgi-bin/test.php"><span class="ico">◐</span> PHP Probe</a>
+        <a class="side-link" href="/cgi-bin/script.sh"><span class="ico">◇</span> Shell Probe</a>
+
+        <div class="side-section">Account</div>
+        <a class="side-link" href="/auth/login.html"><span class="ico">⊙</span> Login</a>
+        <a class="side-link" href="/auth/session.html"><span class="ico">⊚</span> Session</a>
+
+        <div class="side-section">System</div>
+        <a class="side-link" href="/old"><span class="ico">↻</span> Redirect Demo</a>
+        <a class="side-link" href="/errors/404.html"><span class="ico">!</span> Error Pages</a>
+    </aside>
+
+    <main class="main">
+
+        <div class="page-head">
+            <div>
+                <h1>File Manager</h1>
+                <div class="crumbs">
+                    <a href="/">webserv</a>
+                    <span class="sep">/</span>
+                    <a href="/dashboard/file-manager.html">dashboard</a>
+                    <span class="sep">/</span>
+                    <span>uploads</span>
+                </div>
+            </div>
+            <div class="toolbar">
+                <input id="search" class="search" type="text" placeholder="Search files…" />
+                <button id="refresh-btn" class="btn btn-ghost btn-sm">Refresh</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="label">Files</div>
+                <div class="value" id="stat-files">0</div>
+                <div class="delta">in /uploads</div>
+            </div>
+            <div class="stat">
+                <div class="label">Folders</div>
+                <div class="value" id="stat-dirs">0</div>
+                <div class="delta">visible</div>
+            </div>
+            <div class="stat">
+                <div class="label">Max upload</div>
+                <div class="value">10 MB</div>
+                <div class="delta">client_max_body_size</div>
+            </div>
+            <div class="stat">
+                <div class="label">Server</div>
+                <div class="value" style="font-size:16px;">webserv/1.0</div>
+                <div class="delta">C++98 · poll()</div>
+            </div>
+        </div>
+
+        <div id="upload-card" class="upload-card">
+            <div class="upload-row">
+                <div>
+                    <h3>Upload to <code>/uploads</code></h3>
+                    <p>Drop files here or pick from your computer. POST goes straight to your <code>upload_path</code>.</p>
+                </div>
+                <div>
+                    <label class="label-file" for="file-input">＋ Choose files</label>
+                    <input id="file-input" class="file-input" type="file" multiple />
+                </div>
+            </div>
+            <div id="progress" class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+            <div id="upload-status" class="upload-status"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <h2>Stored files</h2>
+                <div class="panel-actions">
+                    <a class="btn btn-sm btn-ghost" href="/uploads/" target="_blank">Open raw index</a>
+                </div>
+            </div>
+
+            <div id="file-table-wrap">
+                <table class="file-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Size</th>
+                            <th>Location</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="file-rows"></tbody>
+                </table>
+            </div>
+
+            <div id="empty" class="empty" style="display:none;">
+                <h3>No files yet</h3>
+                <p>Upload your first file using the panel above.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/assets/js/file-manager.js"></script>
+</body>
+</html>
