@@ -97,11 +97,10 @@ static void logClient(const Client& client) {
 	logSocket(client.getSocket());
 	std::cout << "\n";
 
-	if (hasReq) {
-		std::cout << GRY "│  " RST << (hasRes ? GRY "├─ " : GRY "└─ ") << WHT "Request | "
-				  << client.getRequest().getHttpVersion() << " "
+	if (hasReq && !hasRes) {
+		std::cout << GRY "│  └─ " WHT "Request | " << client.getRequest().getHttpVersion() << " "
 				  << client.getRequest().getStatusCode() << "\n" RST;
-		logRequest(client.getRequest(), hasRes);
+		logRequest(client.getRequest(), false);
 	}
 	if (hasRes) {
 		std::cout << GRY "│  └─ " WHT "Response | " << client.getResponse().getHttpVersion() << " "
@@ -217,5 +216,6 @@ void logServerStart(const WebServer& ws) {
 
 void logServerEvent(const WebServer& ws, const char* event) {
 	std::cout << GRY "│\n├── " RST << event << GRY "\n│\n" RST;
-	logClients(ws);
+	if (ws.running)
+		logClients(ws);
 }
