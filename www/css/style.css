@@ -19,3 +19,69 @@ nav a {
 nav a:hover {
     text-decoration: underline;
 }
+
+
+
+
+form {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 90%;
+    transition: transform 0.3s ease;
+    margin-top: 20px;
+}
+
+
+/* Label styling */
+label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+/* File input styling */
+input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 1.5rem;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]:hover {
+    border-color: #0066cc;
+    background: #f0f0ff;
+}
+
+input[type="file"]:focus {
+    outline: none;
+    border-color: #0066cc;
+    background: #faf5ff;
+}
+
+/* Submit button styling */
+input[type="submit"] {
+    background: #0066cc;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
