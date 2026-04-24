@@ -8,6 +8,53 @@ std::string randomSessionId() {
 	return ss.str();
 }
 
+void Response::handleLogin(const Request& request)
+{
+	std::string body = request.getBody();
+	std::string username;
+	size_t		pos = body.find("username=");
+	if (pos == std::string::npos) {
+		setStatus(HTTP_302_FOUND);
+		setHeader("Location", URI_LOGIN);
+		return;
+	}
+	username = body.substr(pos + 9);
+	if (username.empty()) {
+		setStatus(HTTP_302_FOUND);
+		setHeader("Location", URI_LOGIN);
+		return;
+	}
+	bool		existUser = false;
+	std::string sessionId;
+	std::string cookie = request.getHeader("Cookie");
+	if (!cookie.empty()) {
+		size_t pos = cookie.find("session_id=");
+		if (pos != std::string::npos) {
+			sessionId = cookie.substr(pos + 11);
+			std::map<std::string, SessionInfo>::iterator it;
+			for (it = _sessions->begin(); it != _sessions->end(); it++) {
+				if (it->first == sessionId) {
+					it->second.isLogged = true;
+					it->second.username = username;
+					existUser			= true;
+					break;
+				}
+			}
+		}
+	}
+	if (existUser == false) {
+		sessionId = randomSessionId();
+		SessionInfo info;
+		info.username			= username;
+		info.isLogged			= true;
+		(*_sessions)[sessionId] = info;
+		setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly");
+	}
+	setStatus(HTTP_302_FOUND);
+	setHeader("Location", URI_DASHBOARD);
+	return;
+}
+
 void Response::handlePost(const Request& request) {
 	const LocationConfig* locConf = request.getLocationConf();
 	if (!locConf) {
@@ -30,49 +77,7 @@ void Response::handlePost(const Request& request) {
 	}
 
 	if (request.getUri() == "/login") {
-		std::string body = request.getBody();
-		std::string username;
-		size_t		pos = body.find("username=");
-		if (pos == std::string::npos) {
-			setStatus(HTTP_302_FOUND);
-			setHeader("Location", URI_LOGIN);
-			return;
-		}
-		username = body.substr(pos + 9);
-		if (username.empty()) {
-			setStatus(HTTP_302_FOUND);
-			setHeader("Location", URI_LOGIN);
-			return;
-		}
-		bool		existUser = false;
-		std::string sessionId;
-		std::string cookie = request.getHeader("Cookie");
-		if (!cookie.empty()) {
-			size_t pos = cookie.find("session_id=");
-			if (pos != std::string::npos) {
-				sessionId = cookie.substr(pos + 11);
-				std::map<std::string, SessionInfo>::iterator it;
-				for (it = _sessions->begin(); it != _sessions->end(); it++) {
-					if (it->first == sessionId) {
-						it->second.isLogged = true;
-						it->second.username = username;
-						existUser			= true;
-						break;
-					}
-				}
-			}
-		}
-		if (existUser == false) {
-			sessionId = randomSessionId();
-			SessionInfo info;
-			info.username			= username;
-			info.isLogged			= true;
-			(*_sessions)[sessionId] = info;
-			setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly");
-		}
-		setStatus(HTTP_302_FOUND);
-		setHeader("Location", URI_DASHBOARD);
-		return;
+		return (handleLogin(request));
 	}
 
 	if (!locConf || !locConf->upload || locConf->upload_path.empty()) {

@@ -64,6 +64,7 @@ class Response : public HttpStatus {
 	void handleGet(const Request& request);
 	void handleDelete(const Request& request);
 	void handlePost(const Request& request);
+	void handleLogin(const Request& request);
 
 	int handleDashboard(const Request& request, const std::string& fullPath);
 	int handleLogout(const Request& request);
