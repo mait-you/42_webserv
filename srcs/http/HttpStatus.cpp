@@ -47,8 +47,6 @@ std::string HttpStatus::getStatusMessage() const {
 			return "Not Found";
 		case HTTP_405_METHOD_NOT_ALLOWED:
 			return "Method Not Allowed";
-		case HTTP_413_REQUEST_ENTITY_TOO_LARGE:
-			return "Request Entity Too Large";
 		case HTTP_500_INTERNAL_SERVER_ERROR:
 			return "Internal Server Error";
 		case HTTP_501_NOT_IMPLEMENTED:
@@ -85,7 +83,9 @@ void HttpStatus::setVersion(HttpVersion httpVersion) {
 }
 
 bool HttpStatus::isError() const {
-	return _statusCode >= HTTP_400_BAD_REQUEST;
+	if (_httpVersion == HTTP_0_9)
+		return true;
+	return _statusCode >= HTTP_400_BAD_REQUEST && _statusCode <= HTTP_503_SERVICE_UNAVAILABLE;
 }
 
 bool HttpStatus::isSuccess() const {
