@@ -17,29 +17,116 @@ Request::Request(const Request& other)
 		  _headers(other._headers), _body(other._body), _serverPort(other._serverPort),
 		  _serverIp(other._serverIp), _clientIp(other._clientIp),
 		  _contentLength(other._contentLength), _parseState(other._parseState),
-		  _hasCgi(other._hasCgi) {}
+		  _hasCgi(other._hasCgi), _multipartFields(other._multipartFields) {}
 
 Request& Request::operator=(const Request& other) {
 	if (this != &other) {
 		HttpStatus::operator=(other);
-		_srvConf	   = other._srvConf;
-		_locConf	   = other._locConf;
-		_method		   = other._method;
-		_uri		   = other._uri;
-		_version	   = other._version;
-		_headers	   = other._headers;
-		_body		   = other._body;
-		_serverPort	   = other._serverPort;
-		_serverIp	   = other._serverIp;
-		_clientIp	   = other._clientIp;
-		_contentLength = other._contentLength;
-		_parseState	   = other._parseState;
-		_hasCgi		   = other._hasCgi;
+		_srvConf		 = other._srvConf;
+		_locConf		 = other._locConf;
+		_method			 = other._method;
+		_uri			 = other._uri;
+		_version		 = other._version;
+		_headers		 = other._headers;
+		_body			 = other._body;
+		_serverPort		 = other._serverPort;
+		_serverIp		 = other._serverIp;
+		_clientIp		 = other._clientIp;
+		_contentLength	 = other._contentLength;
+		_parseState		 = other._parseState;
+		_hasCgi			 = other._hasCgi;
+		_multipartFields = other._multipartFields;
 	}
 	return *this;
 }
 
 Request::~Request() {}
+
+void Request::parseMultipartHeaderLine(const std::string& line, MultipartField& field) {
+	std::size_t colon = line.find(':');
+	if (colon == std::string::npos)
+		return;
+
+	std::string name  = toLower(trimStr(line.substr(0, colon)));
+	std::string value = trimStr(line.substr(colon + 1));
+
+	if (name == "content-disposition") {
+		field.name	   = extractParam(value, "name");
+		field.filename = extractParam(value, "filename");
+	} else if (name == "content-type")
+		field.contentType = value;
+}
+
+void Request::parsePart(std::string& part) {
+	MultipartField field;
+	field.contentType = "text/plain"; /* RFC 7578 §4.4 default */
+
+	std::string line;
+	do {
+		std::size_t pos = part.find("\r\n");
+		if (pos == std::string::npos)
+			return setError(HTTP_400_BAD_REQUEST);
+		line = part.substr(0, pos);
+		part.erase(0, pos + 2);
+		if (!line.empty())
+			parseMultipartHeaderLine(line, field);
+	} while (!line.empty());
+
+	if (field.name.empty())
+		return setError(HTTP_400_BAD_REQUEST);
+	field.data = part;
+	_multipartFields.push_back(field);
+}
+
+void Request::parseMultipart(const std::string& boundary) {
+	const std::string delim		 = "--" + boundary + "\r\n";
+	const std::string closeDelim = "--" + boundary + "--" + "\r\n";
+
+	std::size_t pos = _body.find(delim);
+	if (pos == std::string::npos || pos != 0)
+		return setError(HTTP_400_BAD_REQUEST);
+	_body.erase(0, delim.size());
+	while (!_body.empty()) {
+		std::size_t pos = _body.find(delim);
+		std::size_t len = delim.size();
+		if (pos == std::string::npos) {
+			pos = _body.find(closeDelim);
+			len = closeDelim.size();
+		}
+		if (pos == std::string::npos)
+			return setError(HTTP_400_BAD_REQUEST);
+		std::string part = _body.substr(0, pos);
+		_body.erase(0, pos + len);
+		parsePart(part);
+		if (_parseState == PARSE_ERROR)
+			return;
+	}
+}
+
+std::string Request::extractParam(const std::string& headerValue, const std::string& param) const {
+	std::string lowerValue = toLower(headerValue);
+	std::string token	   = param + "=";
+
+	std::size_t pos = lowerValue.find(token);
+	if (pos == std::string::npos)
+		return "";
+
+	pos += token.size();
+
+	if (pos < headerValue.size() && headerValue[pos] == '"') {
+		++pos;
+		std::size_t endQuote = headerValue.find('"', pos);
+		if (endQuote == std::string::npos)
+			return "";
+		return headerValue.substr(pos, endQuote - pos);
+	}
+
+	std::size_t endPos = headerValue.find(';', pos);
+	if (endPos == std::string::npos)
+		endPos = headerValue.size();
+
+	return trimStr(headerValue.substr(pos, endPos - pos));
+}
 
 bool Request::parse(std::string& buffer) {
 	while (_parseState == PARSE_REQUEST_LINE || _parseState == PARSE_HEADERS) {
@@ -53,34 +140,47 @@ bool Request::parse(std::string& buffer) {
 
 		processLine(line);
 	}
+	// ! i need a to store in disk
 	if (_parseState == PARSE_BODY) {
+		if (_method != "POST")
+			_parseState = PARSE_DONE;
 		if (buffer.size() >= _contentLength) {
 			_body = buffer.substr(0, _contentLength);
 			buffer.erase(0, _contentLength);
-			_parseState = PARSE_DONE;
+			_parseState	   = PARSE_DONE;
+			std::string ct = getHeader("Content-Type");
+			if (ct.find("multipart/form-data") != std::string::npos) {
+				std::string bnd = extractParam(ct, "boundary");
+				if (!bnd.empty())
+					parseMultipart(bnd);
+				else
+					setError(HTTP_400_BAD_REQUEST);
+			}
 		}
 	}
-	if (_parseState == PARSE_DONE)
-		setStatus(HTTP_200_OK);
 	return true;
 }
 
 void Request::processLine(const std::string& line) {
 	if (_parseState == PARSE_REQUEST_LINE) {
-		return parseRequestLine(line);
-	}
-	if (_parseState == PARSE_HEADERS) {
+		parseRequestLine(line);
+	} else if (_parseState == PARSE_HEADERS) {
 		if (line.empty()) {
-			std::string cl = getHeader("content-length");
+			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
 				_contentLength = static_cast<std::size_t>(std::atol(cl.c_str()));
-				if (_contentLength > _srvConf->client_max_body_size)  // serve side
+				if (_contentLength > _srvConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
+
+			} else if (_method == "POST") {
+				return setError(HTTP_204_NO_CONTENT);
 			} else {
 				_contentLength = 0;
 				_parseState	   = PARSE_DONE;
 			}
+		} else if (_httpVersion == HTTP_0_9) {
+			return setError(HTTP_400_BAD_REQUEST);
 		} else
 			parseHeaderLine(line);
 	}
@@ -94,22 +194,18 @@ void Request::parseRequestLine(const std::string& line) {
 
 	std::size_t second = line.find(' ', first + 1);
 	if (second == std::string::npos) {
-		/* no second SP — HTTP/0.9 Simple-Request */
 		_uri = line.substr(first + 1);
 	} else {
 		_uri	 = line.substr(first + 1, second - first - 1);
 		_version = line.substr(second + 1);
 	}
 
-	/* reject extra spaces — double space = empty token */
 	if (_method.empty() || _uri.empty())
 		return setError(HTTP_400_BAD_REQUEST);
 
-	/* reject if version contains a space — extra token */
 	if (!_version.empty() && _version.find(' ') != std::string::npos)
 		return setError(HTTP_400_BAD_REQUEST);
 
-	/* RFC 1945 §3.1 — parse version */
 	if (_version.empty() && _method == "GET")
 		_httpVersion = HTTP_0_9;
 	else if (_version == "HTTP/1.0")
@@ -119,11 +215,9 @@ void Request::parseRequestLine(const std::string& line) {
 	else
 		return setError(HTTP_400_BAD_REQUEST);
 
-	/* RFC 1945 §5.1.1 — unsupported method */
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 
-	/* RFC 1945 §3.2 — validate URI characters */
 	if (!isValidUri(_uri))
 		return setError(HTTP_400_BAD_REQUEST);
 
@@ -137,9 +231,6 @@ void Request::parseRequestLine(const std::string& line) {
 }
 
 void Request::parseHeaderLine(const std::string& line) {
-	/* RFC 1945 §4 —  Simple-Request do not allow the use of any header */
-	if (_httpVersion == HTTP_0_9)
-		return setError(HTTP_400_BAD_REQUEST);
 	std::size_t colon = line.find(':');
 	if (colon == std::string::npos)
 		return setError(HTTP_400_BAD_REQUEST);
@@ -150,11 +241,9 @@ void Request::parseHeaderLine(const std::string& line) {
 	if (name.empty())
 		return setError(HTTP_400_BAD_REQUEST);
 
-	/* RFC 1945 §4.2 — no LWS between field-name and ":" */
 	if (std::isspace((unsigned char) name[name.size() - 1]))
 		return setError(HTTP_400_BAD_REQUEST);
 
-	/* RFC 1945 §2.2 — token: printable US-ASCII (33-126), no CTL */
 	for (std::size_t i = 0; i < name.size(); ++i) {
 		unsigned char c = name[i];
 		if (c < 33 || c == 127)
@@ -168,12 +257,11 @@ bool Request::isValidUri(const std::string& uri) const {
 	if (uri.empty() || uri.size() > MAX_URI_LENGTH)
 		return false;
 
-	/* Characters that are never valid in a Request-URI */
 	const std::string forbidden = "\"<>\\^~`{}|";
 
 	for (std::size_t i = 0; i < uri.size(); ++i) {
 		unsigned char c = uri[i];
-		if (c < 33 || c == 127) /* CTL or DEL */
+		if (c < 33 || c == 127)
 			return false;
 		if (forbidden.find(c) != std::string::npos)
 			return false;
@@ -221,7 +309,7 @@ void Request::detectCgi() {
 		}
 	}
 
-	std::string ext = getExtension(path); /* e.g. "pl" */
+	std::string ext = getExtension(path);
 
 	if (_locConf->cgi.count(ext) || _locConf->cgi.count("." + ext))
 		_hasCgi = true;
@@ -232,10 +320,6 @@ void Request::setError(CodeStatus code) {
 	_parseState = PARSE_ERROR;
 }
 
-/*
- * Example (normal): root="/var/www", URI="/img/a.png" → "/var/www/img/a.png"
- * Example (alias):  root="/data",   loc="/img", URI="/img/a.png" → "/data/a.png"
- */
 std::string Request::resolveFullPath() const {
 	const std::string& root	   = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
 	std::string		   relPath = _resolveUri;
@@ -274,14 +358,13 @@ std::string Request::resolveFullPath() const {
 bool Request::isComplete() const {
 	return (_parseState == PARSE_DONE || _parseState == PARSE_ERROR);
 }
-
 bool Request::isValid() const {
-	return isSuccess();
+	return _parseState == PARSE_DONE;
 }
-
 bool Request::hasCgi() const {
 	return _hasCgi;
 }
+
 const std::string& Request::getMethod() const {
 	return _method;
 }
@@ -297,11 +380,9 @@ const std::string& Request::getBody() const {
 const std::string& Request::getClientIp() const {
 	return _clientIp;
 }
-
 const std::string& Request::getServerPort() const {
 	return _serverPort;
 }
-
 const std::string& Request::getServerIp() const {
 	return _serverIp;
 }
@@ -309,20 +390,20 @@ const std::string& Request::getServerIp() const {
 const Request::HeaderMap& Request::getHeaders() const {
 	return _headers;
 }
-
 const std::string& Request::getResolvePath() const {
 	return _resolveUri;
 }
-
 const std::string& Request::getResolveFullPath() const {
 	return _resolveFullUri;
 }
-
 const LocationConfig* Request::getLocationConf() const {
 	return _locConf;
 }
 const ServerConfig* Request::getConf() const {
 	return _srvConf;
+}
+const Request::MultipartFields& Request::getMultipartFields() const {
+	return _multipartFields;
 }
 
 std::string Request::getHeader(const std::string& key) const {

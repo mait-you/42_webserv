@@ -9,12 +9,12 @@ void Response::errorPage(const Request& request, CodeStatus code) {
 
 	setStatus(code);
 	if (locConf) {
-		std::map<int, std::string>::const_iterator it = locConf->error_pages.find(code);
+		std::map<int, std::string>::const_iterator it = locConf->error_pages.find(getStatusCode());
 		if (it != locConf->error_pages.end() && handleErrorFile(it->second))
 			return;
 	}
 	if (srvConf && locConf) {
-		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(code);
+		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(getStatusCode());
 
 		if (it != srvConf->error_pages.end()) {
 			std::string path;
@@ -60,6 +60,8 @@ std::string Response::getList(const std::string& fullPath, const std::string& ur
 	struct stat	   st;
 	while ((entry = readdir(dir)) != NULL) {
 		std::string name = htmlEscape(entry->d_name);
+		if (name == "." || name == "..")
+			continue;
 		res += "<a href='";
 		if (stat((fullPath + name).c_str(), &st) == 0 && S_ISDIR(st.st_mode))
 			res += name + "/'>" + name + "/";

@@ -1,12 +1,14 @@
 #include "../../includes/net/Client.hpp"
+#include "../../includes/utils/Utils.hpp"
+
 // it call only for Map
 Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response() {}
 
 Client::Client(const Socket& socket, const Socket& serverSock,
 			   std::map<std::string, SessionInfo>* session)
-		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(&serverSock, socket.getIp()),
-		  _response(session) {}
+		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0),
+		  _request(&serverSock, socket.getIp()), _response(session) {}
 
 Client::Client(const Client& other)
 		: _socket(other._socket), _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),
@@ -28,12 +30,15 @@ Client::~Client() {}
 
 bool Client::recvData() {
 	char	buf[RECV_BUFFER_SIZE] = {0};
-	ssize_t n					  = recv(_socket.getFd(), buf, sizeof(buf), 0);
+	ssize_t n					  = recv(_socket.getFd(), buf, sizeof buf, 0);
 	if (n == 0)
 		return false;
 	if (n < 0)
 		return true;
 	_recvBuffer.append(buf, n);
+
+	// printEscaped(_recvBuffer);
+
 	return true;
 }
 

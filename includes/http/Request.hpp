@@ -6,16 +6,22 @@
 #include "../http/HttpStatus.hpp"
 #include "../net/Socket.hpp"
 
-/*
- * RFC 1945 §3.2 — URI length is not specified, 8192 is a safe server limit.
- * RFC 1945 §5   — A Request is a Request-Line, headers, and optional body.
- */
 #define MAX_URI_LENGTH 8192
+
+/* RFC 7578 §4.2 — each part carries a name, optional filename,
+   optional Content-Type, and the raw part data */
+struct MultipartField {
+	std::string name;		 /* "name" param of Content-Disposition   */
+	std::string filename;	 /* "filename" param — empty if not a file */
+	std::string contentType; /* Content-Type of part, default text/plain (§4.4) */
+	std::string data;		 /* raw bytes of this part's body          */
+};
 
 class Request : public HttpStatus {
   public:
 	typedef std::map<std::string, std::string> HeaderMap;
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
+	typedef std::vector<MultipartField>		   MultipartFields;
 
 	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_DONE, PARSE_ERROR };
 
@@ -27,14 +33,18 @@ class Request : public HttpStatus {
 	std::string			  _version;
 	HeaderMap			  _headers;
 	std::string			  _body;
-	std::string			  _serverPort;
-	std::string			  _serverIp;
-	std::string			  _clientIp;
-	std::size_t			  _contentLength;
-	ParseState			  _parseState;
-	bool				  _hasCgi;
-	std::string			  _resolveUri;
-	std::string			  _resolveFullUri;
+
+	std::string _serverPort;
+	std::string _serverIp;
+	std::string _clientIp;
+	std::size_t _contentLength;
+	ParseState	_parseState;
+	bool		_hasCgi;
+	std::string _resolveUri;
+	std::string _resolveFullUri;
+
+	/* RFC 7578 §4 — parsed multipart parts, filled by parseMultipart() */
+	MultipartFields _multipartFields;
 
   public:
 	Request();
@@ -43,11 +53,6 @@ class Request : public HttpStatus {
 	Request& operator=(const Request& other);
 	~Request();
 
-	/*
-	 * RFC 1945 §5 — Feed raw received bytes. Returns true when the request
-	 * is fully parsed (PARSE_DONE or PARSE_ERROR).
-	 * The buffer is consumed as lines are extracted.
-	 */
 	bool parse(std::string& buffer);
 
 	/* Getters */
@@ -70,34 +75,26 @@ class Request : public HttpStatus {
 	const std::string&	  getServerPort() const;
 	const std::string&	  getServerIp() const;
 
+	/* RFC 7578 — access parsed multipart fields */
+	const MultipartFields& getMultipartFields() const;
+
   private:
-	/* --- parsing pipeline --- */
 	void processLine(const std::string& line);
-
-	/*
-	 * RFC 1945 §5.1   — Request-Line = Method SP Request-URI SP HTTP-Version CRLF
-	 */
 	void parseRequestLine(const std::string& line);
-
-	/*
-	 * RFC 1945 §4.2   — Message-Header = field-name ":" [ field-value ]
-	 */
 	void parseHeaderLine(const std::string& line);
+	void parseMultipartHeaderLine(const std::string& line, MultipartField& field);
 
-	/* --- validation helpers --- */
+	/* RFC 7578 §4 — multipart parsing pipeline */
+	void		parseMultipart(const std::string& boundary);
+	void		parsePart(std::string& part);
+	std::string extractParam(const std::string& headerValue, const std::string& param) const;
 
-	/*
-	 * RFC 1945 §3.2   — URI must be non-empty printable US-ASCII, no CTL chars.
-	 */
-	bool isValidUri(const std::string& uri) const;
-
-	/* --- location and CGI --- */
 	bool matchLocation();
 	void detectCgi();
 
-	/* Mark the request as failed and stop parsing. */
 	void setError(CodeStatus code);
 
+	bool		isValidUri(const std::string& uri) const;
 	std::string resolveFullPath() const;
 };
 

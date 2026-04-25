@@ -18,4 +18,6 @@ std::string htmlEscape(const std::string& s);
 
 std::string resolvePath(const std::string& uri);
 
+void printEscaped(const std::string& s);
+
 #endif
