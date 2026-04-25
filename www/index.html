@@ -18,11 +18,18 @@
 
 
 <form method="POST" action="/uploads" enctype="multipart/form-data">
-    <label for="avatar">Profile picture:</label>
+    <label for="avatar">picture one:</label>
     <input type="file"
            name="image"
            id="avatar"
-           accept="image/png, image/jpeg"
+           accept="image/png, image/jpeg, image/jpg"
+           required>
+    <br>
+    <label for="avatar">picture two:</label>
+        <input type="file"
+           name="image"
+           id="avatar"
+           accept="image/png, image/jpeg, image/jpg"
            required>
     <br>
     <input type="submit" value="submit">
