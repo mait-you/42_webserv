@@ -1,5 +1,8 @@
 #include "../../includes/http/MimeTypes.hpp"
 #include "../../includes/http/Response.hpp"
+#include "../../includes/utils/Utils.hpp"
+
+static unsigned long uploadCounter = 0;
 
 std::string randomSessionId() {
 	static unsigned long idCounter = 0;
@@ -8,7 +11,8 @@ std::string randomSessionId() {
 	return ss.str();
 }
 
-void Response::handleLogin(const Request& request) {
+void Response::handleLogin(const Request& request)
+{
 	std::string body = request.getBody();
 	std::string username;
 	size_t		pos = body.find("username=");
@@ -54,7 +58,63 @@ void Response::handleLogin(const Request& request) {
 	return;
 }
 
-void Response::handlePost(const Request& request) {
+void Response::multiPart(Request& request,const MultipartField &part, std::string uploadDir)
+{
+	if (part.filename.empty())
+	{
+		request.setFormKeyValue(part.name, part.data);
+		setStatus(HTTP_201_CREATED);
+		setHeader("Content-Type", "text/plain");
+		setBody("");
+		return;
+	}
+
+	std::ostringstream	 oss;
+	oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
+
+	std::string ext = Mime::getExtension(part.contentType);
+
+	if (!ext.empty())
+		ext = "." + ext;
+
+	const std::string filePath = oss.str() + ext;
+	std::ofstream	  file(filePath.c_str(), std::ios::binary);
+	if (!file) {
+		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
+		return;
+	}
+
+	file.write(part.data.c_str(), part.data.size());
+	file.close();
+
+	setStatus(HTTP_201_CREATED);
+	setHeader("Content-Type", "text/plain");
+	setBody(filePath + "\n");
+}
+
+void Response::urlencoded(Request& request)
+{
+	std::stringstream ss(request.getBody());
+	std::string formInput;
+	std::string key;
+	std::string value;
+
+	while (std::getline(ss, formInput, '&'))
+	{
+		size_t pos = formInput.find("=");
+		if (pos == std::string::npos)
+			return errorPage(request, HTTP_400_BAD_REQUEST);
+		key = formInput.substr(0, pos);
+		value = formInput.substr(pos + 1);
+		request.setFormKeyValue(decode(key), decode(value));
+	}
+
+	setStatus(HTTP_201_CREATED);
+	setHeader("Content-Type", "text/plain");
+	setBody("Form data received successfully");
+}
+
+void Response::handlePost(Request& request) {
 	const LocationConfig* locConf = request.getLocationConf();
 	if (!locConf) {
 		errorPage(request, HTTP_403_FORBIDDEN);
@@ -88,35 +148,56 @@ void Response::handlePost(const Request& request) {
 	if (!uploadDir.empty() && uploadDir[uploadDir.size() - 1] != '/')
 		uploadDir += '/';
 
-	const std::string contentType = request.getHeader("Content-Type");
-	if (contentType.find("multipart/form-data") != std::string::npos) {
-		const Request::MultipartFields& fields = request.getMultipartFields();
-		if (fields.empty()) {
-			errorPage(request, HTTP_400_BAD_REQUEST);
+	static unsigned long uploadCounter = 0;
+	std::string type = request.getHeader("content-type");
+	if (type.find("multipart/form-data") != std::string::npos)
+	{
+		std::string bodyStr = "Form data received successfully.\n";
+		for (size_t i = 0; i < request.getMultipartFields().size(); i++)
+		{
+			multiPart(request, request.getMultipartFields()[i], uploadDir);
+			if (getStatusCode() != HTTP_201_CREATED)
+				return;
+			bodyStr += getBody();
+		}
+		setBody(bodyStr + "\n");
+	}
+	else if (type == "application/x-www-form-urlencoded")
+	{
+		urlencoded(request);
+	}
+	else
+	{
+		std::string uploadDir = locConf->upload_path;
+		if (!uploadDir.empty() && uploadDir[uploadDir.size() - 1] != '/')
+			uploadDir += '/';
+
+		std::ostringstream	 oss;
+		oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
+
+		std::string ext = Mime::getExtension(request.getHeader("Content-Type"));
+		if (!ext.empty())
+			ext = "." + ext;
+
+		const std::string filePath = oss.str() + ext;
+		std::ofstream	  file(filePath.c_str(), std::ios::binary);
+		if (!file) {
+			errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 			return;
 		}
+
+		const std::string& body = request.getBody();
+		file.write(body.c_str(), body.size());
+		file.close();
+		setStatus(HTTP_201_CREATED);
+		setHeader("Content-Type", "text/plain");
+		setBody("File uploaded: " + filePath + "\n");
 	}
-
-	std::ostringstream	 oss;
-	static unsigned long uploadCounter = 0;
-	oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
-
-	std::string ext = Mime::getExtension(contentType);
-	if (!ext.empty())
-		ext = "." + ext;
-
-	const std::string filePath = oss.str() + ext;
-	std::ofstream	  file(filePath.c_str(), std::ios::binary);
-	if (!file) {
-		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
-		return;
-	}
-
-	const std::string& body = request.getBody();
-	file.write(body.c_str(), body.size());
-	file.close();
-
-	setStatus(HTTP_201_CREATED);
-	setHeader("Content-Type", "text/plain");
-	setBody("File uploaded: " + filePath + "\n");
+	// for debuging
+	// std::map<std::string, std::string> myMap = request.getFormKeyValue();
+	// for (std::map<std::string, std::string>::iterator it = myMap.begin();
+	// 	it != myMap.end(); ++it)
+	// {
+	// 	std::cout << "||||||||||||||||||||||| key:" << it->first << " value:" << it->second << std::endl;
+	// }
 }

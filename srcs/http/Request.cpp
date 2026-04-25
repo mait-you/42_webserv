@@ -81,7 +81,7 @@ void Request::parsePart(std::string& part) {
 void Request::parseMultipart(const std::string& boundary) {
 	const std::string delim		 = "--" + boundary + "\r\n";
 	const std::string closeDelim = "--" + boundary + "--" + "\r\n";
-	std::string body = _body;
+	std::string		  body		 = _body;
 
 	std::size_t pos = body.find(delim);
 	if (pos == std::string::npos || pos != 0)
@@ -160,6 +160,10 @@ bool Request::parse(std::string& buffer) {
 		}
 	}
 	return true;
+}
+
+void Request::setFormKeyValue(std::string key, std::string value) {
+	_formKeyValue[key] = value;
 }
 
 void Request::processLine(const std::string& line) {
@@ -386,6 +390,10 @@ const std::string& Request::getServerPort() const {
 }
 const std::string& Request::getServerIp() const {
 	return _serverIp;
+}
+
+const std::map<std::string, std::string>& Request::getFormKeyValue() const {
+	return _formKeyValue;
 }
 
 const Request::HeaderMap& Request::getHeaders() const {

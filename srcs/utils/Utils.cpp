@@ -157,3 +157,37 @@ void printEscaped(const std::string& s) {
 	}
 	// std::cerr << "=>\n";
 }
+
+
+char hexToChar(const std::string &hex)
+{
+	int value;
+	std::stringstream ss;
+	ss << std::hex << hex;
+	ss >> value;
+	return static_cast<char>(value);
+}
+
+std::string decode(const std::string &str)
+{
+	std::string out;
+
+	for (size_t i = 0; i < str.size(); ++i)
+	{
+		if (str[i] == '+')
+		{
+			out += ' ';
+		}
+		else if (str[i] == '%' && i + 2 < str.size())
+		{
+			std::string hex = str.substr(i + 1, 2);
+			out += hexToChar(hex);
+			i += 2;
+		}
+		else
+		{
+			out += str[i];
+		}
+	}
+	return out;
+}

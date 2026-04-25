@@ -170,7 +170,7 @@ void Response::handleRedirect(const Request& request) {
 	setHeader("Location", loc->redirect_url);
 }
 
-void Response::handleByMethod(const Request& request) {
+void Response::handleByMethod(Request& request) {
 	const std::string& m = request.getMethod();
 	if (m == "GET")
 		handleGet(request);

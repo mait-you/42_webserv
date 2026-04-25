@@ -46,7 +46,7 @@ class Response : public HttpStatus {
 
   private:
 	void handleRedirect(const Request& request);
-	void handleByMethod(const Request& request);
+	void handleByMethod(Request& request);
 
 	bool		allowedMethods(const Request& request);
 	std::string getList(const std::string& fullPath, const std::string& uri);
@@ -63,7 +63,9 @@ class Response : public HttpStatus {
 
 	void handleGet(const Request& request);
 	void handleDelete(const Request& request);
-	void handlePost(const Request& request);
+	void handlePost(Request& request);
+	void multiPart(Request& request,const MultipartField &part, std::string uploadDir);
+	void urlencoded(Request& request);
 	void handleLogin(const Request& request);
 
 	int handleDashboard(const Request& request, const std::string& fullPath);
