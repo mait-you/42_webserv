@@ -81,22 +81,23 @@ void Request::parsePart(std::string& part) {
 void Request::parseMultipart(const std::string& boundary) {
 	const std::string delim		 = "--" + boundary + "\r\n";
 	const std::string closeDelim = "--" + boundary + "--" + "\r\n";
+	std::string body = _body;
 
-	std::size_t pos = _body.find(delim);
+	std::size_t pos = body.find(delim);
 	if (pos == std::string::npos || pos != 0)
 		return setError(HTTP_400_BAD_REQUEST);
-	_body.erase(0, delim.size());
-	while (!_body.empty()) {
-		std::size_t pos = _body.find(delim);
+	body.erase(0, delim.size());
+	while (!body.empty()) {
+		std::size_t pos = body.find(delim);
 		std::size_t len = delim.size();
 		if (pos == std::string::npos) {
-			pos = _body.find(closeDelim);
+			pos = body.find(closeDelim);
 			len = closeDelim.size();
 		}
 		if (pos == std::string::npos)
 			return setError(HTTP_400_BAD_REQUEST);
-		std::string part = _body.substr(0, pos);
-		_body.erase(0, pos + len);
+		std::string part = body.substr(0, pos);
+		body.erase(0, pos + len);
 		parsePart(part);
 		if (_parseState == PARSE_ERROR)
 			return;
