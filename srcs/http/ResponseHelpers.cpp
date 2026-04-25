@@ -60,6 +60,8 @@ std::string Response::getList(const std::string& fullPath, const std::string& ur
 	struct stat	   st;
 	while ((entry = readdir(dir)) != NULL) {
 		std::string name = htmlEscape(entry->d_name);
+		if (name == "." || name == "..")
+			continue;
 		res += "<a href='";
 		if (stat((fullPath + name).c_str(), &st) == 0 && S_ISDIR(st.st_mode))
 			res += name + "/'>" + name + "/";

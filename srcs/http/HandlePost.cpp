@@ -8,27 +8,77 @@ std::string randomSessionId() {
 	return ss.str();
 }
 
-void Response::handleLogin(const Request& request)
-{
-	std::string body = request.getBody();
-	std::string username;
-	size_t		pos = body.find("username=");
-	if (pos == std::string::npos) {
-		setStatus(HTTP_302_FOUND);
-		setHeader("Location", URI_LOGIN);
-		return;
+static std::string getFieldValue(const Request& request, const std::string& fieldName) {
+	const Request::MultipartFields& fields = request.getMultipartFields();
+
+	/* multipart path: walk the parsed parts */
+	for (std::size_t i = 0; i < fields.size(); ++i) {
+		if (fields[i].name == fieldName)
+			return fields[i].data;
 	}
-	username = body.substr(pos + 9);
+
+	/* urlencoded fallback: "fieldName=value&..." */
+	const std::string& body	 = request.getBody();
+	const std::string  token = fieldName + "=";
+	std::size_t		   pos	 = body.find(token);
+	if (pos == std::string::npos)
+		return "";
+	pos += token.size();
+	std::size_t end = body.find('&', pos);
+	if (end == std::string::npos)
+		end = body.size();
+	return body.substr(pos, end - pos);
+}
+
+
+static std::string writePart(const MultipartField& field, const std::string& uploadDir,
+							 unsigned long counter) {
+	std::string safeName;
+
+	if (!field.filename.empty()) {
+		std::size_t slash = field.filename.rfind('/');
+		safeName = (slash != std::string::npos) ? field.filename.substr(slash + 1) : field.filename;
+	}
+
+	std::ostringstream oss;
+
+	oss << uploadDir << std::time(NULL) << "_" << counter << "_";
+
+	if (safeName.empty()) {
+
+		std::string ext = Mime::getExtension(field.contentType);
+		if (!ext.empty())
+			ext = "." + ext;
+		oss << "upload" << ext;
+	} else
+		oss << safeName;
+
+	const std::string filePath = oss.str();
+	std::ofstream	  file(filePath.c_str(), std::ios::binary);
+	if (!file)
+		return "";
+
+	file.write(field.data.c_str(), field.data.size());
+	file.close();
+	return filePath;
+}
+
+
+void Response::handleLogin(const Request& request) {
+	std::string username = getFieldValue(request, "username");
+
 	if (username.empty()) {
 		setStatus(HTTP_302_FOUND);
 		setHeader("Location", URI_LOGIN);
 		return;
 	}
+
 	bool		existUser = false;
 	std::string sessionId;
 	std::string cookie = request.getHeader("Cookie");
+
 	if (!cookie.empty()) {
-		size_t pos = cookie.find("session_id=");
+		std::size_t pos = cookie.find("session_id=");
 		if (pos != std::string::npos) {
 			sessionId = cookie.substr(pos + 11);
 			std::map<std::string, SessionInfo>::iterator it;
@@ -42,7 +92,8 @@ void Response::handleLogin(const Request& request)
 			}
 		}
 	}
-	if (existUser == false) {
+
+	if (!existUser) {
 		sessionId = randomSessionId();
 		SessionInfo info;
 		info.username			= username;
@@ -50,10 +101,11 @@ void Response::handleLogin(const Request& request)
 		(*_sessions)[sessionId] = info;
 		setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly");
 	}
+
 	setStatus(HTTP_302_FOUND);
 	setHeader("Location", URI_DASHBOARD);
-	return;
 }
+
 
 void Response::handlePost(const Request& request) {
 	const LocationConfig* locConf = request.getLocationConf();
@@ -62,7 +114,6 @@ void Response::handlePost(const Request& request) {
 		return;
 	}
 
-	// CGI check FIRST — before upload guard
 	if (request.hasCgi()) {
 		const std::string fullPath = request.getResolveFullPath();
 		Cgi				  cgi(request, *request.getConf(), locConf, fullPath);
@@ -77,25 +128,63 @@ void Response::handlePost(const Request& request) {
 	}
 
 	if (request.getUri() == "/login") {
-		return (handleLogin(request));
+		handleLogin(request);
+		return;
 	}
 
-	if (!locConf || !locConf->upload || locConf->upload_path.empty()) {
+	if (!locConf->upload || locConf->upload_path.empty()) {
 		errorPage(request, HTTP_403_FORBIDDEN);
 		return;
 	}
 
 	std::string uploadDir = locConf->upload_path;
-	if (!uploadDir.empty() && uploadDir[uploadDir.size() - 1] != '/')
+	if (uploadDir[uploadDir.size() - 1] != '/')
 		uploadDir += '/';
+
+	const std::string contentType = request.getHeader("Content-Type");
+
+
+	if (contentType.find("multipart/form-data") != std::string::npos) {
+		const Request::MultipartFields& fields = request.getMultipartFields();
+		if (fields.empty()) {
+			errorPage(request, HTTP_400_BAD_REQUEST);
+			return;
+		}
+		std::string			 responseBody;
+		bool				 anyFileWritten = false;
+		static unsigned long uploadCounter	= 0;
+
+		for (std::size_t i = 0; i < fields.size(); ++i) {
+			if (fields[i].filename.empty())
+				continue;
+
+			std::string written = writePart(fields[i], uploadDir, uploadCounter++);
+			if (written.empty()) {
+				errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
+				return;
+			}
+			responseBody += "File uploaded: " + written + "\n";
+			anyFileWritten = true;
+		}
+
+		if (!anyFileWritten) {
+			errorPage(request, HTTP_400_BAD_REQUEST);
+			return;
+		}
+
+		setStatus(HTTP_201_CREATED);
+		setHeader("Content-Type", "text/plain");
+		setBody(responseBody);
+		return;
+	}
+
+	std::string ext = Mime::getExtension(contentType);
+	if (!ext.empty())
+		ext = "." + ext;
 
 	std::ostringstream	 oss;
 	static unsigned long uploadCounter = 0;
 	oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
-
-	std::string ext = Mime::getExtension(request.getHeader("Content-Type"));
-	if (!ext.empty())
-		ext = "." + ext;
 
 	const std::string filePath = oss.str() + ext;
 	std::ofstream	  file(filePath.c_str(), std::ios::binary);

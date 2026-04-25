@@ -5,8 +5,8 @@ Client::Client()
 
 Client::Client(const Socket& socket, const Socket& serverSock,
 			   std::map<std::string, SessionInfo>* session)
-		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(&serverSock, socket.getIp()),
-		  _response(session) {}
+		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0),
+		  _request(&serverSock, socket.getIp()), _response(session) {}
 
 Client::Client(const Client& other)
 		: _socket(other._socket), _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),
@@ -34,6 +34,7 @@ bool Client::recvData() {
 	if (n < 0)
 		return true;
 	_recvBuffer.append(buf, n);
+
 	return true;
 }
 
