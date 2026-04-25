@@ -141,3 +141,19 @@ std::string resolvePath(const std::string& uri) {
 
 	return clean;
 }
+
+void printEscaped(const std::string& s) {
+	for (size_t i = 0; i < s.size(); ++i) {
+		if (s[i] == '\r') {
+			if (i + 1 < s.size() && s[i + 1] == '\n') {
+				std::cerr << "\\r\\n" << "\n";
+				++i;  // skip '\n'
+			} else
+				std::cerr << "\\r";
+		} else if (s[i] == '\n') {
+			std::cerr << "\\n" << "\n";
+		} else
+			std::cerr << s[i];
+	}
+	// std::cerr << "=>\n";
+}

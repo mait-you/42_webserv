@@ -42,163 +42,68 @@ Request& Request::operator=(const Request& other) {
 
 Request::~Request() {}
 
+void Request::parseMultipartHeaderLine(const std::string& line, MultipartField& field) {
+	std::size_t colon = line.find(':');
+	if (colon == std::string::npos)
+		return;
+
+	std::string name  = toLower(trimStr(line.substr(0, colon)));
+	std::string value = trimStr(line.substr(colon + 1));
+
+	if (name == "content-disposition") {
+		field.name	   = extractParam(value, "name");
+		field.filename = extractParam(value, "filename");
+	} else if (name == "content-type")
+		field.contentType = value;
+}
+
+void Request::parsePart(std::string& part) {
+	MultipartField field;
+	field.contentType = "text/plain"; /* RFC 7578 §4.4 default */
+
+	std::string line;
+	do {
+		std::size_t pos = part.find("\r\n");
+		if (pos == std::string::npos)
+			return setError(HTTP_400_BAD_REQUEST);
+		line = part.substr(0, pos);
+		part.erase(0, pos + 2);
+		if (!line.empty())
+			parseMultipartHeaderLine(line, field);
+	} while (!line.empty());
+
+	if (field.name.empty())
+		return setError(HTTP_400_BAD_REQUEST);
+	field.data = part;
+	_multipartFields.push_back(field);
+}
+
 void Request::parseMultipart(const std::string& boundary) {
-	/* RFC 7578 §4.1 — delimiter = "--" + boundary-value */
-	const std::string delim		 = "--" + boundary;
-	const std::string closeDelim = delim + "--";
+	const std::string delim		 = "--" + boundary + "\r\n";
+	const std::string closeDelim = "--" + boundary + "--" + "\r\n";
 
 	std::size_t pos = _body.find(delim);
-	if (pos == std::string::npos)
-		return; /* malformed — no delimiter found at all */
-
-	/* Advance past the first delimiter line (includes trailing CRLF) */
-	pos += delim.size();
-	if (_body.compare(pos, 2, "\r\n") == 0)
-		pos += 2;
-	else
-		return; /* malformed preamble */
-
-	while (pos < _body.size()) {
-		/* ── locate the next delimiter ──────────────────────────────────────
-		 * RFC 7578 §4.1 — each part ends with CRLF before the next "--boundary"
-		 * so we search for "\r\n--boundary" to find the exact end of this part */
-		const std::string nextDelimPrefix = "\r\n" + delim;
-		std::size_t		  partEnd		  = _body.find(nextDelimPrefix, pos);
-		if (partEnd == std::string::npos)
-			break; /* no closing delimiter — treat as end */
-
-		std::string part = _body.substr(pos, partEnd - pos);
-
-		/* ── split headers from body ────────────────────────────────────────
-		 * RFC 7578 §4.2 — part headers end at the first blank line "\r\n\r\n" */
-		const std::string headerBodySep = "\r\n\r\n";
-		std::size_t		  sepPos		= part.find(headerBodySep);
-		if (sepPos == std::string::npos) {
-			/* RFC 7578 §4.2 — Content-Disposition is REQUIRED; skip bad part */
-			pos = partEnd + nextDelimPrefix.size();
-			if (_body.compare(pos, 2, "\r\n") == 0)
-				pos += 2;
-			continue;
+	if (pos == std::string::npos || pos != 0)
+		return setError(HTTP_400_BAD_REQUEST);
+	_body.erase(0, delim.size());
+	while (!_body.empty()) {
+		std::size_t pos = _body.find(delim);
+		std::size_t len = delim.size();
+		if (pos == std::string::npos) {
+			pos = _body.find(closeDelim);
+			len = closeDelim.size();
 		}
-
-		std::string headerBlock = part.substr(0, sepPos);
-		std::string partBody	= part.substr(sepPos + headerBodySep.size());
-
-		/* ── parse the part headers ─────────────────────────────────────── */
-		MultipartField field;
-		field.data = partBody;
-
-		if (!parsePartHeaders(headerBlock, field)) {
-			/* RFC 7578 §4.2 — Content-Disposition with "name" is REQUIRED;
-			   silently skip any part that fails this check */
-			pos = partEnd + nextDelimPrefix.size();
-			if (_body.compare(pos, 2, "\r\n") == 0)
-				pos += 2;
-			continue;
-		}
-
-		_multipartFields.push_back(field);
-
-		/* ── advance past the delimiter that ended this part ────────────── */
-		pos = partEnd + nextDelimPrefix.size();
-
-		/* RFC 7578 §4.1 — close-delimiter has "--" suffix → we are done */
-		if (_body.compare(pos, 2, "--") == 0)
-			break;
-
-		/* skip the CRLF after a normal delimiter before the next part */
-		if (_body.compare(pos, 2, "\r\n") == 0)
-			pos += 2;
+		if (pos == std::string::npos)
+			return setError(HTTP_400_BAD_REQUEST);
+		std::string part = _body.substr(0, pos);
+		_body.erase(0, pos + len);
+		parsePart(part);
+		if (_parseState == PARSE_ERROR)
+			return;
 	}
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
- * parsePartHeaders
- *
- * Iterates over every header line in `headerBlock` (lines split by "\r\n").
- *
- * RFC 7578 §4.2 — MUST have:
- *   Content-Disposition: form-data; name="<fieldname>"
- *   optionally:          filename="<filename>"
- *
- * RFC 7578 §4.4 — MAY have:
- *   Content-Type: <media-type>   (default: text/plain)
- *
- * RFC 7578 §4.8 — all other Content-* headers MUST be ignored.
- *
- * Returns false if Content-Disposition is absent or "name" param is missing.
- * ─────────────────────────────────────────────────────────────────────────── */
-bool Request::parsePartHeaders(const std::string& headerBlock, MultipartField& field) const {
-	/* RFC 7578 §4.4 — default content-type when header is absent */
-	field.contentType = "text/plain";
-
-	bool hasContentDisposition = false;
-
-	std::size_t lineStart = 0;
-	while (lineStart <= headerBlock.size()) {
-		std::size_t lineEnd = headerBlock.find("\r\n", lineStart);
-		if (lineEnd == std::string::npos)
-			lineEnd = headerBlock.size();
-
-		std::string line = headerBlock.substr(lineStart, lineEnd - lineStart);
-		lineStart		 = lineEnd + 2;
-
-		if (line.empty())
-			continue;
-
-		/* split "Header-Name: value" */
-		std::size_t colon = line.find(':');
-		if (colon == std::string::npos)
-			continue;
-
-		std::string hName  = toLower(trimStr(line.substr(0, colon)));
-		std::string hValue = trimStr(line.substr(colon + 1));
-
-		/* ── RFC 7578 §4.2 — Content-Disposition ────────────────────────── */
-		if (hName == "content-disposition") {
-			/* value must start with "form-data" token */
-			if (hValue.compare(0, 9, "form-data") != 0)
-				continue;
-
-			/* extract required "name" parameter */
-			std::string nameVal = extractParam(hValue, "name");
-			if (nameVal.empty())
-				return false; /* RFC 7578 §4.2 — "name" is REQUIRED */
-
-			field.name = nameVal;
-
-			/* RFC 7578 §4.2 — "filename" is OPTIONAL */
-			std::string filenameVal = extractParam(hValue, "filename");
-			if (!filenameVal.empty())
-				field.filename = filenameVal;
-
-			hasContentDisposition = true;
-
-			/* ── RFC 7578 §4.4 — Content-Type ───────────────────────────────── */
-		} else if (hName == "content-type") {
-			field.contentType = hValue;
-
-			/* ── RFC 7578 §4.8 — all other Content-* headers are ignored ────── */
-		}
-	}
-
-	return hasContentDisposition;
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
- * extractParam
- *
- * Extracts the value of a named parameter from a header-field value string.
- *
- * Example input : "form-data; name=\"user\"; filename=\"a.txt\""
- * extractParam(..., "name")     → "user"
- * extractParam(..., "filename") → "a.txt"
- *
- * RFC 7578 §4.2 — parameter values are quoted-strings; we strip the quotes.
- * RFC 7578 §2   — percent-encoded filenames are returned as-is (caller decodes).
- * ─────────────────────────────────────────────────────────────────────────── */
 std::string Request::extractParam(const std::string& headerValue, const std::string& param) const {
-	/* search for "param=" (case-insensitive via toLower on the full value) */
 	std::string lowerValue = toLower(headerValue);
 	std::string token	   = param + "=";
 
@@ -206,26 +111,22 @@ std::string Request::extractParam(const std::string& headerValue, const std::str
 	if (pos == std::string::npos)
 		return "";
 
-	pos += token.size(); /* move past "param=" */
+	pos += token.size();
 
-	/* RFC 7578 §4.2 — values are typically quoted-strings */
 	if (pos < headerValue.size() && headerValue[pos] == '"') {
-		++pos; /* skip opening quote */
+		++pos;
 		std::size_t endQuote = headerValue.find('"', pos);
 		if (endQuote == std::string::npos)
-			return ""; /* malformed quoted-string */
+			return "";
 		return headerValue.substr(pos, endQuote - pos);
 	}
 
-	/* unquoted token: ends at ';' or end-of-string */
 	std::size_t endPos = headerValue.find(';', pos);
 	if (endPos == std::string::npos)
 		endPos = headerValue.size();
 
 	return trimStr(headerValue.substr(pos, endPos - pos));
 }
-
-/* ─────────────────────────────────────────────────────────────────────────── */
 
 bool Request::parse(std::string& buffer) {
 	while (_parseState == PARSE_REQUEST_LINE || _parseState == PARSE_HEADERS) {
@@ -239,28 +140,24 @@ bool Request::parse(std::string& buffer) {
 
 		processLine(line);
 	}
-
+	// ! i need a to store in disk
 	if (_parseState == PARSE_BODY) {
+		if (_method != "POST")
+			_parseState = PARSE_DONE;
 		if (buffer.size() >= _contentLength) {
 			_body = buffer.substr(0, _contentLength);
 			buffer.erase(0, _contentLength);
-
-			std::string ct = getHeader("Content-Type");
 			_parseState	   = PARSE_DONE;
-
-			/* RFC 7578 §4.1 — detect multipart/form-data and extract boundary */
+			std::string ct = getHeader("Content-Type");
 			if (ct.find("multipart/form-data") != std::string::npos) {
 				std::string bnd = extractParam(ct, "boundary");
 				if (!bnd.empty())
 					parseMultipart(bnd);
 				else
-					setError(HTTP_400_BAD_REQUEST); /* boundary is REQUIRED (§4.1) */
+					setError(HTTP_400_BAD_REQUEST);
 			}
 		}
 	}
-
-	if (_parseState == PARSE_DONE)
-		setStatus(HTTP_200_OK);
 	return true;
 }
 
@@ -269,16 +166,21 @@ void Request::processLine(const std::string& line) {
 		parseRequestLine(line);
 	} else if (_parseState == PARSE_HEADERS) {
 		if (line.empty()) {
-			std::string cl = getHeader("content-length");
+			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
 				_contentLength = static_cast<std::size_t>(std::atol(cl.c_str()));
 				if (_contentLength > _srvConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
+
+			} else if (_method == "POST") {
+				return setError(HTTP_204_NO_CONTENT);
 			} else {
 				_contentLength = 0;
 				_parseState	   = PARSE_DONE;
 			}
+		} else if (_httpVersion == HTTP_0_9) {
+			return setError(HTTP_400_BAD_REQUEST);
 		} else
 			parseHeaderLine(line);
 	}
@@ -329,9 +231,6 @@ void Request::parseRequestLine(const std::string& line) {
 }
 
 void Request::parseHeaderLine(const std::string& line) {
-	if (_httpVersion == HTTP_0_9)
-		return setError(HTTP_400_BAD_REQUEST);
-
 	std::size_t colon = line.find(':');
 	if (colon == std::string::npos)
 		return setError(HTTP_400_BAD_REQUEST);
@@ -456,13 +355,11 @@ std::string Request::resolveFullPath() const {
 	return root + relPath;
 }
 
-/* ── Getters ─────────────────────────────────────────────────────────────── */
-
 bool Request::isComplete() const {
 	return (_parseState == PARSE_DONE || _parseState == PARSE_ERROR);
 }
 bool Request::isValid() const {
-	return isSuccess();
+	return _parseState == PARSE_DONE;
 }
 bool Request::hasCgi() const {
 	return _hasCgi;

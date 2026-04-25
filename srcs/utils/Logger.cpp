@@ -52,17 +52,36 @@ static void logRequest(const Request& req, bool hasRes) {
 	std::cout << p << GRY "├─ " WHT "body:    " RST;
 	if (body.empty()) {
 		std::cout << GRY "(empty)\n" RST;
-	} else {
-		std::cout << GRY "[" RST << body.size() << GRY " bytes] " RST << std::hex
-				  << std::setfill('0');
-		for (size_t i = 0; i < body.size() && i < 16; ++i)
-			std::cout << std::setw(2)
-					  << static_cast<unsigned int>(static_cast<unsigned char>(body[i])) << " ";
-		if (body.size() > 16)
-			std::cout << GRY "...";
-		std::cout << std::dec << RST "\n";
-	}
+	} else
+		std::cout << GRY "[" RST << body.size() << GRY " bytes] " RST "\n";
+	const Request::MultipartFields& parts = req.getMultipartFields();
+	if (!parts.empty()) {
+		std::cout << p << GRY "│  └─ " WHT "multipart: " GRY "[" RST << parts.size()
+				  << GRY "]\n" RST;
+		for (size_t i = 0; i < parts.size(); ++i) {
+			const MultipartField& f	   = parts[i];
+			const bool			  last = (i == parts.size() - 1);
 
+			std::cout << p << GRY "│     " RST << (last ? GRY "└─ " RST : GRY "├─ " RST)
+					  << WHT "part[" RST << i + 1 << WHT "]\n" RST;
+			std::cout << p << GRY "│     " RST << (last ? GRY "   " RST : GRY "│  " RST)
+					  << GRY "├─ " WHT "name:    " RST
+					  << (f.name.empty() ? GRY "(none)" RST : f.name.c_str()) << "\n";
+			std::cout << p << GRY "│     " RST << (last ? GRY "   " RST : GRY "│  " RST)
+					  << GRY "├─ " WHT "file:    " RST
+					  << (f.filename.empty() ? GRY "(none)" RST : f.filename.c_str()) << "\n";
+			std::cout << p << GRY "│     " RST << (last ? GRY "   " RST : GRY "│  " RST)
+					  << GRY "├─ " WHT "type:    " RST
+					  << (f.contentType.empty() ? GRY "text/plain" RST : f.contentType.c_str())
+					  << "\n";
+			std::cout << p << GRY "│     " RST << (last ? GRY "   " RST : GRY "│  " RST)
+					  << GRY "└─ " WHT "data:    " RST;
+			if (f.data.empty()) {
+				std::cout << GRY "(empty)\n" RST;
+			} else
+				std::cout << GRY "[" RST << f.data.size() << GRY " bytes] " RST "\n";
+		}
+	}
 	std::cout << p << GRY "└─ " WHT "type:    " RST
 			  << (req.hasCgi() ? CYN "dynamic" RST : GRY "static" RST) << "\n";
 }

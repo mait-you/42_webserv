@@ -1,4 +1,6 @@
 #include "../../includes/net/Client.hpp"
+#include "../../includes/utils/Utils.hpp"
+
 // it call only for Map
 Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response() {}
@@ -28,12 +30,14 @@ Client::~Client() {}
 
 bool Client::recvData() {
 	char	buf[RECV_BUFFER_SIZE] = {0};
-	ssize_t n					  = recv(_socket.getFd(), buf, sizeof(buf), 0);
+	ssize_t n					  = recv(_socket.getFd(), buf, sizeof buf, 0);
 	if (n == 0)
 		return false;
 	if (n < 0)
 		return true;
 	_recvBuffer.append(buf, n);
+
+	// printEscaped(_recvBuffer);
 
 	return true;
 }

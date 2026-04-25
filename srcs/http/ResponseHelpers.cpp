@@ -9,12 +9,12 @@ void Response::errorPage(const Request& request, CodeStatus code) {
 
 	setStatus(code);
 	if (locConf) {
-		std::map<int, std::string>::const_iterator it = locConf->error_pages.find(code);
+		std::map<int, std::string>::const_iterator it = locConf->error_pages.find(getStatusCode());
 		if (it != locConf->error_pages.end() && handleErrorFile(it->second))
 			return;
 	}
 	if (srvConf && locConf) {
-		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(code);
+		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(getStatusCode());
 
 		if (it != srvConf->error_pages.end()) {
 			std::string path;

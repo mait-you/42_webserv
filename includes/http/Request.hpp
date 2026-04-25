@@ -21,10 +21,7 @@ class Request : public HttpStatus {
   public:
 	typedef std::map<std::string, std::string> HeaderMap;
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
-
-	/* RFC 7578 §4.3 — multiple parts may share the same field name,
-	   so we store a list, not a map */
-	typedef std::vector<MultipartField> MultipartFields;
+	typedef std::vector<MultipartField>		   MultipartFields;
 
 	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_DONE, PARSE_ERROR };
 
@@ -85,10 +82,11 @@ class Request : public HttpStatus {
 	void processLine(const std::string& line);
 	void parseRequestLine(const std::string& line);
 	void parseHeaderLine(const std::string& line);
+	void parseMultipartHeaderLine(const std::string& line, MultipartField& field);
 
 	/* RFC 7578 §4 — multipart parsing pipeline */
 	void		parseMultipart(const std::string& boundary);
-	bool		parsePartHeaders(const std::string& headerBlock, MultipartField& field) const;
+	void		parsePart(std::string& part);
 	std::string extractParam(const std::string& headerValue, const std::string& param) const;
 
 	bool matchLocation();
