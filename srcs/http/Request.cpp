@@ -161,6 +161,11 @@ bool Request::parse(std::string& buffer) {
 	return true;
 }
 
+void Request::setFormKeyValue(std::string key, std::string value)
+{
+	_formKeyValue[key] = value;
+}
+
 void Request::processLine(const std::string& line) {
 	if (_parseState == PARSE_REQUEST_LINE) {
 		parseRequestLine(line);
@@ -385,6 +390,10 @@ const std::string& Request::getServerPort() const {
 }
 const std::string& Request::getServerIp() const {
 	return _serverIp;
+}
+
+const std::map<std::string, std::string>& Request::getFormKeyValue() const {
+	return _formKeyValue;
 }
 
 const Request::HeaderMap& Request::getHeaders() const {

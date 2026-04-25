@@ -45,6 +45,7 @@ class Request : public HttpStatus {
 
 	/* RFC 7578 §4 — parsed multipart parts, filled by parseMultipart() */
 	MultipartFields _multipartFields;
+	std::map<std::string, std::string> _formKeyValue;
 
   public:
 	Request();
@@ -54,6 +55,8 @@ class Request : public HttpStatus {
 	~Request();
 
 	bool parse(std::string& buffer);
+
+	void setFormKeyValue(std::string key, std::string value);
 
 	/* Getters */
 	bool isComplete() const;
@@ -74,6 +77,7 @@ class Request : public HttpStatus {
 	const ServerConfig*	  getConf() const;
 	const std::string&	  getServerPort() const;
 	const std::string&	  getServerIp() const;
+	const std::map<std::string, std::string>& getFormKeyValue() const;
 
 	/* RFC 7578 — access parsed multipart fields */
 	const MultipartFields& getMultipartFields() const;
