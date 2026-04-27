@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webserv - test upload</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+	<h2>Upload page</h2>
+	<form method="POST" action="/uploads" enctype="multipart/form-data">
+		<label for="avatar">profile picture:</label>
+		<input type="file"
+			name="image"
+			id="avatar"
+			accept="image/png, image/jpeg, image/jpg"
+			required  multiple>
+		<input type="submit" value="submit" style="margin-top: 20px;">
+	</form>
+
+	<!-- <form method="POST" action="/uploads" >
+		<label for="avatar">name:</label>
+		<input type="text" name="username" >
+		<br>
+		<br>
+		<label for="avatar">age:</label>
+		<input type="text" name="age">
+		<input type="submit" value="submit" style="margin-top: 20px;">
+	</form> -->
+
+
+	<a href="/" style="display: block; margin-top: 20px;">Back to Home</a>
+<script src="js/script.js"></script>
+</body>
+</html>

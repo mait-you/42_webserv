@@ -3,7 +3,6 @@
 
 #include "../http/Request.hpp"
 #include "../http/Response.hpp"
-#include "../session/SessionInfo.hpp"
 #include "Socket.hpp"
 
 #define RECV_BUFFER_SIZE 4096
@@ -26,7 +25,7 @@ class Client {
   public:
 	Client();
 	Client(const Socket& socket, const Socket& serverSock,
-		   std::map<std::string, SessionInfo>* _session);
+		   std::map<std::string, std::string>* _session);
 	Client(const Client& other);
 	Client& operator=(const Client& other);
 	~Client();

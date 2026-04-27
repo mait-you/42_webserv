@@ -4,7 +4,7 @@
 
 Response::Response() : HttpStatus(), _hasCgiRunning(false), _sessions(NULL), _isComplete(false) {}
 
-Response::Response(std::map<std::string, SessionInfo>* session)
+Response::Response(std::map<std::string, std::string>* session)
 		: HttpStatus(), _hasCgiRunning(false), _sessions(session), _isComplete(false) {}
 
 Response::Response(const Response& other)

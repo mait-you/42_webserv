@@ -17,7 +17,6 @@ HEADERS = \
 	$(INC_DIR)/http/Request.hpp             \
 	$(INC_DIR)/http/Response.hpp            \
 	$(INC_DIR)/http/HttpStatus.hpp          \
-	$(INC_DIR)/session/SessionInfo.hpp      \
 	$(INC_DIR)/utils/Logger.hpp             \
 	$(INC_DIR)/utils/Utils.hpp
 

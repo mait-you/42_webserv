@@ -16,7 +16,7 @@ class WebServer {
   private:
 	Socket::Map		 _serverSockets;
 	Client::Map		 _clients;
-	SessionInfo::Map _sessions;
+	std::map<std::string, std::string> _sessions;
 	t_ev			 _events[MAX_EVENTS];
 	int				 _epollFd;
 	const Config&	 _config;
@@ -29,7 +29,7 @@ class WebServer {
 
 	const Socket::Map&		getServerSockets() const;
 	const Client::Map&		getClients() const;
-	const SessionInfo::Map& getSessions() const;
+	const std::map<std::string, std::string>& getSessions() const;
 	const Config&			getConfig() const;
 
   private:

@@ -3,15 +3,16 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Login</title>
+	<title>Webserv - Welcome</title>
 	    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 	<h2>Enter Your Name</h2>
-	<form method="POST" action="/login">
-		<label for="username">Username:</label>
+	<form method="POST" action="/welcome">
+		<label for="username">Who are you?</label>
 		<input type="text" id="username" name="username" required>
-		<input type="submit" value="Login">
+		<input type="submit" value="Login" style="margin-top: 20px;">
+		<a href="/" style="display: block;margin-top: 20px;">Back to Home</a>
 	</form>
 </body>
 </html>

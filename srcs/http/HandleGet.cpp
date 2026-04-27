@@ -14,52 +14,50 @@ std::string extractId(std::string& cookie) {
 	return "";
 }
 
-int Response::handleDashboard(const Request& request, const std::string& fullPath) {
+void Response::handleDashboard(const Request& request, const std::string& fullPath) {
 	std::stringstream ss;
 	std::string		  cookie = request.getHeader("Cookie");
 	if (!cookie.empty()) {
 		std::string sessionId = extractId(cookie);
 		if (!sessionId.empty()) {
-			std::map<std::string, SessionInfo>::iterator it;
+			std::map<std::string, std::string>::iterator it;
 			for (it = _sessions->begin(); it != _sessions->end(); it++) {
 				if (it->first == sessionId) {
-					if (it->second.isLogged == true) {
-						ss << "<html> <head><title>Webserv - Dashboard</title>"
-						   << "<link rel='stylesheet' href='css/style.css'></head> <body>"
-						   << "<a href='/logout.html'>logout</a>"
-						   << "<h1> Welcome, " << it->second.username << "</h1>"
-						   << "<a href='/'>Back to Home</a></body></html>";
-						setStatus(HTTP_200_OK);
-						std::string extension = getExtension(fullPath);
-						setHeader("Content-type", Mime::getType(extension));
-						setBody(ss.str());
-						return 1;
-					}
+					ss << "<html> <head><title>Webserv - Dashboard</title>"
+						<< "<link rel='stylesheet' href='css/style.css'></head> <body>"
+						<< "<a href='/logout'>logout</a>"
+						<< "<h1> Welcome, " << it->second << "</h1>"
+						<< "<a href='/'>Back to Home</a></body></html>";
+					setStatus(HTTP_200_OK);
+					std::string extension = getExtension(fullPath);
+					setHeader("Content-type", Mime::getType(extension));
+					setBody(ss.str());
+					return ;
+				}
+			}
+		}
+	}
+	setStatus(HTTP_302_FOUND);
+	setHeader("Location", URI_WELCOME);
+}
+
+void Response::handleLogout(const Request& request) {
+	std::string cookie = request.getHeader("Cookie");
+	if (!cookie.empty()) {
+		std::string sessionId = extractId(cookie);
+		if (!sessionId.empty()) {
+			std::map<std::string, std::string>::iterator it;
+			for (it = _sessions->begin(); it != _sessions->end(); it++) {
+				if (it->first == sessionId) {
+					 _sessions->erase(sessionId);
 					break;
 				}
 			}
 		}
 	}
-	return 0;
-}
-
-int Response::handleLogout(const Request& request) {
-	std::string cookie = request.getHeader("Cookie");
-	if (!cookie.empty()) {
-		std::string sessionId = extractId(cookie);
-		if (!sessionId.empty()) {
-			std::map<std::string, SessionInfo>::iterator it;
-			for (it = _sessions->begin(); it != _sessions->end(); it++) {
-				if (it->first == sessionId) {
-					it->second.isLogged = false;
-					setStatus(HTTP_302_FOUND);
-					setHeader("Location", URI_LOGIN);
-					return 1;
-				}
-			}
-		}
-	}
-	return 0;
+	setHeader("Set-Cookie", "session_id=;Path=/; HttpOnly; Max-Age=0");
+	setStatus(HTTP_302_FOUND);
+	setHeader("Location", URI_WELCOME);
 }
 
 void Response::handleFile(const Request& request, const std::string& fullPath) {
@@ -82,14 +80,6 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 			_hasCgiRunning = true;
 		return;
 	}
-	int flag = 0;
-	if (request.getUri() == URI_DASHBOARD)
-		flag = handleDashboard(request, fullPath);
-	else if (request.getUri() == URI_LOGOUT)
-		flag = handleLogout(request);
-
-	if (flag == 1)
-		return;
 	std::stringstream ss;
 	ss << file.rdbuf();
 	setStatus(HTTP_200_OK);
@@ -143,15 +133,23 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 void Response::handleGet(const Request& request) {
 	std::string fullPath = request.getResolveFullPath();
 
+	if (request.getUri() == URI_DASHBOARD)
+		return(handleDashboard(request, fullPath));
+	else if (request.getUri() == URI_LOGOUT)
+		return(handleLogout(request));
+
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {
 		errorPage(request, HTTP_404_NOT_FOUND);
 		return;
 	}
+
 	if (S_ISREG(buffer.st_mode))
 		handleFile(request, fullPath);
 	else if (S_ISDIR(buffer.st_mode))
 		handleDir(request, fullPath);
 	else
+	{
 		errorPage(request, HTTP_404_NOT_FOUND);
+	}
 }

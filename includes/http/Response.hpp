@@ -3,7 +3,6 @@
 
 #include "../cgi/Cgi.hpp"
 #include "../http/Request.hpp"
-#include "../session/SessionInfo.hpp"
 
 class Response : public HttpStatus {
   public:
@@ -17,12 +16,12 @@ class Response : public HttpStatus {
 
 	bool								_hasCgiRunning;
 	CgiInfo								_runningCgi;
-	std::map<std::string, SessionInfo>* _sessions;
+	std::map<std::string, std::string>* _sessions;
 	bool _isComplete;
 
   public:
 	Response();
-	Response(std::map<std::string, SessionInfo>* session);
+	Response(std::map<std::string, std::string>* session);
 	Response(const Response& other);
 	Response& operator=(const Response& other);
 	void operator=(const Request& req);
@@ -65,11 +64,10 @@ class Response : public HttpStatus {
 	void handleDelete(const Request& request);
 	void handlePost(Request& request);
 	void multiPart(Request& request,const MultipartField &part, std::string uploadDir);
-	void urlencoded(Request& request);
 	void handleLogin(const Request& request);
 
-	int handleDashboard(const Request& request, const std::string& fullPath);
-	int handleLogout(const Request& request);
+	void handleDashboard(const Request& request, const std::string& fullPath);
+	void handleLogout(const Request& request);
 };
 
 #endif

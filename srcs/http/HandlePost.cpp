@@ -17,13 +17,13 @@ void Response::handleLogin(const Request& request) {
 	size_t		pos = body.find("username=");
 	if (pos == std::string::npos) {
 		setStatus(HTTP_302_FOUND);
-		setHeader("Location", URI_LOGIN);
+		setHeader("Location", URI_WELCOME);
 		return;
 	}
 	username = body.substr(pos + 9);
 	if (username.empty()) {
 		setStatus(HTTP_302_FOUND);
-		setHeader("Location", URI_LOGIN);
+		setHeader("Location", URI_WELCOME);
 		return;
 	}
 	bool		existUser = false;
@@ -33,11 +33,10 @@ void Response::handleLogin(const Request& request) {
 		size_t pos = cookie.find("session_id=");
 		if (pos != std::string::npos) {
 			sessionId = cookie.substr(pos + 11);
-			std::map<std::string, SessionInfo>::iterator it;
+			std::map<std::string, std::string>::iterator it;
 			for (it = _sessions->begin(); it != _sessions->end(); it++) {
 				if (it->first == sessionId) {
-					it->second.isLogged = true;
-					it->second.username = username;
+					it->second = username;
 					existUser			= true;
 					break;
 				}
@@ -46,11 +45,8 @@ void Response::handleLogin(const Request& request) {
 	}
 	if (existUser == false) {
 		sessionId = randomSessionId();
-		SessionInfo info;
-		info.username			= username;
-		info.isLogged			= true;
-		(*_sessions)[sessionId] = info;
-		setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly");
+		(*_sessions)[sessionId] = username;
+		setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly; Max-Age=60");
 	}
 	setStatus(HTTP_302_FOUND);
 	setHeader("Location", URI_DASHBOARD);
@@ -111,7 +107,7 @@ void Response::handlePost(Request& request) {
 		return;
 	}
 
-	if (request.getUri() == "/login") {
+	if (request.getUri() == "/welcome") {
 		return (handleLogin(request));
 	}
 

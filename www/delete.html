@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+	<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Webserv - DELETE</title>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<h2>DELETE page</h2>
+<div class="box">
+	 <strong style="margin-bottom: 10px; display: block;">file path</strong>
+	<input name="delete" id="path" placeholder="/uploads/file.txt">
+	<button onclick="sendDelete()" style="margin-top: 20px;">DELETE</button>
+	<p id="res" style="margin:  20px 0 10px; color: darkcyan;"></p>
+	<a href="/" style="display: block;margin-top: 20px;">Back to Home</a>
+</div>
+
+<script>
+	function sendDelete() {
+		const path = document.getElementById('path').value;
+
+		fetch(path, { method: 'DELETE' })
+			.then(res => res.text().then(text => {
+				document.getElementById('res').textContent =
+					res.status + " " + res.statusText + "\n\n";
+			}))
+			.catch(err => {
+				document.getElementById('res').textContent = "Error: " + err;
+			});
+	}
+</script>
+
+</body>
+</html>

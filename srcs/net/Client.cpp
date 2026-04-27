@@ -6,7 +6,7 @@ Client::Client()
 		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response() {}
 
 Client::Client(const Socket& socket, const Socket& serverSock,
-			   std::map<std::string, SessionInfo>* session)
+			   std::map<std::string, std::string>* session)
 		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0),
 		  _request(&serverSock, socket.getIp()), _response(session) {}
 

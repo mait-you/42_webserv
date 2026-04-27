@@ -41,7 +41,7 @@ const Socket::Map& WebServer::getServerSockets() const {
 const Client::Map& WebServer::getClients() const {
 	return _clients;
 }
-const SessionInfo::Map& WebServer::getSessions() const {
+const std::map<std::string, std::string>& WebServer::getSessions() const {
 	return _sessions;
 }
 const Config& WebServer::getConfig() const {

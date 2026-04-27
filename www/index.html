@@ -10,45 +10,12 @@
     <h1>Welcome to Webserv!</h1>
     <p>This is a C++98 HTTP server implementation.</p>
     <nav>
-        <a href="/">Home</a>
-        <a href="/login.html">Login</a>
+        <a href="/welcome.html">Welcome</a>
         <a href="/dashboard.html">dashboard</a>
+        <a href="/upload.html">upload</a>
+        <a href="/delete.html">delete</a>
         <a href="/about.html">About</a>
     </nav>
-
-
-<form method="POST" action="/uploads" enctype="multipart/form-data">
-    <label for="avatar">picture one:</label>
-    <input type="file"
-           name="image"
-           id="avatar"
-           accept="image/png, image/jpeg, image/jpg"
-           required  multiple>
-    <br>
-    <label for="avatar">name:</label>
-        <input type="text"
-           name="username"
-           id="username"
-           placeholder="enter your name"
-           required>
-    <br>
-    <br>
-        <label for="avatar">email:</label>
-        <input type="email"
-           name="email"
-           id="email"
-           placeholder="enter your email"
-           required>
-    <br>
-    <input type="submit" value="submit" style="margin-top: 20px;">
-</form>
-
-
-<!-- <form action="/uploads" method="GET">
-  <input type="text" name="username" value="monir">
-  <input type="text" name="age" value="21">
-  <button type="submit">Send</button>
-</form> -->
 
     <script src="js/script.js"></script>
 </body>
