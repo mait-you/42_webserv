@@ -17,7 +17,8 @@ Request::Request(const Request& other)
 		  _headers(other._headers), _body(other._body), _serverPort(other._serverPort),
 		  _serverIp(other._serverIp), _clientIp(other._clientIp),
 		  _contentLength(other._contentLength), _parseState(other._parseState),
-		  _hasCgi(other._hasCgi), _multipartFields(other._multipartFields) {}
+		  _hasCgi(other._hasCgi), _multipartFields(other._multipartFields),
+		  _formData(other._formData) {}
 
 Request& Request::operator=(const Request& other) {
 	if (this != &other) {
@@ -36,11 +37,33 @@ Request& Request::operator=(const Request& other) {
 		_parseState		 = other._parseState;
 		_hasCgi			 = other._hasCgi;
 		_multipartFields = other._multipartFields;
+		_formData		 = other._formData;
 	}
 	return *this;
 }
 
 Request::~Request() {}
+
+void Request::parseUrlEncoded() {
+	std::string body = _body;
+
+	while (!body.empty()) {
+		std::size_t pos	 = body.find('&');
+		std::string pair = body.substr(0, pos);
+		if (pos == std::string::npos)
+			body.clear();
+		else
+			body.erase(0, pos + 1);
+		if (pair.empty())
+			continue;
+
+		std::size_t eq	= pair.find('=');
+		std::string key = (eq == std::string::npos) ? pair : pair.substr(0, eq);
+		std::string val = (eq == std::string::npos) ? "" : pair.substr(eq + 1);
+
+		_formData[decode(key)] = decode(val);
+	}
+}
 
 void Request::parseMultipartHeaderLine(const std::string& line, MultipartField& field) {
 	std::size_t colon = line.find(':');
@@ -156,14 +179,11 @@ bool Request::parse(std::string& buffer) {
 					parseMultipart(bnd);
 				else
 					setError(HTTP_400_BAD_REQUEST);
-			}
+			} else if (ct == "application/x-www-form-urlencoded")
+				parseUrlEncoded();
 		}
 	}
 	return true;
-}
-
-void Request::setFormKeyValue(std::string key, std::string value) {
-	_formKeyValue[key] = value;
 }
 
 void Request::processLine(const std::string& line) {
@@ -174,7 +194,7 @@ void Request::processLine(const std::string& line) {
 			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
 				_contentLength = static_cast<std::size_t>(std::atol(cl.c_str()));
-				if (_contentLength > _srvConf->client_max_body_size)
+				if (_contentLength > _locConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
 
@@ -326,7 +346,7 @@ void Request::setError(CodeStatus code) {
 }
 
 std::string Request::resolveFullPath() const {
-	const std::string& root	   = !_locConf->root.empty() ? _locConf->root : _srvConf->root;
+	const std::string& root	   = _locConf->root;
 	std::string		   relPath = _resolveUri;
 	const std::string& locPath = _locConf->path;
 
@@ -392,8 +412,8 @@ const std::string& Request::getServerIp() const {
 	return _serverIp;
 }
 
-const std::map<std::string, std::string>& Request::getFormKeyValue() const {
-	return _formKeyValue;
+const Request::FormData& Request::getFormData() const {
+	return _formData;
 }
 
 const Request::HeaderMap& Request::getHeaders() const {
@@ -413,6 +433,10 @@ const ServerConfig* Request::getConf() const {
 }
 const Request::MultipartFields& Request::getMultipartFields() const {
 	return _multipartFields;
+}
+
+void Request::setFormData(const std::string& key, const std::string& val) {
+	_formData[key] = val;
 }
 
 std::string Request::getHeader(const std::string& key) const {

@@ -22,6 +22,7 @@ class Request : public HttpStatus {
 	typedef std::map<std::string, std::string> HeaderMap;
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
 	typedef std::vector<MultipartField>		   MultipartFields;
+	typedef std::map<std::string, std::string> FormData;
 
 	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_DONE, PARSE_ERROR };
 
@@ -45,7 +46,7 @@ class Request : public HttpStatus {
 
 	/* RFC 7578 §4 — parsed multipart parts, filled by parseMultipart() */
 	MultipartFields _multipartFields;
-	std::map<std::string, std::string> _formKeyValue;
+	FormData		_formData;
 
   public:
 	Request();
@@ -55,8 +56,6 @@ class Request : public HttpStatus {
 	~Request();
 
 	bool parse(std::string& buffer);
-
-	void setFormKeyValue(std::string key, std::string value);
 
 	/* Getters */
 	bool isComplete() const;
@@ -77,11 +76,13 @@ class Request : public HttpStatus {
 	const ServerConfig*	  getConf() const;
 	const std::string&	  getServerPort() const;
 	const std::string&	  getServerIp() const;
-	const std::map<std::string, std::string>& getFormKeyValue() const;
+	const FormData&		  getFormData() const;
 
 	/* RFC 7578 — access parsed multipart fields */
 	const MultipartFields& getMultipartFields() const;
 
+	void setFormData(const std::string &key, const std::string &val);
+	
   private:
 	void processLine(const std::string& line);
 	void parseRequestLine(const std::string& line);
@@ -92,6 +93,7 @@ class Request : public HttpStatus {
 	void		parseMultipart(const std::string& boundary);
 	void		parsePart(std::string& part);
 	std::string extractParam(const std::string& headerValue, const std::string& param) const;
+	void		parseUrlEncoded();
 
 	bool matchLocation();
 	void detectCgi();
