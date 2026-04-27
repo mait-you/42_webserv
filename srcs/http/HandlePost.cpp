@@ -11,8 +11,7 @@ std::string randomSessionId() {
 	return ss.str();
 }
 
-void Response::handleLogin(const Request& request)
-{
+void Response::handleLogin(const Request& request) {
 	std::string body = request.getBody();
 	std::string username;
 	size_t		pos = body.find("username=");
@@ -58,18 +57,16 @@ void Response::handleLogin(const Request& request)
 	return;
 }
 
-void Response::multiPart(Request& request,const MultipartField &part, std::string uploadDir)
-{
-	if (part.filename.empty())
-	{
-		request.setFormKeyValue(part.name, part.data);
+void Response::multiPart(Request& request, const MultipartField& part, std::string uploadDir) {
+	if (part.filename.empty()) {
+		request.setFormData(part.name, part.data);
 		setStatus(HTTP_201_CREATED);
 		setHeader("Content-Type", "text/plain");
 		setBody("");
 		return;
 	}
 
-	std::ostringstream	 oss;
+	std::ostringstream oss;
 	oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
 
 	std::string ext = Mime::getExtension(part.contentType);
@@ -92,27 +89,6 @@ void Response::multiPart(Request& request,const MultipartField &part, std::strin
 	setBody(filePath + "\n");
 }
 
-void Response::urlencoded(Request& request)
-{
-	std::stringstream ss(request.getBody());
-	std::string formInput;
-	std::string key;
-	std::string value;
-
-	while (std::getline(ss, formInput, '&'))
-	{
-		size_t pos = formInput.find("=");
-		if (pos == std::string::npos)
-			return errorPage(request, HTTP_400_BAD_REQUEST);
-		key = formInput.substr(0, pos);
-		value = formInput.substr(pos + 1);
-		request.setFormKeyValue(decode(key), decode(value));
-	}
-
-	setStatus(HTTP_201_CREATED);
-	setHeader("Content-Type", "text/plain");
-	setBody("Form data received successfully");
-}
 
 void Response::handlePost(Request& request) {
 	const LocationConfig* locConf = request.getLocationConf();
@@ -149,30 +125,26 @@ void Response::handlePost(Request& request) {
 		uploadDir += '/';
 
 	static unsigned long uploadCounter = 0;
-	std::string type = request.getHeader("content-type");
-	if (type.find("multipart/form-data") != std::string::npos)
-	{
+	std::string			 type		   = request.getHeader("content-type");
+	if (type.find("multipart/form-data") != std::string::npos) {
 		std::string bodyStr = "Form data received successfully.\n";
-		for (size_t i = 0; i < request.getMultipartFields().size(); i++)
-		{
+		for (size_t i = 0; i < request.getMultipartFields().size(); i++) {
 			multiPart(request, request.getMultipartFields()[i], uploadDir);
 			if (getStatusCode() != HTTP_201_CREATED)
 				return;
 			bodyStr += getBody();
 		}
 		setBody(bodyStr + "\n");
-	}
-	else if (type == "application/x-www-form-urlencoded")
-	{
-		urlencoded(request);
-	}
-	else
-	{
+	} else if (type == "application/x-www-form-urlencoded") {
+		setStatus(HTTP_200_OK);
+		setHeader("Content-Type", "text/plain");
+		setBody("Form data received successfully.\n");
+	} else {
 		std::string uploadDir = locConf->upload_path;
 		if (!uploadDir.empty() && uploadDir[uploadDir.size() - 1] != '/')
 			uploadDir += '/';
 
-		std::ostringstream	 oss;
+		std::ostringstream oss;
 		oss << uploadDir << "upload_" << std::time(NULL) << "_" << uploadCounter++;
 
 		std::string ext = Mime::getExtension(request.getHeader("Content-Type"));
@@ -198,6 +170,7 @@ void Response::handlePost(Request& request) {
 	// for (std::map<std::string, std::string>::iterator it = myMap.begin();
 	// 	it != myMap.end(); ++it)
 	// {
-	// 	std::cout << "||||||||||||||||||||||| key:" << it->first << " value:" << it->second << std::endl;
+	// 	std::cout << "||||||||||||||||||||||| key:" << it->first << " value:" << it->second <<
+	// std::endl;
 	// }
 }

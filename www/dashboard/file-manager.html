@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard · webserv File Manager</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="logo-dot"></span>
+          <span class="brand-name">
+            <a href="/">webserv</a><span class="muted">/cloud</span>
+          </span>
+        </div>
+        <div class="side-section">Storage</div>
+        <a class="side-link active" href="/dashboard/file-manager.html">
+          <span class="ico">▣</span> File Manager
+        </a>
+        <a class="side-link" href="/uploads/">
+          <span class="ico">↗</span> Raw Index
+        </a>
+      </aside>
+
+      <main class="main">
+        <div class="page-head">
+          <h1>File Manager</h1>
+          <div class="crumbs">
+            <a href="/">webserv</a>
+            <span class="sep">/</span>
+            <a href="/dashboard/file-manager.html">dashboard</a>
+            <span class="sep">/</span>
+            <span>uploads</span>
+          </div>
+        </div>
+
+        <div class="upload-card">
+          <h3>Upload to <code>/uploads</code></h3>
+          <label class="label-file" for="file-input">&#xFF0B; Choose files</label>
+          <input id="file-input" class="file-input" type="file" name="files" multiple />
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Stored files</h2>
+          </div>
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="file-rows"></tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+    <script src="/assets/js/file-manager.js"></script>
+  </body>
+</html>
