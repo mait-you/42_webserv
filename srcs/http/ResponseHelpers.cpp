@@ -5,20 +5,14 @@ void Response::errorPage(const Request& request, CodeStatus code) {
 	if (_httpVersion == HTTP_0_9)
 		return;
 	const LocationConfig* locConf = request.getLocationConf();
-	const ServerConfig*	  srvConf = request.getConf();
 
 	setStatus(code);
 	if (locConf) {
 		std::map<int, std::string>::const_iterator it = locConf->error_pages.find(getStatusCode());
-		if (it != locConf->error_pages.end() && handleErrorFile(it->second))
-			return;
-	}
-	if (srvConf && locConf) {
-		std::map<int, std::string>::const_iterator it = srvConf->error_pages.find(getStatusCode());
 
-		if (it != srvConf->error_pages.end()) {
+		if (it != locConf->error_pages.end()) {
 			std::string path;
-			std::string root = !locConf->root.empty() ? locConf->root : srvConf->root;
+			std::string root = locConf->root;
 			if (root[root.length() - 1] == '/' && it->second[0] == '/')
 				path = root + it->second.substr(1);
 			else if (root[root.length() - 1] != '/' && it->second[0] != '/')

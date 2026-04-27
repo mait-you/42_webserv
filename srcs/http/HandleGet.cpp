@@ -109,10 +109,8 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 	}
 
 	std::string index;
-	if (locConf && !locConf->index.empty())
+	if (locConf)
 		index = locConf->index;
-	else
-		index = request.getConf()->index;
 	if (!index.empty()) {
 		std::string indexPath = fullPath + index;
 		struct stat st;

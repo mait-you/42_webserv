@@ -33,7 +33,7 @@ CgiInfo::CgiInfo() : pid(-1) {}
 
 std::vector<std::string> Cgi::createEnv() const {
 	std::vector<std::string> envVec;
-	std::string root = !_loc->root.empty() ? _loc->root : _srv.root;
+	std::string root = _loc->root;
 	std::string query;
 	std::string uri = _req.getUri();
 

@@ -163,6 +163,14 @@ void parseLocation(size_t& i, std::vector<Token>& tokens, ServerConfig& server) 
 		throw std::runtime_error("Invalid config: expected } in location");
 	}
 	i++;
+	if (!location.has_max)
+		location.client_max_body_size = server.client_max_body_size;
+	if (location.root.empty())
+		location.root = server.root;
+	if (location.index.empty())
+		location.index = server.index;
+	if (location.error_pages.empty())
+		location.error_pages = server.error_pages;
 	server.locations.push_back(location);
 }
 
