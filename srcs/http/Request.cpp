@@ -153,6 +153,7 @@ std::string Request::extractParam(const std::string& headerValue, const std::str
 }
 
 bool Request::parse(std::string& buffer) {
+
 	while (_parseState == PARSE_REQUEST_LINE || _parseState == PARSE_HEADERS) {
 		/* RFC 1945 §2.2 — lines end with CRLF */
 		std::size_t pos = buffer.find("\r\n");
@@ -164,8 +165,8 @@ bool Request::parse(std::string& buffer) {
 
 		processLine(line);
 	}
-	// ! i need a to store in disk
 	if (_parseState == PARSE_BODY) {
+		std::cout << std::string(100,'#') << std::endl;
 		if (_method != "POST")
 			_parseState = PARSE_DONE;
 		if (buffer.size() >= _contentLength) {

@@ -82,6 +82,20 @@ static void logRequest(const Request& req, bool hasRes) {
 				std::cout << GRY "[" RST << f.data.size() << GRY " bytes] " RST "\n";
 		}
 	}
+	const Request::FormData& form = req.getFormData();
+	if (!form.empty()) {
+		std::cout << p << GRY "├─ " WHT "form:    " GRY "[" RST << form.size() << GRY "]\n" RST;
+		Request::FormData::const_iterator it = form.begin();
+		while (it != form.end()) {
+			Request::FormData::const_iterator next = it;
+			++next;
+			const bool last = (next == form.end());
+			std::cout << p << GRY "│   " RST << (last ? GRY "└─ " RST : GRY "├─ " RST) << it->first
+					  << GRY ": " RST << it->second << "\n";
+			it = next;
+		}
+	}
+
 	std::cout << p << GRY "└─ " WHT "type:    " RST
 			  << (req.hasCgi() ? CYN "dynamic" RST : GRY "static" RST) << "\n";
 }
