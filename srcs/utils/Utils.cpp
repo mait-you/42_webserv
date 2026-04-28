@@ -7,7 +7,6 @@ static void handler(int) {
 
 void setupSignals() {
 	signal(SIGINT, handler);
-	signal(SIGPIPE, SIG_IGN);
 }
 
 bool isNumber(const std::string& str) {
@@ -55,15 +54,6 @@ std::string trimStr(const std::string& s) {
 		return "";
 	std::size_t end = s.find_last_not_of(" \t\r\n");
 	return s.substr(start, end - start + 1);
-}
-
-bool getLine(const std::string& buf, std::size_t& pos, std::string& line) {
-	std::size_t end = buf.find("\r\n", pos);
-	if (end == std::string::npos)
-		return false;
-	line = buf.substr(pos, end - pos);
-	pos	 = end + 2;
-	return true;
 }
 
 std::string getExtension(const std::string& fullPath) {
@@ -142,50 +132,25 @@ std::string resolvePath(const std::string& uri) {
 	return clean;
 }
 
-void printEscaped(const std::string& s) {
-	for (size_t i = 0; i < s.size(); ++i) {
-		if (s[i] == '\r') {
-			if (i + 1 < s.size() && s[i + 1] == '\n') {
-				std::cerr << "\\r\\n" << "\n";
-				++i;  // skip '\n'
-			} else
-				std::cerr << "\\r";
-		} else if (s[i] == '\n') {
-			std::cerr << "\\n" << "\n";
-		} else
-			std::cerr << s[i];
-	}
-	// std::cerr << "=>\n";
-}
-
-
-char hexToChar(const std::string &hex)
-{
-	int value;
+char hexToChar(const std::string& hex) {
+	int				  value;
 	std::stringstream ss;
 	ss << std::hex << hex;
 	ss >> value;
 	return static_cast<char>(value);
 }
 
-std::string decode(const std::string &str)
-{
+std::string decode(const std::string& str) {
 	std::string out;
 
-	for (size_t i = 0; i < str.size(); ++i)
-	{
-		if (str[i] == '+')
-		{
+	for (size_t i = 0; i < str.size(); ++i) {
+		if (str[i] == '+') {
 			out += ' ';
-		}
-		else if (str[i] == '%' && i + 2 < str.size())
-		{
+		} else if (str[i] == '%' && i + 2 < str.size()) {
 			std::string hex = str.substr(i + 1, 2);
 			out += hexToChar(hex);
 			i += 2;
-		}
-		else
-		{
+		} else {
 			out += str[i];
 		}
 	}

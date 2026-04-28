@@ -36,9 +36,6 @@ bool Client::recvData() {
 	if (n < 0)
 		return true;
 	_recvBuffer.append(buf, n);
-
-	// printEscaped(_recvBuffer);
-
 	return true;
 }
 

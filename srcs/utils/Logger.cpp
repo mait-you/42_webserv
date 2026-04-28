@@ -8,19 +8,16 @@ static void appendErrno(std::ostream& out) {
 	}
 }
 
-void warnLog(const std::string& file, int line, const std::string& context,
-			 const std::string& detail) {
+void warnLog(const std::string& context, const std::string& detail) {
 	std::cerr << YEL "[WARNING]" RST " " WHT << context << YEL " — " << detail << RST;
 	appendErrno(std::cerr);
-	std::cerr << GRY " (" << file << ":" << line << ")" RST "\n";
+	std::cerr << "\n";
 }
 
-void errorLog(const std::string& file, int line, const std::string& context,
-			  const std::string& detail) {
+void errorLog(const std::string& context, const std::string& detail) {
 	std::ostringstream msg;
 	msg << RED "[ERROR]" RST " " WHT << context << YEL " — " << detail << RST;
 	appendErrno(msg);
-	msg << GRY " (" << file << ":" << line << ")" RST;
 	throw std::runtime_error(msg.str());
 }
 

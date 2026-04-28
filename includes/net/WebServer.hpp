@@ -7,7 +7,7 @@ typedef epoll_event t_ev;
 #define MAX_EVENTS 1024
 #define EPOLL_EVENT(name)                                                                          \
 	t_ev name;                                                                                     \
-	std::memset(&name, 0, sizeof(name));
+	std::memset(&name, 0, sizeof name );
 
 class WebServer {
   public:

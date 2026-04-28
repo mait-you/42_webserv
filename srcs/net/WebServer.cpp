@@ -6,10 +6,10 @@
 bool WebServer::running = true;
 
 WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
-	std::memset(_events, 0, sizeof(_events));
+	std::memset(_events, 0, sizeof _events );
 	_epollFd = epoll_create1(EPOLL_CLOEXEC);
 	if (_epollFd == -1)
-		ERROR_LOG("epoll_create", "failed to create epoll instance");
+		errorLog("epoll_create", "failed to create epoll instance");
 	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
@@ -20,7 +20,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 			ev.events  = EPOLLIN;
 			ev.data.fd = sock.getFd();
 			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1)
-				ERROR_LOG("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
+				errorLog("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
 			_serverSockets[sock.getFd()] = sock;
 		}
 	}
@@ -51,7 +51,7 @@ const Config& WebServer::getConfig() const {
 void WebServer::removeClient(Client& client) {
 	int fd = client.getSocket().getFd();
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) == -1)
-		WARNING_LOG("WebServer::removeClient", "epoll_ctl DEL failed");
+		warnLog("WebServer::removeClient", "epoll_ctl DEL failed");
 	client.getSocket().close();
 	_clients.erase(fd);
 }
@@ -68,7 +68,7 @@ void WebServer::acceptClient(Socket& serverSock) {
 	ev.events  = EPOLLIN;
 	ev.data.fd = newSock.getFd();
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1) {
-		WARNING_LOG("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
+		warnLog("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
 		newSock.close();
 		return;
 	}
@@ -95,7 +95,7 @@ void WebServer::run() {
 		if (n == -1) {
 			if (errno == EINTR)
 				continue;
-			ERROR_LOG("epoll_wait", "failed to wait for events");
+			errorLog("epoll_wait", "failed to wait for events");
 		}
 
 		for (int i = 0; i < n; ++i) {
@@ -112,6 +112,12 @@ void WebServer::run() {
 				continue;
 			Client& client = it->second;
 			bool	keep   = true;
+
+			if (_events[i].events & EPOLLERR) {
+				removeClient(client);
+				logServerEvent(*this, GRY "Client disconnected (error)" RST);
+				continue;
+			}
 
 			if (_events[i].events & EPOLLIN) {
 				keep = handleRequest(client);
@@ -136,6 +142,6 @@ void WebServer::run() {
 			}
 		}
 	}
-	logServerEvent(*this, GRY "Server shutdown" RST);
-	std::cout << GRY "\r└─── ─ ─ ─ " RST "\n";
+
+	std::cout << GRY "\r└─── Server shutdown ─ ─ ─ " RST "\n";
 }

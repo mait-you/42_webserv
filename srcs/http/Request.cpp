@@ -45,22 +45,21 @@ Request& Request::operator=(const Request& other) {
 Request::~Request() {}
 
 void Request::parseUrlEncoded() {
-	std::string body = _body;
+	std::istringstream ss(_body);
+	std::string		   pair;
 
-	while (!body.empty()) {
-		std::size_t pos	 = body.find('&');
-		std::string pair = body.substr(0, pos);
-		if (pos == std::string::npos)
-			body.clear();
-		else
-			body.erase(0, pos + 1);
+	while (std::getline(ss, pair, '&')) {
 		if (pair.empty())
 			continue;
 
-		std::size_t eq	= pair.find('=');
-		std::string key = (eq == std::string::npos) ? pair : pair.substr(0, eq);
-		std::string val = (eq == std::string::npos) ? "" : pair.substr(eq + 1);
-
+		std::size_t eq = pair.find('=');
+		std::string key, val;
+		if (eq == std::string::npos) {
+			key = pair;
+		} else {
+			key = pair.substr(0, eq);
+			val = pair.substr(eq + 1);
+		}
 		_formData[decode(key)] = decode(val);
 	}
 }
@@ -104,23 +103,26 @@ void Request::parsePart(std::string& part) {
 void Request::parseMultipart(const std::string& boundary) {
 	const std::string delim		 = "--" + boundary + "\r\n";
 	const std::string closeDelim = "--" + boundary + "--" + "\r\n";
-	std::string		  body		 = _body;
 
-	std::size_t pos = body.find(delim);
-	if (pos == std::string::npos || pos != 0)
+	std::size_t offset = 0;
+
+	if (_body.compare(offset, delim.size(), delim) != 0)
 		return setError(HTTP_400_BAD_REQUEST);
-	body.erase(0, delim.size());
-	while (!body.empty()) {
-		std::size_t pos = body.find(delim);
+	offset += delim.size();
+
+	while (offset < _body.size()) {
+		std::size_t pos = _body.find(delim, offset);
 		std::size_t len = delim.size();
 		if (pos == std::string::npos) {
-			pos = body.find(closeDelim);
+			pos = _body.find(closeDelim, offset);
 			len = closeDelim.size();
 		}
 		if (pos == std::string::npos)
 			return setError(HTTP_400_BAD_REQUEST);
-		std::string part = body.substr(0, pos);
-		body.erase(0, pos + len);
+
+		std::string part = _body.substr(offset, pos - offset);
+		offset			 = pos + len;
+
 		parsePart(part);
 		if (_parseState == PARSE_ERROR)
 			return;
@@ -153,7 +155,6 @@ std::string Request::extractParam(const std::string& headerValue, const std::str
 }
 
 bool Request::parse(std::string& buffer) {
-
 	while (_parseState == PARSE_REQUEST_LINE || _parseState == PARSE_HEADERS) {
 		/* RFC 1945 §2.2 — lines end with CRLF */
 		std::size_t pos = buffer.find("\r\n");
@@ -166,10 +167,9 @@ bool Request::parse(std::string& buffer) {
 		processLine(line);
 	}
 	if (_parseState == PARSE_BODY) {
-		std::cout << std::string(100,'#') << std::endl;
 		if (_method != "POST")
-			_parseState = PARSE_DONE;
-		if (buffer.size() >= _contentLength) {
+			setError(HTTP_400_BAD_REQUEST);
+		else if (buffer.size() >= _contentLength) {
 			_body = buffer.substr(0, _contentLength);
 			buffer.erase(0, _contentLength);
 			_parseState	   = PARSE_DONE;
@@ -304,19 +304,15 @@ bool Request::matchLocation() {
 
 	for (std::size_t i = 0; i < _srvConf->locations.size(); ++i) {
 		const std::string& locPath = _srvConf->locations[i].path;
-
 		if (uri.compare(0, locPath.size(), locPath) != 0)
 			continue;
-
 		if (locPath != "/" && uri.size() != locPath.size() && uri[locPath.size()] != '/')
 			continue;
-
 		if (locPath.size() > bestLen) {
 			bestLen	 = locPath.size();
 			_locConf = &_srvConf->locations[i];
 		}
 	}
-
 	return _locConf != NULL;
 }
 
@@ -325,7 +321,6 @@ void Request::detectCgi() {
 		return;
 
 	std::string path = _resolveFullUri;
-
 	for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
 		 it != _locConf->cgi.end(); ++it) {
 		std::size_t pos = path.find(it->first);
@@ -334,9 +329,7 @@ void Request::detectCgi() {
 			break;
 		}
 	}
-
 	std::string ext = getExtension(path);
-
 	if (_locConf->cgi.count(ext) || _locConf->cgi.count("." + ext))
 		_hasCgi = true;
 }

@@ -10,17 +10,11 @@ std::string ipv4Tostr(uint32_t ip);
 std::string portTostr(uint16_t port);
 std::string toLower(const std::string& s);
 std::string trimStr(const std::string& s);
-bool		getLine(const std::string& buf, std::size_t& pos, std::string& line);
 std::string getExtension(const std::string& fullPath);
-
 std::string toString(int val);
 std::string htmlEscape(const std::string& s);
-
 std::string resolvePath(const std::string& uri);
-
-void printEscaped(const std::string& s);
-
-char hexToChar(const std::string &hex);
-std::string decode(const std::string &str);
+char		hexToChar(const std::string& hex);
+std::string decode(const std::string& str);
 
 #endif
