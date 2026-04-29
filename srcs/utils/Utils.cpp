@@ -24,7 +24,7 @@ bool isValidPort(const std::string& str) {
 	int				  port = -1;
 	std::stringstream ss(str);
 	ss >> port;
-	if (port >= 1024 && port <= 65535)
+	if (port >= 0 && port <= 65535)
 		return true;
 	return false;
 }

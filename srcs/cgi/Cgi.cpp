@@ -104,10 +104,6 @@ const std::string Cgi::findCgiPath() const {
 	else
 		return "";
 	std::map<std::string, std::string>::const_iterator it = _loc->cgi.find(extension);
-	if (it == _loc->cgi.end()) {
-		std::string dotExt = "." + extension;
-		it = _loc->cgi.find(dotExt);
-	}
 	if (it == _loc->cgi.end())
 		return "";
 	return it->second;
