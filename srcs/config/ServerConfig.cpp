@@ -28,8 +28,8 @@ void parselisten(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	} else {
 		port = tokens[i].value;
 	}
-	if (!isNumber(port) || !isValidPort(port))
-		throw std::runtime_error("Invalid config: invalid port");
+	// if (!isNumber(port) || !isValidPort(port))
+	// 	throw std::runtime_error("Invalid config: invalid port");
 	for (size_t j = 0; j < server.listens.size(); j++) {
 		if (server.listens[j].port == port && server.listens[j].host == parsedHost) {
 			throw std::runtime_error("Invalid config: duplicate listen");

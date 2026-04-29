@@ -45,6 +45,9 @@ class Client {
 	const Socket&	getSocket() const;
 	const Request&	getRequest() const;
 	const Response& getResponse() const;
+
+	const std::string &grtRecvBuffer() const;
+	const std::string &grtSendBuffer() const;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "../../includes/net/Client.hpp"
+
 #include "../../includes/utils/Utils.hpp"
 
 // it call only for Map
@@ -93,6 +94,14 @@ const Request& Client::getRequest() const {
 }
 const Response& Client::getResponse() const {
 	return _response;
+}
+
+const std::string& Client::grtRecvBuffer() const {
+	return _recvBuffer;
+}
+
+const std::string& Client::grtSendBuffer() const {
+	return _sendBuffer;
 }
 
 bool Client::hasCgiRunning() const {

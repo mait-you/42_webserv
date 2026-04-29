@@ -1,5 +1,6 @@
 #include "../../includes/Head.hpp"
 #include "../../includes/net/WebServer.hpp"
+#include "../../includes/utils/Logger.hpp"
 
 static void handler(int) {
 	WebServer::running = false;
@@ -155,4 +156,20 @@ std::string decode(const std::string& str) {
 		}
 	}
 	return out;
+}
+
+void setNonBlocking(int fd) {
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		errorLog("Socket::setNonBlocking::fcntl", "F_GETFL failed");
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		errorLog("Socket::setNonBlocking::fcntl", "F_SETFL O_NONBLOCK failed");
+}
+
+void setCloExec(int fd) {
+	int flags = fcntl(fd, F_GETFD, 0);
+	if (flags == -1)
+		errorLog("Socket::setCloExec::fcntl", "F_GETFD failed");
+	if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
+		errorLog("Socket::setCloExec::fcntl", "failed to set FD_CLOEXEC");
 }

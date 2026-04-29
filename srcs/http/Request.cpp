@@ -169,7 +169,7 @@ bool Request::parse(std::string& buffer) {
 	if (_parseState == PARSE_BODY) {
 		if (_method != "POST")
 			setError(HTTP_400_BAD_REQUEST);
-		else if (buffer.size() >= _contentLength) {
+		else if (buffer.size() >= static_cast<std::size_t>(_contentLength)) {
 			_body = buffer.substr(0, _contentLength);
 			buffer.erase(0, _contentLength);
 			_parseState	   = PARSE_DONE;
@@ -194,8 +194,9 @@ void Request::processLine(const std::string& line) {
 		if (line.empty()) {
 			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
-				_contentLength = static_cast<std::size_t>(std::atol(cl.c_str()));
-				if (_contentLength > _locConf->client_max_body_size)
+				_contentLength = std::atol(cl.c_str());
+				if (_contentLength < 0
+					|| _contentLength > static_cast<long>(_locConf->client_max_body_size)) //!
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
 
@@ -227,9 +228,6 @@ void Request::parseRequestLine(const std::string& line) {
 	}
 
 	if (_method.empty() || _uri.empty())
-		return setError(HTTP_400_BAD_REQUEST);
-
-	if (!_version.empty() && _version.find(' ') != std::string::npos)
 		return setError(HTTP_400_BAD_REQUEST);
 
 	if (_version.empty() && _method == "GET")
@@ -313,23 +311,14 @@ bool Request::matchLocation() {
 			_locConf = &_srvConf->locations[i];
 		}
 	}
+
 	return _locConf != NULL;
 }
 
 void Request::detectCgi() {
 	if (!_locConf || !_locConf->has_cgi)
 		return;
-
-	std::string path = _resolveFullUri;
-	for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
-		 it != _locConf->cgi.end(); ++it) {
-		std::size_t pos = path.find(it->first);
-		if (pos != std::string::npos) {
-			path = path.substr(0, pos + it->first.size());
-			break;
-		}
-	}
-	std::string ext = getExtension(path);
+	std::string ext = getExtension(_resolveFullUri);
 	if (_locConf->cgi.count(ext) || _locConf->cgi.count("." + ext))
 		_hasCgi = true;
 }

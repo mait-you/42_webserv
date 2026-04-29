@@ -16,5 +16,7 @@ std::string htmlEscape(const std::string& s);
 std::string resolvePath(const std::string& uri);
 char		hexToChar(const std::string& hex);
 std::string decode(const std::string& str);
+void		setNonBlocking(int fd);
+void		setCloExec(int fd);
 
 #endif

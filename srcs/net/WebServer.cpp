@@ -6,7 +6,7 @@
 bool WebServer::running = true;
 
 WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
-	std::memset(_events, 0, sizeof _events );
+	std::memset(_events, 0, sizeof _events);
 	_epollFd = epoll_create1(EPOLL_CLOEXEC);
 	if (_epollFd == -1)
 		errorLog("epoll_create", "failed to create epoll instance");
@@ -46,6 +46,16 @@ const std::map<std::string, std::string>& WebServer::getSessions() const {
 }
 const Config& WebServer::getConfig() const {
 	return _config;
+}
+
+void WebServer::checkIdleClients() {
+	for (Client::It it = _clients.begin(); it != _clients.end(); ++it) {
+		Client& client = it->second;
+		if (it->second.grtRecvBuffer().empty()) {
+			removeClient(client);
+			logServerEvent(*this, GRY "Client disconnected" RST);
+		}
+	}
 }
 
 void WebServer::removeClient(Client& client) {
@@ -91,11 +101,15 @@ void WebServer::run() {
 	logServerStart(*this);
 
 	while (running) {
-		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 100);
+		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 5000);
 		if (n == -1) {
 			if (errno == EINTR)
 				continue;
 			errorLog("epoll_wait", "failed to wait for events");
+		}
+		if (n == 0) {
+			checkIdleClients();
+			continue;
 		}
 
 		for (int i = 0; i < n; ++i) {

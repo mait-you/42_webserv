@@ -24,15 +24,15 @@ void Response::handleDashboard(const Request& request, const std::string& fullPa
 			for (it = _sessions->begin(); it != _sessions->end(); it++) {
 				if (it->first == sessionId) {
 					ss << "<html> <head><title>Webserv - Dashboard</title>"
-						<< "<link rel='stylesheet' href='css/style.css'></head> <body>"
-						<< "<a href='/logout'>logout</a>"
-						<< "<h1> Welcome, " << it->second << "</h1>"
-						<< "<a href='/'>Back to Home</a></body></html>";
+					   << "<link rel='stylesheet' href='css/style.css'></head> <body>"
+					   << "<a href='/logout'>logout</a>"
+					   << "<h1> Welcome, " << it->second << "</h1>"
+					   << "<a href='/'>Back to Home</a></body></html>";
 					setStatus(HTTP_200_OK);
 					std::string extension = getExtension(fullPath);
 					setHeader("Content-type", Mime::getType(extension));
 					setBody(ss.str());
-					return ;
+					return;
 				}
 			}
 		}
@@ -49,7 +49,7 @@ void Response::handleLogout(const Request& request) {
 			std::map<std::string, std::string>::iterator it;
 			for (it = _sessions->begin(); it != _sessions->end(); it++) {
 				if (it->first == sessionId) {
-					 _sessions->erase(sessionId);
+					_sessions->erase(sessionId);
 					break;
 				}
 			}
@@ -134,9 +134,9 @@ void Response::handleGet(const Request& request) {
 	std::string fullPath = request.getResolveFullPath();
 
 	if (request.getUri() == URI_DASHBOARD)
-		return(handleDashboard(request, fullPath));
+		return (handleDashboard(request, fullPath));
 	else if (request.getUri() == URI_LOGOUT)
-		return(handleLogout(request));
+		return (handleLogout(request));
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {
@@ -148,8 +148,7 @@ void Response::handleGet(const Request& request) {
 		handleFile(request, fullPath);
 	else if (S_ISDIR(buffer.st_mode))
 		handleDir(request, fullPath);
-	else
-	{
+	else {
 		errorPage(request, HTTP_404_NOT_FOUND);
 	}
 }

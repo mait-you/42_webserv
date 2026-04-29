@@ -37,9 +37,9 @@ void Socket::setup() {
 	std::memset(&hints, 0, sizeof hints);
 	hints.ai_family	  = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags	  = AI_PASSIVE;
+	hints.ai_protocol = IPPROTO_TCP;
 
-	int status = getaddrinfo(_ip.empty() ? NULL : _ip.c_str(), _port.c_str(), &hints, &result);
+	int status = getaddrinfo(_ip.c_str(), _port.c_str(), &hints, &result);
 	if (status != 0)
 		errorLog("Socket::setup::getaddrinfo", gai_strerror(status));
 
@@ -64,14 +64,12 @@ void Socket::setup() {
 
 	if (!bound)
 		errorLog("Socket::setup", "failed to bind on " + _ip + ":" + _port);
+
+	setNonBlocking(_fd);
+	setCloExec(_fd);
+
 	if (fcntl(_fd, F_SETFD, FD_CLOEXEC) == -1)
 		errorLog("Socket::setup::fcntl", "failed to set FD_CLOEXEC");
-
-	int flags = fcntl(_fd, F_GETFL, 0);
-	if (flags == -1)
-		errorLog("Socket::setup::fcntl", "F_GETFL failed");
-	if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		errorLog("Socket::setup::fcntl", "F_SETFL O_NONBLOCK failed");
 
 	if (listen(_fd, SOMAXCONN) == -1)
 		errorLog("Socket::setup::listen", "failed to listen");
@@ -85,15 +83,8 @@ Socket Socket::accept() {
 	int clientFd = ::accept(_fd, (sockaddr*) &client_addr, &addr_len);
 	if (clientFd == -1)
 		errorLog("Socket::accept", "accept() failed");
-	if (fcntl(clientFd, F_SETFD, FD_CLOEXEC) == -1) {
-		::close(clientFd);
-		errorLog("Socket::accept::fcntl", "failed to set FD_CLOEXEC");
-	}
-	int flags = fcntl(clientFd, F_GETFL, 0);
-	if (flags == -1)
-		errorLog("Socket::setup::fcntl", "F_GETFL failed");
-	if (fcntl(clientFd, F_SETFL, flags | O_NONBLOCK) == -1)
-		errorLog("Socket::setup::fcntl", "F_SETFL O_NONBLOCK failed");
+	setNonBlocking(clientFd);
+	setCloExec(clientFd);
 	Socket s(clientFd);
 	s.setIp(ipv4Tostr(client_addr.sin_addr.s_addr));
 	s.setPort(portTostr(ntohs(client_addr.sin_port)));

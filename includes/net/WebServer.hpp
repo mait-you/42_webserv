@@ -37,6 +37,7 @@ class WebServer {
 	bool handleRequest(Client& client);
 	bool handleResponse(Client& client);
 	void removeClient(Client& client);
+	void checkIdleClients();
 
   private:
 	WebServer();
