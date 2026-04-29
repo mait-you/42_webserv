@@ -136,6 +136,10 @@ void parseCgi(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected cgi interpreter path");
 	}
+	if (extension[0] == '.')
+		extension = extension.substr(1);
+	if (extension.empty() || extension.find(".") != std::string::npos)
+		throw std::runtime_error("Invalid config: invalid extension");
 	if (location.cgi.count(extension))
 		throw std::runtime_error("Invalid config: duplicate cgi");
 	location.cgi[extension] = tokens[i].value;

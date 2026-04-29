@@ -330,7 +330,7 @@ void Request::detectCgi() {
 		}
 	}
 	std::string ext = getExtension(path);
-	if (_locConf->cgi.count(ext) || _locConf->cgi.count("." + ext))
+	if (_locConf->cgi.count(ext))
 		_hasCgi = true;
 }
 
