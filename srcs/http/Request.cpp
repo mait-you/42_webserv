@@ -196,7 +196,7 @@ void Request::processLine(const std::string& line) {
 			if (!cl.empty()) {
 				_contentLength = std::atol(cl.c_str());
 				if (_contentLength < 0
-					|| _contentLength > static_cast<long>(_locConf->client_max_body_size))	//!
+					|| _contentLength > _locConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
 
