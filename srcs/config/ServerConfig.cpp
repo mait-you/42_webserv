@@ -51,7 +51,10 @@ void parseServerName(size_t& i, std::vector<Token>& tokens, ServerConfig& server
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected server name");
 	}
+	if (server.hasServerName)
+		throw std::runtime_error("Invalid config: Duplicate root");
 	server.server_name = tokens[i].value;
+	server.hasServerName = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -64,7 +67,10 @@ void parseRoot(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected root");
 	}
+	if (server.hasRoot)
+		throw std::runtime_error("Invalid config: Duplicate root");
 	server.root = tokens[i].value;
+	server.hasRoot = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -77,7 +83,10 @@ void parseServerIndex(size_t& i, std::vector<Token>& tokens, ServerConfig& serve
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected index");
 	}
+	if (server.hasIndex)
+		throw std::runtime_error("Invalid config: Duplicate index");
 	server.index = tokens[i].value;
+	server.hasIndex = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -99,6 +108,11 @@ void parseErrorPage(size_t& i, std::vector<Token>& tokens, ServerConfig& server)
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected error page path");
+	}
+	if(server.error_pages.count(errorCode))
+	{
+		std::string str = "Invalid config: Duplicate error page " + tokens[i].value;
+		throw std::runtime_error(str);
 	}
 	server.error_pages[errorCode] = tokens[i].value;
 	i++;
@@ -135,7 +149,10 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 		if (tmp < value)
 			throw std::runtime_error("Invalid config: client_max_body_size not valid");
 	}
+	if (server.hasMax)
+		throw std::runtime_error("Invalid config: Duplicate client_max_body_size");
 	server.client_max_body_size = tmp;
+	server.hasMax = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -143,7 +160,7 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 }
 
-void parseLocation(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
+void parseLocationBlock(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: unexpected location path");
@@ -161,12 +178,12 @@ void parseLocation(size_t& i, std::vector<Token>& tokens, ServerConfig& server) 
 		throw std::runtime_error("Invalid config: expected { after location");
 	}
 	i++;
-	parseLocation(tokens, i, location);
+	parseLocationBody(tokens, i, location);
 	if (i >= tokens.size() || tokens[i].type != closeBrace) {
 		throw std::runtime_error("Invalid config: expected } in location");
 	}
 	i++;
-	if (!location.has_max)
+	if (!location.hasMax)
 		location.client_max_body_size = server.client_max_body_size;
 	if (location.root.empty())
 		location.root = server.root;
@@ -199,7 +216,7 @@ void parseServer(std::vector<Token>& tokens, size_t& i, ServerConfig& server) {
 		else if (tokens[i].type == word && tokens[i].value == "client_max_body_size")
 			parseMaxSize(i, tokens, server);
 		else if (tokens[i].type == word && tokens[i].value == "location")
-			parseLocation(i, tokens, server);
+			parseLocationBlock(i, tokens, server);
 		else {
 			std::string str = "Invalid config: unexpected token '" + tokens[i].value + "'";
 			throw std::runtime_error(str);

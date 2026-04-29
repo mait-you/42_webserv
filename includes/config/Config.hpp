@@ -30,8 +30,12 @@ struct LocationConfig {
 	bool							 	has_cgi;
 	std::map<std::string, std::string>	cgi;
 	bool								isAlias;
-	bool								has_max;
+	bool								hasMax;
 	long								client_max_body_size;
+	bool	hasRoot;
+	bool	hasIndex;
+	bool	hasAuto;
+	bool	hasMethods;
 	LocationConfig();
 };
 
@@ -43,6 +47,10 @@ struct ServerConfig {
 	std::map<int, std::string>	error_pages;
 	long						client_max_body_size;
 	std::vector<LocationConfig> locations;
+	bool	hasRoot;
+	bool	hasIndex;
+	bool	hasServerName;
+	bool	hasMax;
 	ServerConfig();
 };
 
@@ -63,7 +71,7 @@ class Config {
 };
 
 std::vector<Token>	tokenize(const std::string& filename);
-void				parseLocation(std::vector<Token>& tokens, size_t& i, LocationConfig& location);
+void				parseLocationBody(std::vector<Token>& tokens, size_t& i, LocationConfig& location);
 void				parseServer(std::vector<Token>& tokens, size_t& i, ServerConfig& server);
 
 #endif

@@ -5,7 +5,10 @@ void parseIndex(size_t& i, std::vector<Token>& tokens, LocationConfig& location)
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected index");
 	}
+	if (location.hasIndex)
+		throw std::runtime_error("Invalid config: Duplicate index");
 	location.index = tokens[i].value;
+	location.hasIndex = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -18,6 +21,9 @@ void parseRoot(size_t& i, std::vector<Token>& tokens, LocationConfig& location) 
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected root");
 	}
+	if (location.hasRoot)
+		throw std::runtime_error("Invalid config: Duplicate root");
+	location.root = tokens[i].value;
 	location.root = tokens[i].value;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
@@ -31,6 +37,8 @@ void parseUploadPath(size_t& i, std::vector<Token>& tokens, LocationConfig& loca
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected upload path");
 	}
+	if (location.upload)
+		throw std::runtime_error("Invalid config: duplicate upload path");
 	location.upload_path = tokens[i].value;
 	location.upload		 = true;
 	i++;
@@ -45,10 +53,14 @@ void parseAutoIndex(size_t& i, std::vector<Token>& tokens, LocationConfig& locat
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected auto index");
 	}
+	if (location.hasAuto)
+		throw std::runtime_error("Invalid config: duplicate auto index");
 	if (tokens[i].value == "on") {
 		location.autoindex = true;
+		location.hasAuto = true;
 	} else if (tokens[i].value == "off") {
 		location.autoindex = false;
+		location.hasAuto = true;
 	} else {
 		throw std::runtime_error("Invalid config: Expected auto index");
 	}
@@ -69,6 +81,8 @@ void parseAllowedMethods(size_t& i, std::vector<Token>& tokens, LocationConfig& 
 		if (tokens[i].type == word
 			&& (tokens[i].value == "GET" || tokens[i].value == "POST"
 				|| tokens[i].value == "DELETE")) {
+			if (location.hasMethods)
+					throw std::runtime_error("Invalid config: duplicate upload method");
 			location.allow_methods.push_back(tokens[i].value);
 			i++;
 		} else if (tokens[i].type == semiColone && j != 1) {
@@ -77,6 +91,7 @@ void parseAllowedMethods(size_t& i, std::vector<Token>& tokens, LocationConfig& 
 			throw std::runtime_error("Invalid config: unexpected upload method");
 		}
 	}
+	location.hasMethods = true;
 	if (tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
 	}
@@ -98,6 +113,11 @@ void parseErrorPage(size_t& i, std::vector<Token>& tokens, LocationConfig& locat
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected error page path");
 	}
+	if(location.error_pages.count(errorCode))
+	{
+		std::string str = "Invalid config: Duplicate error page " + tokens[i].value;
+		throw std::runtime_error(str);
+	}
 	location.error_pages[errorCode] = tokens[i].value;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
@@ -111,12 +131,13 @@ void parseCgi(size_t& i, std::vector<Token>& tokens, LocationConfig& location) {
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected cgi extension");
 	}
-	// i think should protect from cgi dup?
 	std::string extension = tokens[i].value;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected cgi interpreter path");
 	}
+	if (location.cgi.count(extension))
+		throw std::runtime_error("Invalid config: duplicate cgi");
 	location.cgi[extension] = tokens[i].value;
 	location.has_cgi		= true;
 	i++;
@@ -198,8 +219,10 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, LocationConfig& locatio
 		if (tmp < value)
 			throw std::runtime_error("Invalid config: client_max_body_size not valid");
 	}
+	if (location.hasMax)
+		throw std::runtime_error("Invalid config: duplicate client_max_body_size");
 	location.client_max_body_size = tmp;
-	location.has_max = true;
+	location.hasMax = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");
@@ -207,7 +230,7 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, LocationConfig& locatio
 	i++;
 }
 
-void parseLocation(std::vector<Token>& tokens, size_t& i, LocationConfig& location) {
+void parseLocationBody(std::vector<Token>& tokens, size_t& i, LocationConfig& location) {
 	size_t tokenSize = tokens.size();
 	if (i >= tokenSize) {
 		throw std::runtime_error("Invalid config: expected }");

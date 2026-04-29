@@ -20,6 +20,10 @@ ServerConfig::ServerConfig() {
 	root				 = "./www";
 	index				 = "index.html";
 	client_max_body_size = 1 * 1024 * 1024;
+	hasRoot = false;
+	hasIndex = false;
+	hasServerName = false;
+	hasMax = false;
 }
 
 LocationConfig::LocationConfig() {
@@ -30,8 +34,12 @@ LocationConfig::LocationConfig() {
 	redirect_code		 = 0;
 	has_cgi				 = false;
 	isAlias				 = false;
-	has_max				 = false;
+	hasMax				 = false;
 	client_max_body_size = 0;
+	hasRoot = false;
+	hasIndex = false;
+	hasAuto = false;
+	hasMethods = false;
 }
 
 bool hasSameHostPort(const ServerConfig& a, const ServerConfig& b) {
