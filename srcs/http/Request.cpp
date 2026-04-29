@@ -334,12 +334,9 @@ std::string Request::resolveFullPath() const {
 	const std::string& locPath = _locConf->path;
 
 	if (_locConf->isAlias) {
-		if (locPath != "/" && relPath.compare(0, locPath.size(), locPath) == 0
-			&& (relPath.size() == locPath.size() || relPath[locPath.size()] == '/')) {
-			relPath = relPath.substr(locPath.size());
-			if (relPath.empty())
-				relPath = "/";
-		}
+		relPath = relPath.substr(locPath.size());
+		if (relPath.empty())
+			relPath = "/";
 	}
 
 	if (_hasCgi) {

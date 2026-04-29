@@ -4,6 +4,7 @@
 void Response::errorPage(const Request& request, CodeStatus code) {
 	if (_httpVersion == HTTP_0_9)
 		return;
+	 const ServerConfig* srvConf = request.getConf();
 	const LocationConfig* locConf = request.getLocationConf();
 
 	setStatus(code);
@@ -12,7 +13,11 @@ void Response::errorPage(const Request& request, CodeStatus code) {
 
 		if (it != locConf->error_pages.end()) {
 			std::string path;
-			std::string root = locConf->root;
+			std::string root;
+			if (srvConf && locConf->isAlias)
+				root = srvConf->root;
+			else
+				root = locConf->root;
 			if (root[root.length() - 1] == '/' && it->second[0] == '/')
 				path = root + it->second.substr(1);
 			else if (root[root.length() - 1] != '/' && it->second[0] != '/')

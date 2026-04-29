@@ -171,12 +171,32 @@ void parseLocationBlock(size_t& i, std::vector<Token>& tokens, ServerConfig& ser
 	}
 	LocationConfig location;
 
-	if (dupLocation(server.locations, tokens[i].value)) {
+	std::string path = tokens[i].value;
+	if (path[0] != '/')
+	{
+		std::string dupPath = "Invalid config: invalid location " + tokens[i].value;
+		throw std::runtime_error(dupPath);
+	}
+	std::stringstream ss (path);
+	std::string part;
+	std::vector<std::string> res;
+	while (std::getline(ss, part, '/'))
+	{
+		if (!part.empty())
+			res.push_back(part);
+	}
+	std::string str = "/";
+	for (size_t i = 0; i < res.size(); i++)
+	{
+		str += res[i];
+		if (i + 1 < res.size())
+			str += "/";
+	}
+	if (dupLocation(server.locations, str)) {
 		std::string dupPath = "Invalid config: duplicated location " + tokens[i].value;
 		throw std::runtime_error(dupPath);
 	}
-
-	location.path = tokens[i].value;
+	location.path = str;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != openBrace) {
 		throw std::runtime_error("Invalid config: expected { after location");
