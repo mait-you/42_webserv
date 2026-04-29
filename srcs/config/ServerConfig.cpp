@@ -34,6 +34,10 @@ void parselisten(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 		if (server.listens[j].port == port && server.listens[j].host == parsedHost) {
 			throw std::runtime_error("Invalid config: duplicate listen");
 		}
+		if (server.listens[j].port == port &&
+			(server.listens[j].host == "0.0.0.0" || parsedHost == "0.0.0.0")) {
+			throw std::runtime_error("Invalid config: invalid listen");
+		}
 	}
 	Listen newListen;
 	newListen.host = parsedHost;
