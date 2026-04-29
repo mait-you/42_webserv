@@ -43,8 +43,6 @@ bool hasSameHostPort(const ServerConfig& a, const ServerConfig& b) {
 					return true;
 				else if (a.listens[i].host == "0.0.0.0" || b.listens[j].host == "0.0.0.0")
 					return true;
-				else
-					continue;
 			}
 		}
 	}
@@ -69,6 +67,7 @@ void Config::parse(const std::string& filename) {
 				Listen defaultListen;
 				defaultListen.host = "0.0.0.0";
 				defaultListen.port = "8080";
+				server.listens.push_back(defaultListen);
 			}
 			if (server.locations.empty()) {
 				LocationConfig location;

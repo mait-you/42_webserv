@@ -38,7 +38,7 @@ class Request : public HttpStatus {
 	std::string _serverPort;
 	std::string _serverIp;
 	std::string _clientIp;
-	std::size_t _contentLength;
+	long		_contentLength;
 	ParseState	_parseState;
 	bool		_hasCgi;
 	std::string _resolveUri;

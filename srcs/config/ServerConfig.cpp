@@ -90,10 +90,10 @@ void parseErrorPage(size_t& i, std::vector<Token>& tokens, ServerConfig& server)
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected error page");
 	}
-	unsigned int	  errorCode;
+	long	errorCode;
 	std::stringstream ss(tokens[i].value);
 	ss >> errorCode;
-	if (ss.fail() || !ss.eof()) {
+	if (ss.fail() || !ss.eof() || errorCode < 0) {
 		throw std::runtime_error("Invalid config:Expected error CodeStatus ");
 	}
 	i++;
@@ -113,26 +113,29 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected client max body size");
 	}
-	unsigned long	  value;
-	std::string		  remaining;
+	long		value;
+	long		tmp;
+	std::string	remaining;
 	std::stringstream ss(tokens[i].value);
 	ss >> value;
-	if (ss.fail()) {
+	if (ss.fail() || value < 0) {
 		throw std::runtime_error("Invalid config: client max body size not valid");
 	}
 	if (!ss.eof()) {
 		ss >> remaining;
 		if (remaining == "K" || remaining == "KB")
-			value *= 1024;
+			tmp = value * 1024;
 		else if (remaining == "M" || remaining == "MB")
-			value *= 1024 * 1024;
+			tmp = value * 1024 * 1024;
 		else if (remaining == "G" || remaining == "GB")
-			value *= 1024 * 1024 * 1024;
+			tmp = value * 1024 * 1024 * 1024 ;
 		else {
 			throw std::runtime_error("Invalid config: client_max_body_size not valid");
 		}
+		if (tmp < value)
+			throw std::runtime_error("Invalid config: client_max_body_size not valid");
 	}
-	server.client_max_body_size = value;
+	server.client_max_body_size = tmp;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
 		throw std::runtime_error("Invalid config: Expected ;");

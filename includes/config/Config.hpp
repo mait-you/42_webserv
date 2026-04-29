@@ -31,7 +31,7 @@ struct LocationConfig {
 	std::map<std::string, std::string>	cgi;
 	bool								isAlias;
 	bool								has_max;
-	std::size_t							client_max_body_size;
+	long								client_max_body_size;
 	LocationConfig();
 };
 
@@ -41,7 +41,7 @@ struct ServerConfig {
 	std::string					root;
 	std::string					index;
 	std::map<int, std::string>	error_pages;
-	std::size_t					client_max_body_size;
+	long						client_max_body_size;
 	std::vector<LocationConfig> locations;
 	ServerConfig();
 };

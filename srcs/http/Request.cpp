@@ -169,7 +169,7 @@ bool Request::parse(std::string& buffer) {
 	if (_parseState == PARSE_BODY) {
 		if (_method != "POST")
 			setError(HTTP_400_BAD_REQUEST);
-		else if (buffer.size() >= _contentLength) {
+		else if (buffer.size() >= static_cast<std::size_t>(_contentLength)) {
 			_body = buffer.substr(0, _contentLength);
 			buffer.erase(0, _contentLength);
 			_parseState	   = PARSE_DONE;
@@ -194,7 +194,7 @@ void Request::processLine(const std::string& line) {
 		if (line.empty()) {
 			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
-				_contentLength = static_cast<std::size_t>(std::atol(cl.c_str()));
+				_contentLength = std::atol(cl.c_str());
 				if (_contentLength > _locConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
