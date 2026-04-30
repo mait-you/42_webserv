@@ -107,25 +107,28 @@ def parse_multipart(body, boundary):
 def render_page(title, body_html, status="200 OK"):
     sys.stdout.write("Status: " + status + "\r\n")
     sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n\r\n")
-    sys.stdout.write("<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>")
+    sys.stdout.write("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>")
     sys.stdout.write(html.escape(title))
-    sys.stdout.write("</title></head><body>")
+    sys.stdout.write("</title>\n</head>\n<body style='font-family: Arial, sans-serif; margin: 40px; color: #333;'>\n")
     sys.stdout.write(body_html)
-    sys.stdout.write("</body></html>")
+    sys.stdout.write("\n</body>\n</html>\n")
 
 
 def render_form(message=""):
     body = [
-        "<h1>Upload a file</h1>",
+        "<h2>CGI File Upload</h2>",
+        "<div style='background: #f9f9f9; padding: 20px; border-radius: 5px; border: 1px solid #ddd;'>",
         "<form method=\"POST\" enctype=\"multipart/form-data\">",
-        "<label for=\"image\">Choose a file:</label>",
-        "<input type=\"file\" name=\"image\" id=\"image\" required>",
-        "<button type=\"submit\">Upload</button>",
+        "<label for=\"image\" style='display: block; margin-bottom: 10px; font-weight: bold;'>Choose a file:</label>",
+        "<input type=\"file\" name=\"image\" id=\"image\" required style='margin-bottom: 20px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box;'>",
+        "<button type=\"submit\" style='padding: 8px 15px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;'>Upload File</button>",
         "</form>",
+        "</div>",
+        "<br><br><a href='/' style='color: #0066cc; text-decoration: none;'>&larr; Back to Home</a>"
     ]
     if message:
-        body.insert(1, "<p>" + html.escape(message) + "</p>")
-    render_page("File Upload", "".join(body))
+        body.insert(1, "<p style='color: #d9534f; font-weight: bold;'>" + html.escape(message) + "</p>")
+    render_page("File Upload", "\n".join(body))
 
 
 def save_uploaded_file(files):
@@ -187,12 +190,14 @@ def main():
 
     relative_path = os.path.relpath(saved_path, get_env("DOCUMENT_ROOT", os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))))
     body = [
-        "<h1>Upload successful</h1>",
-        "<p>Saved as: " + html.escape(os.path.basename(saved_path)) + "</p>",
-        "<p><a href=\"/" + html.escape(relative_path).replace("\\", "/") + "\">Download file</a></p>",
-        "<p><a href=\"/\">Back to home</a></p>",
+        "<h2>Upload successful</h2>",
+        "<div style='background: #dff0d8; padding: 20px; border-radius: 5px; border: 1px solid #d6e9c6; color: #3c763d;'>",
+        "<p><strong>Saved as:</strong> " + html.escape(os.path.basename(saved_path)) + "</p>",
+        "<p><a href=\"/" + html.escape(relative_path).replace("\\", "/") + "\" style='color: #3c763d; text-decoration: underline;'>Get the uploaded file</a></p>",
+        "</div>",
+        "<br><br><a href='/' style='color: #0066cc; text-decoration: none;'>&larr; Back to Home</a>",
     ]
-    render_page("Upload Successful", "".join(body), "201 Created")
+    render_page("Upload Successful", "\n".join(body), "201 Created")
 
 
 if __name__ == "__main__":
