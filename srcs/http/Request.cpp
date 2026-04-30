@@ -330,34 +330,34 @@ void Request::setError(CodeStatus code) {
 
 std::string Request::resolveFullPath() const {
 	const std::string& root	   = _locConf->root;
-	std::string		   relPath = _resolveUri;
+	std::string		   relaPath = _resolveUri;
 	const std::string& locPath = _locConf->path;
 
 	if (_locConf->isAlias) {
-		relPath = relPath.substr(locPath.size());
-		if (relPath.empty())
-			relPath = "/";
+		relaPath = relaPath.substr(locPath.size());
+		if (relaPath.empty())
+			relaPath = "/";
 	}
 
 	if (_hasCgi) {
 		for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
 			 it != _locConf->cgi.end(); ++it) {
-			std::size_t pos = relPath.find(it->first);
+			std::size_t pos = relaPath.find(it->first);
 			if (pos != std::string::npos) {
-				relPath = relPath.substr(0, pos + it->first.size());
+				relaPath = relaPath.substr(0, pos + it->first.size());
 				break;
 			}
 		}
 	}
 
 	bool rootSlash = (root[root.size() - 1] == '/');
-	bool relSlash  = (!relPath.empty() && relPath[0] == '/');
+	bool realSlash = (!relaPath.empty() && relaPath[0] == '/');
 
-	if (rootSlash && relSlash)
-		return root + relPath.substr(1);
-	if (!rootSlash && !relSlash)
-		return root + "/" + relPath;
-	return root + relPath;
+	if (rootSlash && realSlash)
+		return root + relaPath.substr(1);
+	if (!rootSlash && !realSlash)
+		return root + "/" + relaPath;
+	return root + relaPath;
 }
 
 bool Request::isComplete() const {
