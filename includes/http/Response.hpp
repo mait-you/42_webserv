@@ -66,7 +66,7 @@ class Response : public HttpStatus {
 	void multiPart(Request& request, const MultipartField& part, std::string uploadDir);
 	void handleLogin(const Request& request);
 
-	void handleDashboard(const Request& request, const std::string& fullPath);
+	void handleDashboard(const Request& request);
 	void handleLogout(const Request& request);
 };
 

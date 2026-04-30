@@ -14,7 +14,7 @@ std::string extractId(std::string& cookie) {
 	return "";
 }
 
-void Response::handleDashboard(const Request& request, const std::string& fullPath) {
+void Response::handleDashboard(const Request& request) {
 	std::stringstream ss;
 	std::string		  cookie = request.getHeader("Cookie");
 	if (!cookie.empty()) {
@@ -29,8 +29,7 @@ void Response::handleDashboard(const Request& request, const std::string& fullPa
 					   << "<h1> Welcome, " << it->second << "</h1>"
 					   << "<a href='/'>Back to Home</a></body></html>";
 					setStatus(HTTP_200_OK);
-					std::string extension = getExtension(fullPath);
-					setHeader("Content-type", Mime::getType(extension));
+					setHeader("Content-type", "text/html");
 					setBody(ss.str());
 					return;
 				}
@@ -134,7 +133,7 @@ void Response::handleGet(const Request& request) {
 	std::string fullPath = request.getResolveFullPath();
 
 	if (request.getUri() == URI_DASHBOARD)
-		return (handleDashboard(request, fullPath));
+		return (handleDashboard(request));
 	else if (request.getUri() == URI_LOGOUT)
 		return (handleLogout(request));
 
