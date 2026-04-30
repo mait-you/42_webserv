@@ -55,6 +55,8 @@ void WebServer::checkIdleClients() {
 			removeClient(client);
 			logServerEvent(*this, GRY "Client disconnected" RST);
 		}
+		if (!_clients.size())
+			break;
 	}
 }
 
