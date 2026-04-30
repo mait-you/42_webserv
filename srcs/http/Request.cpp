@@ -198,7 +198,7 @@ void Request::processLine(const std::string& line) {
 				if (_contentLength < 0
 					|| _contentLength > _locConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
-				_parseState = (_contentLength > 0) ? PARSE_BODY : PARSE_DONE;
+				_parseState = (_contentLength == 0) ? PARSE_DONE : PARSE_BODY ;
 
 			} else if (_method == "POST") {
 				return setError(HTTP_204_NO_CONTENT);
@@ -319,7 +319,7 @@ void Request::detectCgi() {
 	if (!_locConf || !_locConf->has_cgi)
 		return;
 	std::string ext = getExtension(_resolveFullUri);
-	if (_locConf->cgi.count(ext) || _locConf->cgi.count("." + ext))
+	if (_locConf->cgi.count(ext))
 		_hasCgi = true;
 }
 
@@ -339,7 +339,7 @@ std::string Request::resolveFullPath() const {
 			relaPath = "/";
 	}
 
-	if (_hasCgi) {
+	if (_hasCgi) { 
 		for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
 			 it != _locConf->cgi.end(); ++it) {
 			std::size_t pos = relaPath.find(it->first);

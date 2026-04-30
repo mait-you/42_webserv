@@ -39,9 +39,7 @@ Response::~Response() {}
 HttpStatus::CodeStatus Response::getStatusCode() const {
 	return _statusCode;
 }
-std::string Response::getStatusMessage() const {
-	return HttpStatus::getStatusMessage();
-}
+
 const Response::HeaderMap& Response::getHeaders() const {
 	return _headers;
 }

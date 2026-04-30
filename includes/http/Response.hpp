@@ -28,7 +28,6 @@ class Response : public HttpStatus {
 	~Response();
 
 	CodeStatus		   getStatusCode() const;
-	std::string		   getStatusMessage() const;
 	const HeaderMap&   getHeaders() const;
 	const std::string& getBody() const;
 

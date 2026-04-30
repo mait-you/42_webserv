@@ -29,10 +29,10 @@ void Response::errorPage(const Request& request, CodeStatus code) {
 		}
 	}
 	setHeader("Content-type", "text/html");
-	std::string defaultErr = "<html><body style='display:flex;justify-content:center;'><h1>";
-	defaultErr += getStatusMessage();
-	defaultErr += "</h1></body></html>\n";
-	setBody(defaultErr);
+	std::stringstream ss;
+	ss << "<html><body style='display:flex;justify-content:center;'><h1>"
+	<< getStatusCode() << " " << getStatusMessage() << "</h1></body></html>\n";
+	setBody(ss.str());
 }
 
 bool Response::allowedMethods(const Request& request) {
