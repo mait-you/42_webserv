@@ -78,8 +78,7 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 	std::stringstream ss;
 	ss << file.rdbuf();
 	setStatus(HTTP_200_OK);
-	std::string extension = getExtension(fullPath);
-	setHeader("Content-type", Mime::getType(extension));
+	setHeader("Content-type", Mime::getType(getExtension(fullPath)));
 	setBody(ss.str());
 }
 
