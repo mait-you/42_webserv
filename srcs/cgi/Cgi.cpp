@@ -118,12 +118,12 @@ int Cgi::createFiles() {
 	_bodyPath = bodyOss.str();
 	_resPath = resOss.str();
 	std::ofstream bodyFile(_bodyPath.c_str());
-	if (!bodyFile.is_open())
+	if (!bodyFile)
 		return 1;
 	bodyFile << _req.getBody();
 	bodyFile.close();
 	std::ofstream responseFile(_resPath.c_str());
-	if (!responseFile.is_open()) {
+	if (!responseFile) {
 		unlink(_bodyPath.c_str());
 		return 1;
 	}

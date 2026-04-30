@@ -98,7 +98,7 @@ void Response::applyCgiHeaders(const std::string& rawHeaders, CodeStatus& outSta
 
 void Response::processCgiOutput(const Request& request) {
 	std::ifstream file(_runningCgi.resPath.c_str(), std::ios::binary);
-	if (!file.is_open()) {
+	if (!file) {
 		unlink(_runningCgi.resPath.c_str());
 		return errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 	}

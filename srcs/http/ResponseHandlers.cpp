@@ -8,7 +8,7 @@ int Response::handleErrorFile(const std::string& fullPath) {
 	if (access(fullPath.c_str(), F_OK) == -1)
 		return 0;
 	std::ifstream file(fullPath.c_str());
-	if (!file.is_open())
+	if (!file)
 		return 0;
 	std::stringstream ss;
 	ss << file.rdbuf();

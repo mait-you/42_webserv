@@ -60,13 +60,9 @@ void Response::handleLogout(const Request& request) {
 }
 
 void Response::handleFile(const Request& request, const std::string& fullPath) {
-	if (access(fullPath.c_str(), F_OK) == -1) {
-		errorPage(request, HTTP_404_NOT_FOUND);
-		return;
-	}
 	const LocationConfig* locConf = request.getLocationConf();
 	std::ifstream		  file(fullPath.c_str());
-	if (!file.is_open()) {
+	if (!file) {
 		errorPage(request, HTTP_403_FORBIDDEN);
 		return;
 	}
@@ -139,7 +135,7 @@ void Response::handleGet(const Request& request) {
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {
-		errorPage(request, HTTP_404_NOT_FOUND);
+		errorPage(request, HTTP_201_CREATED);
 		return;
 	}
 

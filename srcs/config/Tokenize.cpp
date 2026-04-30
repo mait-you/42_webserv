@@ -35,7 +35,7 @@ std::vector<Token> tokenize(const std::string &filename)
 	std::vector<Token> tokens;
 
 	std::ifstream configFile(filename.c_str());
-	if (!configFile.is_open())
+	if (!configFile)
 	{
 		throw std::runtime_error("Error: cannot open config file");
 	}
