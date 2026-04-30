@@ -155,6 +155,8 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	}
 	if (server.hasMax)
 		throw std::runtime_error("Invalid config: Duplicate client_max_body_size");
+	if (tmp > 100 * 1024 * 1024)
+		throw std::runtime_error("Invalid config: Duplicate client_max_body_size");
 	server.client_max_body_size = tmp;
 	server.hasMax = true;
 	i++;

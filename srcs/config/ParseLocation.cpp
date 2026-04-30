@@ -225,6 +225,8 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, LocationConfig& locatio
 	}
 	if (location.hasMax)
 		throw std::runtime_error("Invalid config: duplicate client_max_body_size");
+	if (tmp > 100 * 1024 * 1024)
+		throw std::runtime_error("Invalid config: Duplicate client_max_body_size");
 	location.client_max_body_size = tmp;
 	location.hasMax = true;
 	i++;
