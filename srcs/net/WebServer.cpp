@@ -48,18 +48,6 @@ const Config& WebServer::getConfig() const {
 	return _config;
 }
 
-void WebServer::checkIdleClients() {
-	for (Client::It it = _clients.begin(); it != _clients.end(); ++it) {
-		Client& client = it->second;
-		if (it->second.grtRecvBuffer().empty()) {
-			removeClient(client);
-			logServerEvent(*this, GRY "Client disconnected" RST);
-		}
-		if (!_clients.size())
-			break;
-	}
-}
-
 void WebServer::removeClient(Client& client) {
 	int fd = client.getSocket().getFd();
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) == -1)
@@ -99,6 +87,16 @@ bool WebServer::handleResponse(Client& client) {
 	return client.sendData();
 }
 
+void WebServer::checkIdleClients() {
+	Client::It it = _clients.begin();
+	while (it != _clients.end()) {
+		Client::It current = it++;
+		if (current->second.isIdle()) {
+			logServerEvent(*this, GRY "Client disconnected (idle timeout)" RST);
+			removeClient(current->second);
+		}
+	}
+}
 void WebServer::run() {
 	logServerStart(*this);
 
@@ -109,10 +107,8 @@ void WebServer::run() {
 				continue;
 			throwError("epoll_wait", "failed to wait for events");
 		}
-		if (n == 0) {
-			checkIdleClients();
-			continue;
-		}
+		
+		checkIdleClients();
 
 		for (int i = 0; i < n; ++i) {
 			int fd = _events[i].data.fd;

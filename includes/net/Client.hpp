@@ -14,6 +14,7 @@ class Client {
 	typedef Map::const_iterator	  ConstIt;
 
   private:
+	std::time_t _lastActivityTime;
 	Socket		_socket;
 	Socket		_serverSock;
 	std::string _recvBuffer;
@@ -46,8 +47,11 @@ class Client {
 	const Request&	getRequest() const;
 	const Response& getResponse() const;
 
-	const std::string &grtRecvBuffer() const;
-	const std::string &grtSendBuffer() const;
+	const std::string& grtRecvBuffer() const;
+	const std::string& grtSendBuffer() const;
+
+	void resetActivityTime();
+	bool isIdle() const;
 };
 
 #endif

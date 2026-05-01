@@ -4,30 +4,42 @@
 
 // it call only for Map
 Client::Client()
-		: _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(), _response() {}
+		: _lastActivityTime(0), _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(),
+		  _response() {}
 
+// Main constructor
 Client::Client(const Socket& socket, const Socket& serverSock,
 			   std::map<std::string, std::string>* session)
-		: _socket(socket), _recvBuffer(), _sendBuffer(), _bytesSent(0),
-		  _request(&serverSock, socket.getIp()), _response(session) {}
+		: _lastActivityTime(time(NULL)), _socket(socket), _recvBuffer(), _sendBuffer(),
+		  _bytesSent(0), _request(&serverSock, socket.getIp()), _response(session) {}
 
 Client::Client(const Client& other)
-		: _socket(other._socket), _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),
+		: _lastActivityTime(other._lastActivityTime), _socket(other._socket),
+		  _recvBuffer(other._recvBuffer), _sendBuffer(other._sendBuffer),
 		  _bytesSent(other._bytesSent), _request(other._request), _response(other._response) {}
 
 Client& Client::operator=(const Client& other) {
 	if (this != &other) {
-		_socket		= other._socket;
-		_recvBuffer = other._recvBuffer;
-		_sendBuffer = other._sendBuffer;
-		_bytesSent	= other._bytesSent;
-		_request	= other._request;
-		_response	= other._response;
+		_lastActivityTime = other._lastActivityTime;
+		_socket			  = other._socket;
+		_recvBuffer		  = other._recvBuffer;
+		_sendBuffer		  = other._sendBuffer;
+		_bytesSent		  = other._bytesSent;
+		_request		  = other._request;
+		_response		  = other._response;
 	}
 	return *this;
 }
 
-Client::~Client() {}
+Client::~Client() {};
+
+void Client::resetActivityTime() {
+	_lastActivityTime = time(NULL);
+}
+
+bool Client::isIdle() const {
+	return (time(NULL) - _lastActivityTime) >= CLIENT_IDLE_TIMEOUT;
+}
 
 bool Client::recvData() {
 	char	buf[RECV_BUFFER_SIZE] = {0};
@@ -37,6 +49,7 @@ bool Client::recvData() {
 	if (n < 0)
 		return true;
 	_recvBuffer.append(buf, n);
+	resetActivityTime();
 	return true;
 }
 
@@ -54,7 +67,7 @@ bool Client::sendData() {
 		return false;
 	if (n < 0)
 		return true;
-
+	resetActivityTime();
 	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {
 		_sendBuffer.clear();
