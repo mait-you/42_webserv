@@ -101,36 +101,35 @@ void WebServer::run() {
 	logServerStart(*this);
 
 	while (running) {
-		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 5000);
+		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 1000);
 		if (n == -1) {
 			if (errno == EINTR)
 				continue;
 			throwError("epoll_wait", "failed to wait for events");
 		}
 		
-		checkIdleClients();
-
+		
 		for (int i = 0; i < n; ++i) {
 			int fd = _events[i].data.fd;
-
+			
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
 				logServerEvent(*this, GRN "Client connected" RST);
 				continue;
 			}
-
+			
 			Client::It it = _clients.find(fd);
 			if (it == _clients.end())
-				continue;
+			continue;
 			Client& client = it->second;
 			bool	keep   = true;
-
+			
 			if (_events[i].events & EPOLLERR) {
 				removeClient(client);
 				logServerEvent(*this, GRY "Client disconnected (error)" RST);
 				continue;
 			}
-
+			
 			if (_events[i].events & EPOLLIN) {
 				keep = handleRequest(client);
 				if (keep && client.getRequest().isComplete()) {
@@ -141,18 +140,19 @@ void WebServer::run() {
 					logServerEvent(*this, CYN "Request received" RST);
 				}
 			}
-
+			
 			if (keep && (_events[i].events & EPOLLOUT)) {
 				keep = handleResponse(client);
 				if (client.getResponse().isComplete())
-					logServerEvent(*this, YEL "Response sent" RST);
+				logServerEvent(*this, YEL "Response sent" RST);
 			}
-
+			
 			if (!keep) {
 				removeClient(client);
 				logServerEvent(*this, GRY "Client disconnected" RST);
 			}
 		}
+		checkIdleClients();
 	}
 
 	std::cout << GRY "\r└─── Server shutdown ─ ─ ─ " RST "\n";

@@ -244,9 +244,10 @@ void Request::parseRequestLine(const std::string& line) {
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 
-	_resolveUri = resolvePath(decode(_uri));
-	if (!isValidUri(_resolveUri))
+	std::string decodeUri = decode(_uri);
+	if (!isValidUri(decodeUri))
 		return setError(HTTP_400_BAD_REQUEST);
+	_resolveUri = resolvePath(decodeUri);
 
 	if (!matchLocation())
 		return setError(HTTP_400_BAD_REQUEST);

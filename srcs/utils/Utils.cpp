@@ -128,7 +128,7 @@ std::string decode(const std::string& str) {
 
 std::string resolvePath(const std::string& uri) {
 	if (uri.empty())
-		return "/";
+		return "";
 	std::string path = uri;
 	std::size_t q	 = path.find('?');
 	if (q != std::string::npos)
