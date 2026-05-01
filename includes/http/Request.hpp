@@ -69,6 +69,7 @@ class Request : public HttpStatus {
 	const HeaderMap&   getHeaders() const;
 	const std::string& getResolvePath() const;
 	const std::string& getResolveFullPath() const;
+	long			   getContentLength() const;
 
 	const LocationConfig* getLocationConf() const;
 	const ServerConfig*	  getConf() const;

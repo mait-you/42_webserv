@@ -14,6 +14,7 @@
 
 #include <cctype>
 #include <cerrno>
+#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>

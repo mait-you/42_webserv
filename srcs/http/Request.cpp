@@ -191,7 +191,13 @@ void Request::processLine(const std::string& line) {
 		if (line.empty()) {
 			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
-				_contentLength = std::atol(cl.c_str());
+				std::stringstream ss(cl);
+				char extra;
+
+				if (!(ss >> _contentLength) || ss >> extra) {
+					_contentLength = 0;
+					return setError(HTTP_400_BAD_REQUEST);
+				}
 				if (_contentLength < 0 || _contentLength > _locConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength == 0) ? PARSE_DONE : PARSE_BODY;
@@ -405,6 +411,9 @@ const std::string& Request::getResolvePath() const {
 }
 const std::string& Request::getResolveFullPath() const {
 	return _resolveFullUri;
+}
+long Request::getContentLength() const {
+	return _contentLength;
 }
 const LocationConfig* Request::getLocationConf() const {
 	return _locConf;

@@ -44,8 +44,12 @@ static void logRequest(const Request& req, bool hasRes) {
 
 	const Request::HeaderMap& hdrs = req.getHeaders();
 	std::cout << p << GRY "├─ " WHT "headers: " GRY "[" RST << hdrs.size() << GRY "]\n" RST;
-	for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it)
-		std::cout << p << GRY "│   " RST << it->first << GRY ": " RST << it->second << "\n";
+	for (Request::ConstHeaderIt it = hdrs.begin(); it != hdrs.end(); ++it) {
+		std::cout << p << GRY "│   " RST "[" << it->first << "]" GRY ": " RST "[" << it->second;
+		if (it->first == "content-length")
+			std::cout << GRY " (parsed: " RST << req.getContentLength() << GRY ")" RST;
+		std::cout << "]\n";
+	}
 
 	const std::string& body = req.getBody();
 	std::cout << p << GRY "├─ " WHT "body:    " RST;
