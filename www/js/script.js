@@ -1,1 +1,3 @@
-console.log('Webserv is running!');
+console.log(document.cookie);
+
+

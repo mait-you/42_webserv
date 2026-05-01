@@ -37,6 +37,8 @@ static void logRequest(const Request& req, bool hasRes) {
 			  << p << GRY "├─ " WHT "uri:     " RST << (u.empty() ? GRY "(none)" RST : u) << "\n"
 			  << p << GRY "│  ├─ " WHT "resolved: " RST
 			  << (req.getresolveUri().empty() ? GRY "(none)" RST : req.getresolveUri()) << "\n"
+			  << p << GRY "│  └─ " WHT "query:     " RST
+			  << (req.getQuery().empty() ? GRY "(none)" RST : req.getQuery()) << "\n"
 			  << p << GRY "│  └─ " WHT "full:     " RST
 			  << (req.getresolveFullUri().empty() ? GRY "(none)" RST : req.getresolveFullUri())
 			  << "\n"

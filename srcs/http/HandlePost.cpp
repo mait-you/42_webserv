@@ -106,9 +106,9 @@ void Response::handlePost(Request& request) {
 		return;
 	}
 
-	if (request.getUri() == "/welcome") {
-		return (handleLogin(request));
-	}
+	// if (request.getUri() == "/welcome") {
+	// 	return (handleLogin(request));
+	// }
 
 	if (!locConf || !locConf->upload || locConf->upload_path.empty()) {
 		errorPage(request, HTTP_403_FORBIDDEN);

@@ -41,6 +41,7 @@ class Request : public HttpStatus {
 	bool		_hasCgi;
 	std::string _resolveUri;
 	std::string _resolveFullUri;
+	std::string _query;
 
 	MultipartFields _multipartFields;
 	FormData		_formData;
@@ -76,11 +77,14 @@ class Request : public HttpStatus {
 	const std::string&	  getServerPort() const;
 	const std::string&	  getServerIp() const;
 	const FormData&		  getFormData() const;
+	const std::string&		  getQuery() const;
 
+	
 	const MultipartFields& getMultipartFields() const;
 	void				   setFormData(const std::string& key, const std::string& val);
-
-  private:
+	
+	private:
+	void resolvePath(std::string &decodeUri);
 	void processLine(const std::string& line);
 	void parseRequestLine(const std::string& line);
 	void parseHeaderLine(const std::string& line);
@@ -100,5 +104,4 @@ class Request : public HttpStatus {
 	std::string resolveFullPath() const;
 };
 
-// M U V
 #endif

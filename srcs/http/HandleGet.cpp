@@ -128,10 +128,10 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 void Response::handleGet(const Request& request) {
 	std::string fullPath = request.getResolveFullPath();
 
-	if (request.getUri() == URI_DASHBOARD)
-		return (handleDashboard(request));
-	else if (request.getUri() == URI_LOGOUT)
-		return (handleLogout(request));
+	// if (request.getUri() == URI_DASHBOARD)
+	// 	return (handleDashboard(request));
+	// else if (request.getUri() == URI_LOGOUT)
+	// 	return (handleLogout(request));
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {

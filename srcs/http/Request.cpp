@@ -247,7 +247,7 @@ void Request::parseRequestLine(const std::string& line) {
 	std::string decodeUri = decode(_uri);
 	if (!isValidUri(decodeUri))
 		return setError(HTTP_400_BAD_REQUEST);
-	_resolveUri = resolvePath(decodeUri);
+	resolvePath(decodeUri);
 
 	if (!matchLocation())
 		return setError(HTTP_400_BAD_REQUEST);
@@ -330,6 +330,37 @@ void Request::setError(CodeStatus code) {
 	_parseState = PARSE_ERROR;
 }
 
+void Request::resolvePath( std::string &decodeUri) {
+
+	std::size_t q	 = decodeUri.find('?');
+	if (q != std::string::npos)
+	{
+		_query = decodeUri.substr(q + 1);
+		decodeUri = decodeUri.substr(0, q);
+	}
+
+	std::vector<std::string> parts;
+	std::stringstream		 ss(decodeUri);
+	std::string				 seg;
+
+	while (std::getline(ss, seg, '/')) {
+		if (seg.empty() || seg == ".")
+			continue;
+		if (seg == "..") {
+			if (!parts.empty())
+				parts.pop_back();
+		} else
+			parts.push_back(seg);
+	}
+
+	for (std::size_t i = 0; i < parts.size(); ++i)
+		_resolveUri += "/" + parts[i];
+
+	if (_resolveUri.empty() || _uri[_uri.size() - 1] == '/')
+		_resolveUri += "/";
+
+}
+
 std::string Request::resolveFullPath() const {
 	const std::string& root		= _locConf->root;
 	std::string		   relaPath = _resolveUri;
@@ -402,6 +433,10 @@ const std::string& Request::getServerIp() const {
 
 const Request::FormData& Request::getFormData() const {
 	return _formData;
+}
+
+const std::string& Request::getQuery() const {
+	return _query;
 }
 
 const Request::HeaderMap& Request::getHeaders() const {
