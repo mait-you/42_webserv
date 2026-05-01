@@ -156,14 +156,11 @@ std::string Request::extractParam(const std::string& headerValue, const std::str
 
 bool Request::parse(std::string& buffer) {
 	while (_parseState == PARSE_REQUEST_LINE || _parseState == PARSE_HEADERS) {
-		/* RFC 1945 §2.2 — lines end with CRLF */
 		std::size_t pos = buffer.find("\r\n");
 		if (pos == std::string::npos)
 			break;
-
 		std::string line = buffer.substr(0, pos);
 		buffer.erase(0, pos + 2);
-
 		processLine(line);
 	}
 	if (_parseState == PARSE_BODY) {
@@ -195,10 +192,9 @@ void Request::processLine(const std::string& line) {
 			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
 				_contentLength = std::atol(cl.c_str());
-				if (_contentLength < 0
-					|| _contentLength > _locConf->client_max_body_size)
+				if (_contentLength < 0 || _contentLength > _locConf->client_max_body_size)
 					return setError(HTTP_400_BAD_REQUEST);
-				_parseState = (_contentLength == 0) ? PARSE_DONE : PARSE_BODY ;
+				_parseState = (_contentLength == 0) ? PARSE_DONE : PARSE_BODY;
 
 			} else if (_method == "POST") {
 				return setError(HTTP_204_NO_CONTENT);
@@ -242,10 +238,10 @@ void Request::parseRequestLine(const std::string& line) {
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
 		return setError(HTTP_501_NOT_IMPLEMENTED);
 
-	if (!isValidUri(_uri))
+	_resolveUri = resolvePath(decode(_uri));
+	if (!isValidUri(_resolveUri))
 		return setError(HTTP_400_BAD_REQUEST);
 
-	_resolveUri = resolvePath(_uri);
 	if (!matchLocation())
 		return setError(HTTP_400_BAD_REQUEST);
 	_resolveFullUri = resolveFullPath();
@@ -297,14 +293,13 @@ bool Request::matchLocation() {
 	if (!_srvConf)
 		return false;
 
-	const std::string& uri	   = _resolveUri;
-	std::size_t		   bestLen = 0;
-
+	std::size_t bestLen = 0;
 	for (std::size_t i = 0; i < _srvConf->locations.size(); ++i) {
 		const std::string& locPath = _srvConf->locations[i].path;
-		if (uri.compare(0, locPath.size(), locPath) != 0)
+		if (_resolveUri.compare(0, locPath.size(), locPath) != 0)
 			continue;
-		if (locPath != "/" && uri.size() != locPath.size() && uri[locPath.size()] != '/')
+		if (locPath != "/" && _resolveUri.size() != locPath.size()
+			&& _resolveUri[locPath.size()] != '/')
 			continue;
 		if (locPath.size() > bestLen) {
 			bestLen	 = locPath.size();
@@ -329,9 +324,9 @@ void Request::setError(CodeStatus code) {
 }
 
 std::string Request::resolveFullPath() const {
-	const std::string& root	   = _locConf->root;
+	const std::string& root		= _locConf->root;
 	std::string		   relaPath = _resolveUri;
-	const std::string& locPath = _locConf->path;
+	const std::string& locPath	= _locConf->path;
 
 	if (_locConf->isAlias) {
 		relaPath = relaPath.substr(locPath.size());
@@ -339,7 +334,7 @@ std::string Request::resolveFullPath() const {
 			relaPath = "/";
 	}
 
-	if (_hasCgi) { 
+	if (_hasCgi) {
 		for (std::map<std::string, std::string>::const_iterator it = _locConf->cgi.begin();
 			 it != _locConf->cgi.end(); ++it) {
 			std::size_t pos = relaPath.find(it->first);
@@ -375,6 +370,12 @@ const std::string& Request::getMethod() const {
 }
 const std::string& Request::getUri() const {
 	return _uri;
+}
+const std::string& Request::getresolveUri() const {
+	return _resolveUri;
+}
+const std::string& Request::getresolveFullUri() const {
+	return _resolveFullUri;
 }
 const std::string& Request::getVersion() const {
 	return _version;

@@ -33,12 +33,14 @@ static void logRequest(const Request& req, bool hasRes) {
 	const std::string& u = req.getUri();
 	const std::string& v = req.getVersion();
 
-	std::cout << p << GRY "├─ " WHT "method:  " RST << (m.empty() ? GRY "(none)" RST : m.c_str())
+	std::cout << p << GRY "├─ " WHT "method:  " RST << (m.empty() ? GRY "(none)" RST : m) << "\n"
+			  << p << GRY "├─ " WHT "uri:     " RST << (u.empty() ? GRY "(none)" RST : u) << "\n"
+			  << p << GRY "│  ├─ " WHT "resolved: " RST
+			  << (req.getresolveUri().empty() ? GRY "(none)" RST : req.getresolveUri()) << "\n"
+			  << p << GRY "│  └─ " WHT "full:     " RST
+			  << (req.getresolveFullUri().empty() ? GRY "(none)" RST : req.getresolveFullUri())
 			  << "\n"
-			  << p << GRY "├─ " WHT "uri:     " RST << (u.empty() ? GRY "(none)" RST : u.c_str())
-			  << "\n"
-			  << p << GRY "├─ " WHT "version: " RST << (v.empty() ? GRY "(none)" RST : v.c_str())
-			  << "\n";
+			  << p << GRY "├─ " WHT "version: " RST << (v.empty() ? GRY "(none)" RST : v) << "\n";
 
 	const Request::HeaderMap& hdrs = req.getHeaders();
 	std::cout << p << GRY "├─ " WHT "headers: " GRY "[" RST << hdrs.size() << GRY "]\n" RST;

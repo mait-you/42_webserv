@@ -146,7 +146,7 @@ void setCloExec(int fd) {
 std::string resolvePath(const std::string& uri) {
 	if (uri.empty())
 		return "/";
-	std::string path = decode(uri);
+	std::string path = uri;
 	std::size_t q	 = path.find('?');
 	if (q != std::string::npos)
 		path = path.substr(0, q);
