@@ -9,7 +9,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 	std::memset(_events, 0, sizeof _events);
 	_epollFd = epoll_create1(EPOLL_CLOEXEC);
 	if (_epollFd == -1)
-		errorLog("epoll_create", "failed to create epoll instance");
+		throwError("epoll_create", "failed to create epoll instance");
 	const std::vector<ServerConfig>& servers = _config.getServers();
 	for (std::size_t i = 0; i < servers.size(); ++i) {
 		const ServerConfig& srv = servers[i];
@@ -20,7 +20,7 @@ WebServer::WebServer(const Config& conf) : _epollFd(-1), _config(conf) {
 			ev.events  = EPOLLIN;
 			ev.data.fd = sock.getFd();
 			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1)
-				errorLog("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
+				throwError("epoll_ctl", "EPOLL_CTL_ADD fd=" + toString(ev.data.fd));
 			_serverSockets[sock.getFd()] = sock;
 		}
 	}
@@ -107,7 +107,7 @@ void WebServer::run() {
 		if (n == -1) {
 			if (errno == EINTR)
 				continue;
-			errorLog("epoll_wait", "failed to wait for events");
+			throwError("epoll_wait", "failed to wait for events");
 		}
 		if (n == 0) {
 			checkIdleClients();

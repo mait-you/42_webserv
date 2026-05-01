@@ -14,7 +14,7 @@ void warnLog(const std::string& context, const std::string& detail) {
 	std::cerr << "\n";
 }
 
-void errorLog(const std::string& context, const std::string& detail) {
+void throwError(const std::string& context, const std::string& detail) {
 	std::ostringstream msg;
 	msg << RED "[ERROR]" RST " " WHT << context << YEL " — " << detail << RST;
 	appendErrno(msg);

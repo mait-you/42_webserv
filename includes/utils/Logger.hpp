@@ -3,7 +3,7 @@
 
 #include "../Head.hpp"
 
-void errorLog(const std::string& context, const std::string& detail);
+void throwError(const std::string& context, const std::string& detail);
 void warnLog(const std::string& context, const std::string& detail);
 
 class WebServer;
