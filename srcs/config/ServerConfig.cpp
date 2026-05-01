@@ -131,14 +131,13 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 	if (i >= tokens.size() || tokens[i].type != word) {
 		throw std::runtime_error("Invalid config: Expected client max body size");
 	}
-	long			  value;
-	std::string		  remaining;
+	long		value;
+	std::string	remaining;
 	std::stringstream ss(tokens[i].value);
 	ss >> value;
 	if (ss.fail() || value < 0)
 		throw std::runtime_error("Invalid config: client max body size not valid");
 
-	long tmp = value;
 	if (!ss.eof()) {
 		ss >> remaining;
 		if (ss.fail())
@@ -153,16 +152,15 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, ServerConfig& server) {
 		else
 			throw std::runtime_error("Invalid config: client_max_body_size not valid");
 
-		// ! value * multiplier > LONG_MAX so using chwya dyal el Math value > LONG_MAX / multiplier
 		if (value > LONG_MAX / multiplier)
 			throw std::runtime_error("Invalid config: client_max_body_size overflow");
-		tmp *= multiplier;
+		value *= multiplier;
 	}
 	if (server.hasMax)
 		throw std::runtime_error("Invalid config: Duplicate client_max_body_size");
-	if (tmp > 100 * 1024 * 1024)
+	if (value > 100 * 1024 * 1024)
 		throw std::runtime_error("Invalid config: client_max_body_size exceeds 100MB limit");
-	server.client_max_body_size = tmp;
+	server.client_max_body_size = value;
 	server.hasMax				= true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {

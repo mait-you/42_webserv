@@ -202,7 +202,6 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, LocationConfig& locatio
 		throw std::runtime_error("Invalid config: Expected client max body size");
 	}
 	long		value;
-	long		tmp;
 	std::string	remaining;
 	std::stringstream ss(tokens[i].value);
 	ss >> value;
@@ -211,23 +210,27 @@ void parseMaxSize(size_t& i, std::vector<Token>& tokens, LocationConfig& locatio
 	}
 	if (!ss.eof()) {
 		ss >> remaining;
+		if (ss.fail())
+			throw std::runtime_error("Invalid config: client_max_body_size not valid");
+		long multiplier;
 		if (remaining == "K" || remaining == "KB")
-			tmp = value * 1024;
+			multiplier = 1024;
 		else if (remaining == "M" || remaining == "MB")
-			tmp = value * 1024 * 1024;
+			multiplier = 1024 * 1024;
 		else if (remaining == "G" || remaining == "GB")
-			tmp = value * 1024 * 1024 * 1024 ;
-		else {
+			multiplier = 1024 * 1024 * 1024;
+		else
 			throw std::runtime_error("Invalid config: client_max_body_size not valid");
-		}
-		if (tmp < value)
-			throw std::runtime_error("Invalid config: client_max_body_size not valid");
+
+		if (value > LONG_MAX / multiplier)
+			throw std::runtime_error("Invalid config: client_max_body_size overflow");
+		value *= multiplier;
 	}
 	if (location.hasMax)
 		throw std::runtime_error("Invalid config: duplicate client_max_body_size");
-	if (tmp > 100 * 1024 * 1024)
+	if (value > 100 * 1024 * 1024)
 		throw std::runtime_error("Invalid config: Duplicate client_max_body_size");
-	location.client_max_body_size = tmp;
+	location.client_max_body_size = value;
 	location.hasMax = true;
 	i++;
 	if (i >= tokens.size() || tokens[i].type != semiColone) {
