@@ -14,51 +14,6 @@ std::string extractId(std::string& cookie) {
 	return "";
 }
 
-void Response::handleDashboard(const Request& request) {
-	std::stringstream ss;
-	std::string		  cookie = request.getHeader("Cookie");
-	if (!cookie.empty()) {
-		std::string sessionId = extractId(cookie);
-		if (!sessionId.empty()) {
-			std::map<std::string, std::string>::iterator it;
-			for (it = _sessions->begin(); it != _sessions->end(); it++) {
-				if (it->first == sessionId) {
-					ss << "<html> <head><title>Webserv - Dashboard</title>"
-					   << "<link rel='stylesheet' href='css/style.css'></head> <body>"
-					   << "<a href='/logout'>logout</a>"
-					   << "<h1> Welcome, " << it->second << "</h1>"
-					   << "<a href='/'>Back to Home</a></body></html>";
-					setStatus(HTTP_200_OK);
-					setHeader("Content-type", "text/html");
-					setBody(ss.str());
-					return;
-				}
-			}
-		}
-	}
-	setStatus(HTTP_302_FOUND);
-	setHeader("Location", URI_WELCOME);
-}
-
-void Response::handleLogout(const Request& request) {
-	std::string cookie = request.getHeader("Cookie");
-	if (!cookie.empty()) {
-		std::string sessionId = extractId(cookie);
-		if (!sessionId.empty()) {
-			std::map<std::string, std::string>::iterator it;
-			for (it = _sessions->begin(); it != _sessions->end(); it++) {
-				if (it->first == sessionId) {
-					_sessions->erase(sessionId);
-					break;
-				}
-			}
-		}
-	}
-	setHeader("Set-Cookie", "session_id=;Path=/; HttpOnly; Max-Age=0");
-	setStatus(HTTP_302_FOUND);
-	setHeader("Location", URI_WELCOME);
-}
-
 void Response::handleFile(const Request& request, const std::string& fullPath) {
 	const LocationConfig* locConf = request.getLocationConf();
 	std::ifstream		  file(fullPath.c_str());
@@ -127,11 +82,6 @@ void Response::handleDir(const Request& request, const std::string& fullPath) {
 
 void Response::handleGet(const Request& request) {
 	std::string fullPath = request.getResolveFullPath();
-
-	// if (request.getUri() == URI_DASHBOARD)
-	// 	return (handleDashboard(request));
-	// else if (request.getUri() == URI_LOGOUT)
-	// 	return (handleLogout(request));
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {

@@ -44,8 +44,8 @@ Request& Request::operator=(const Request& other) {
 
 Request::~Request() {}
 
-void Request::parseUrlEncoded() {
-	std::istringstream ss(_body);
+void Request::parseUrlEncoded(const std::string &str) {
+	std::istringstream ss(str);
 	std::string		   pair;
 
 	while (std::getline(ss, pair, '&')) {
@@ -63,6 +63,7 @@ void Request::parseUrlEncoded() {
 		_formData[decode(key)] = decode(val);
 	}
 }
+
 
 void Request::parseMultipartHeaderLine(const std::string& line, MultipartField& field) {
 	std::size_t colon = line.find(':');
@@ -178,7 +179,7 @@ bool Request::parse(std::string& buffer) {
 				else
 					setError(HTTP_400_BAD_REQUEST);
 			} else if (ct == "application/x-www-form-urlencoded")
-				parseUrlEncoded();
+				parseUrlEncoded(_body);
 		}
 	}
 	return true;
@@ -248,6 +249,7 @@ void Request::parseRequestLine(const std::string& line) {
 	if (!isValidUri(decodeUri))
 		return setError(HTTP_400_BAD_REQUEST);
 	resolvePath(decodeUri);
+	parseUrlEncoded(_query);
 
 	if (!matchLocation())
 		return setError(HTTP_400_BAD_REQUEST);

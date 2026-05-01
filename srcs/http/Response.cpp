@@ -49,7 +49,7 @@ const std::string& Response::getBody() const {
 
 void Response::setHeader(const std::string& key, const std::string& value) {
 	if (_httpVersion != HTTP_0_9)
-		_headers[key] = value;
+		_headers.insert(std::make_pair(key, value));
 }
 
 void Response::setBody(const std::string& body) {
@@ -200,6 +200,62 @@ void Response::handleByMethod(Request& request) {
 		handleDelete(request);
 }
 
+std::string randomSessionId() {
+	static unsigned long idCounter = 0;
+	std::stringstream	 ss;
+	ss << "id_" << std::time(0) << "_" << idCounter++;
+	return ss.str();
+}
+
+void Response::handleSession(const Request& request)
+{
+	const Request::FormData &data = request.getFormData();
+	
+	Request::FormData::const_iterator it = data.find("theme");
+	std::string cookie = request.getHeader("Cookie");
+	if (it == data.end())
+	{
+		if (cookie.empty())
+		{
+			std::string id = randomSessionId();
+			(*_sessions)[id] = "light";
+			setHeader("Set-Cookie", "session_id=" + id + "; Path=/; HttpOnly;");
+			setHeader("Set-Cookie", "theme=light; Path=/;");
+			return;
+		}
+	}
+
+	std::string theme = it->second;
+	std::stringstream ss(cookie);
+	std::string line, sessionId;
+	
+	while (std::getline(ss, line, ';'))
+	{
+		size_t pos = line.find("session_id=");
+		if (pos != std::string::npos)
+			sessionId = line.substr(pos + 11);
+	}
+	if (it != data.end())
+	{
+		if (!sessionId.empty())
+		{
+			std::map<std::string, std::string>::iterator it;
+			for (it = _sessions->begin(); it != _sessions->end(); it++) {
+				if (it->first == sessionId) {
+					it->second = theme;
+					setHeader("Set-Cookie", "theme=" + theme + "; Path=/;");
+					return;
+				}
+			}
+		}
+
+		std::string id = randomSessionId();
+		(*_sessions)[id] = theme;
+		setHeader("Set-Cookie", "session_id=" + id + "; Path=/; HttpOnly;");
+		setHeader("Set-Cookie", "theme=" +  theme + "; Path=/;");
+	}
+}
+
 std::string Response::build(Request& request) {
 	if (!request.isValid())
 		errorPage(request, request.getStatusCode());
@@ -210,7 +266,10 @@ std::string Response::build(Request& request) {
 	else if (!allowedMethods(request))
 		errorPage(request, HTTP_405_METHOD_NOT_ALLOWED);
 	else
+	{
+		handleSession(request);
 		handleByMethod(request);
+	}
 
 	if (_hasCgiRunning)
 		return "";

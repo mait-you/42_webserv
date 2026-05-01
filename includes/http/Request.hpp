@@ -93,7 +93,7 @@ class Request : public HttpStatus {
 	void		parseMultipart(const std::string& boundary);
 	void		parsePart(std::string& part);
 	std::string extractParam(const std::string& headerValue, const std::string& param) const;
-	void		parseUrlEncoded();
+	void		parseUrlEncoded(const std::string &str);
 
 	bool matchLocation();
 	void detectCgi();

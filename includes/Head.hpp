@@ -36,10 +36,6 @@
 #define RED "\e[91m"
 #define MGT "\e[95m"
 
-#define URI_WELCOME "/welcome.html"
-#define URI_DASHBOARD "/dashboard.html"
-#define URI_LOGOUT "/logout"
-
 #define CLIENT_IDLE_TIMEOUT 5
 
 #endif

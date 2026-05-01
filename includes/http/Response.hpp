@@ -6,7 +6,7 @@
 
 class Response : public HttpStatus {
   public:
-	typedef std::map<std::string, std::string> HeaderMap;
+	typedef std::multimap<std::string, std::string> HeaderMap;
 	typedef HeaderMap::iterator				   HeaderIt;
 	typedef HeaderMap::const_iterator		   ConstHeaderIt;
 
@@ -64,10 +64,7 @@ class Response : public HttpStatus {
 	void handleDelete(const Request& request);
 	void handlePost(Request& request);
 	void multiPart(Request& request, const MultipartField& part, std::string uploadDir);
-	void handleLogin(const Request& request);
-
-	void handleDashboard(const Request& request);
-	void handleLogout(const Request& request);
+	void handleSession(const Request& request);
 };
 
 #endif

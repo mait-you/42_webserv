@@ -4,55 +4,6 @@
 
 static unsigned long uploadCounter = 0;
 
-std::string randomSessionId() {
-	static unsigned long idCounter = 0;
-	std::stringstream	 ss;
-	ss << "id_" << std::time(0) << "_" << idCounter++;
-	return ss.str();
-}
-
-void Response::handleLogin(const Request& request) {
-	std::string body = request.getBody();
-	std::string username;
-	size_t		pos = body.find("username=");
-	if (pos == std::string::npos) {
-		setStatus(HTTP_302_FOUND);
-		setHeader("Location", URI_WELCOME);
-		return;
-	}
-	username = body.substr(pos + 9);
-	if (username.empty()) {
-		setStatus(HTTP_302_FOUND);
-		setHeader("Location", URI_WELCOME);
-		return;
-	}
-	bool		existUser = false;
-	std::string sessionId;
-	std::string cookie = request.getHeader("Cookie");
-	if (!cookie.empty()) {
-		size_t pos = cookie.find("session_id=");
-		if (pos != std::string::npos) {
-			sessionId = cookie.substr(pos + 11);
-			std::map<std::string, std::string>::iterator it;
-			for (it = _sessions->begin(); it != _sessions->end(); it++) {
-				if (it->first == sessionId) {
-					it->second = username;
-					existUser			= true;
-					break;
-				}
-			}
-		}
-	}
-	if (existUser == false) {
-		sessionId = randomSessionId();
-		(*_sessions)[sessionId] = username;
-		setHeader("Set-Cookie", "session_id=" + sessionId + "; Path=/; HttpOnly; Max-Age=60");
-	}
-	setStatus(HTTP_302_FOUND);
-	setHeader("Location", URI_DASHBOARD);
-	return;
-}
-
 void Response::multiPart(Request& request, const MultipartField& part, std::string uploadDir) {
 	if (part.filename.empty()) {
 		request.setFormData(part.name, part.data);
@@ -105,10 +56,6 @@ void Response::handlePost(Request& request) {
 		_hasCgiRunning = true;
 		return;
 	}
-
-	// if (request.getUri() == "/welcome") {
-	// 	return (handleLogin(request));
-	// }
 
 	if (!locConf || !locConf->upload || locConf->upload_path.empty()) {
 		errorPage(request, HTTP_403_FORBIDDEN);
