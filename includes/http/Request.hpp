@@ -17,10 +17,10 @@ struct MultipartField {
 
 class Request : public HttpStatus {
   public:
-	typedef std::map<std::string, std::string> HeaderMap;
-	typedef HeaderMap::const_iterator		   ConstHeaderIt;
-	typedef std::vector<MultipartField>		   MultipartFields;
-	typedef std::map<std::string, std::string> FormData;
+	typedef std::map<std::string, std::string>				HeaderMap;
+	typedef HeaderMap::const_iterator						ConstHeaderIt;
+	typedef std::vector<MultipartField>						MultipartFields;
+	typedef std::map<std::string, std::vector<std::string> > FormData;
 
 	enum ParseState { PARSE_REQUEST_LINE, PARSE_HEADERS, PARSE_BODY, PARSE_DONE, PARSE_ERROR };
 
@@ -77,14 +77,13 @@ class Request : public HttpStatus {
 	const std::string&	  getServerPort() const;
 	const std::string&	  getServerIp() const;
 	const FormData&		  getFormData() const;
-	const std::string&		  getQuery() const;
+	const std::string&	  getQuery() const;
 
-	
 	const MultipartFields& getMultipartFields() const;
 	void				   setFormData(const std::string& key, const std::string& val);
-	
-	private:
-	void resolvePath(std::string &decodeUri);
+
+  private:
+	void resolvePath(std::string& decodeUri);
 	void processLine(const std::string& line);
 	void parseRequestLine(const std::string& line);
 	void parseHeaderLine(const std::string& line);
@@ -93,7 +92,7 @@ class Request : public HttpStatus {
 	void		parseMultipart(const std::string& boundary);
 	void		parsePart(std::string& part);
 	std::string extractParam(const std::string& headerValue, const std::string& param) const;
-	void		parseUrlEncoded(const std::string &str);
+	void		parseUrlEncoded(const std::string& str);
 
 	bool matchLocation();
 	void detectCgi();

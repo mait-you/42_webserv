@@ -1,4 +1,5 @@
 #include "../../includes/Head.hpp"
+#include "../../includes/http/MimeTypes.hpp"
 #include "../../includes/net/WebServer.hpp"
 #include "../../includes/utils/Logger.hpp"
 
@@ -124,4 +125,33 @@ std::string decode(const std::string& str) {
 		}
 	}
 	return out;
+}
+
+std::string buildFilePath(const std::string& uploadDir, std::string ext) {
+	static unsigned long uploadCounter = 0;
+	std::ostringstream	 oss;
+	if (uploadDir.empty() || uploadDir[uploadDir.size() - 1] != '/')
+		oss << uploadDir << '/';
+	else
+		oss << uploadDir;
+	oss << "upload_" << std::time(NULL) << "_" << uploadCounter++;
+	if (!ext.empty())
+		ext = "." + ext;
+	return oss.str() + ext;
+}
+
+bool writeFile(const std::string& filePath, const std::string& data) {
+	std::ofstream file(filePath.c_str(), std::ios::binary);
+	if (!file)
+		return false;
+	file.write(data.c_str(), data.size());
+	file.close();
+	return true;
+}
+
+std::string randomSessionId() {
+	static unsigned long idCounter = 0;
+	std::stringstream	 ss;
+	ss << "id_" << std::time(0) << "_" << idCounter++;
+	return ss.str();
 }

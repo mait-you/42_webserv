@@ -53,7 +53,6 @@ void Response::setHeader(const std::string& key, const std::string& value) {
 }
 
 void Response::setBody(const std::string& body) {
-	// if (_statusCode != HTTP_000_NO_CODE_STATUS && _httpVersion != HTTP_0_9)
 	_body = body;
 }
 
@@ -200,24 +199,14 @@ void Response::handleByMethod(Request& request) {
 		handleDelete(request);
 }
 
-std::string randomSessionId() {
-	static unsigned long idCounter = 0;
-	std::stringstream	 ss;
-	ss << "id_" << std::time(0) << "_" << idCounter++;
-	return ss.str();
-}
+void Response::handleSession(const Request& request) {
+	const Request::FormData& data = request.getFormData();
 
-void Response::handleSession(const Request& request)
-{
-	const Request::FormData &data = request.getFormData();
-	
-	Request::FormData::const_iterator it = data.find("theme");
-	std::string cookie = request.getHeader("Cookie");
-	if (it == data.end())
-	{
-		if (cookie.empty())
-		{
-			std::string id = randomSessionId();
+	Request::FormData::const_iterator it	 = data.find("theme");
+	std::string						  cookie = request.getHeader("Cookie");
+	if (it == data.end()) {
+		if (cookie.empty()) {
+			std::string id	 = randomSessionId();
 			(*_sessions)[id] = "light";
 			setHeader("Set-Cookie", "session_id=" + id + "; Path=/; HttpOnly;");
 			setHeader("Set-Cookie", "theme=light; Path=/;");
@@ -225,20 +214,17 @@ void Response::handleSession(const Request& request)
 		}
 	}
 
-	std::string theme = it->second;
+	std::string		  theme = it->second.empty() ? "light" : it->second[0];
 	std::stringstream ss(cookie);
-	std::string line, sessionId;
-	
-	while (std::getline(ss, line, ';'))
-	{
+	std::string		  line, sessionId;
+
+	while (std::getline(ss, line, ';')) {
 		size_t pos = line.find("session_id=");
 		if (pos != std::string::npos)
 			sessionId = line.substr(pos + 11);
 	}
-	if (it != data.end())
-	{
-		if (!sessionId.empty())
-		{
+	if (it != data.end()) {
+		if (!sessionId.empty()) {
 			std::map<std::string, std::string>::iterator it;
 			for (it = _sessions->begin(); it != _sessions->end(); it++) {
 				if (it->first == sessionId) {
@@ -249,10 +235,10 @@ void Response::handleSession(const Request& request)
 			}
 		}
 
-		std::string id = randomSessionId();
+		std::string id	 = randomSessionId();
 		(*_sessions)[id] = theme;
 		setHeader("Set-Cookie", "session_id=" + id + "; Path=/; HttpOnly;");
-		setHeader("Set-Cookie", "theme=" +  theme + "; Path=/;");
+		setHeader("Set-Cookie", "theme=" + theme + "; Path=/;");
 	}
 }
 
@@ -265,8 +251,7 @@ std::string Response::build(Request& request) {
 		handleRedirect(request);
 	else if (!allowedMethods(request))
 		errorPage(request, HTTP_405_METHOD_NOT_ALLOWED);
-	else
-	{
+	else {
 		handleSession(request);
 		handleByMethod(request);
 	}

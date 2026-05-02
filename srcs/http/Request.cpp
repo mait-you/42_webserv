@@ -44,7 +44,7 @@ Request& Request::operator=(const Request& other) {
 
 Request::~Request() {}
 
-void Request::parseUrlEncoded(const std::string &str) {
+void Request::parseUrlEncoded(const std::string& str) {
 	std::istringstream ss(str);
 	std::string		   pair;
 
@@ -60,10 +60,9 @@ void Request::parseUrlEncoded(const std::string &str) {
 			key = pair.substr(0, eq);
 			val = pair.substr(eq + 1);
 		}
-		_formData[decode(key)] = decode(val);
+		setFormData(decode(key), decode(val));
 	}
 }
-
 
 void Request::parseMultipartHeaderLine(const std::string& line, MultipartField& field) {
 	std::size_t colon = line.find(':');
@@ -89,6 +88,7 @@ void Request::parsePart(std::string& part) {
 		std::size_t pos = part.find("\r\n");
 		if (pos == std::string::npos)
 			return setError(HTTP_400_BAD_REQUEST);
+
 		line = part.substr(0, pos);
 		part.erase(0, pos + 2);
 		if (!line.empty())
@@ -97,6 +97,7 @@ void Request::parsePart(std::string& part) {
 
 	if (field.name.empty())
 		return setError(HTTP_400_BAD_REQUEST);
+
 	field.data = part;
 	_multipartFields.push_back(field);
 }
@@ -178,8 +179,10 @@ bool Request::parse(std::string& buffer) {
 					parseMultipart(bnd);
 				else
 					setError(HTTP_400_BAD_REQUEST);
-			} else if (ct == "application/x-www-form-urlencoded")
+			} else if (ct == "application/x-www-form-urlencoded") {
+				_formData.clear();
 				parseUrlEncoded(_body);
+			}
 		}
 	}
 	return true;
@@ -193,13 +196,14 @@ void Request::processLine(const std::string& line) {
 			std::string cl = getHeader("Content-length");
 			if (!cl.empty()) {
 				std::stringstream ss(cl);
-				char extra;
-
+				char			  extra;
 				if (!(ss >> _contentLength) || ss >> extra) {
 					_contentLength = 0;
 					return setError(HTTP_400_BAD_REQUEST);
 				}
 				if (_contentLength < 0 || _contentLength > _locConf->client_max_body_size)
+					return setError(HTTP_400_BAD_REQUEST);
+				if (_contentLength == 0 && _method == "POST")
 					return setError(HTTP_400_BAD_REQUEST);
 				_parseState = (_contentLength == 0) ? PARSE_DONE : PARSE_BODY;
 
@@ -332,12 +336,10 @@ void Request::setError(CodeStatus code) {
 	_parseState = PARSE_ERROR;
 }
 
-void Request::resolvePath( std::string &decodeUri) {
-
-	std::size_t q	 = decodeUri.find('?');
-	if (q != std::string::npos)
-	{
-		_query = decodeUri.substr(q + 1);
+void Request::resolvePath(std::string& decodeUri) {
+	std::size_t q = decodeUri.find('?');
+	if (q != std::string::npos) {
+		_query	  = decodeUri.substr(q + 1);
 		decodeUri = decodeUri.substr(0, q);
 	}
 
@@ -360,7 +362,6 @@ void Request::resolvePath( std::string &decodeUri) {
 
 	if (_resolveUri.empty() || _uri[_uri.size() - 1] == '/')
 		_resolveUri += "/";
-
 }
 
 std::string Request::resolveFullPath() const {
@@ -464,7 +465,7 @@ const Request::MultipartFields& Request::getMultipartFields() const {
 }
 
 void Request::setFormData(const std::string& key, const std::string& val) {
-	_formData[key] = val;
+	_formData[key].push_back(val);
 }
 
 std::string Request::getHeader(const std::string& key) const {

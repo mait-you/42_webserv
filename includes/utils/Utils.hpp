@@ -15,5 +15,7 @@ std::string toString(int val);
 std::string htmlEscape(const std::string& s);
 char		hexToChar(const std::string& hex);
 std::string decode(const std::string& str);
-
+std::string buildFilePath(const std::string& uploadDir, std::string ext);
+bool		writeFile(const std::string& filePath, const std::string& data);
+std::string randomSessionId();
 #endif

@@ -94,9 +94,18 @@ static void logRequest(const Request& req, bool hasRes) {
 		while (it != form.end()) {
 			Request::FormData::const_iterator next = it;
 			++next;
-			const bool last = (next == form.end());
-			std::cout << p << GRY "│   " RST << (last ? GRY "└─ " RST : GRY "├─ " RST) << it->first
-					  << GRY ": " RST << it->second << "\n";
+			const bool lastField = (next == form.end());
+
+			std::cout << p << GRY "│   " RST << (lastField ? GRY "└─ " RST : GRY "├─ " RST)
+					  << it->first << GRY ":" RST << "\n";
+
+			const std::vector<std::string>& vals = it->second;
+			for (std::size_t i = 0; i < vals.size(); ++i) {
+				const bool lastVal = (i == vals.size() - 1);
+				std::cout << p << GRY "│   " RST << (lastField ? "    " : GRY "│   " RST)
+						  << (lastVal ? GRY "└─ " RST : GRY "├─ " RST) << vals[i] << "\n";
+			}
+
 			it = next;
 		}
 	}
