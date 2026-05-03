@@ -5,15 +5,12 @@
 void Response::multiPart(Request& request, const MultipartField& part,
 						 const std::string& uploadDir) {
 	if (part.filename.empty()) {
-		request.setFormData(part.name, part.data);
-		setStatus(HTTP_200_OK);
 		setBody(part.name + ": " + part.data);
 		return;
 	}
 	const std::string filePath = buildFilePath(uploadDir, Mime::getExtension(part.contentType));
 	if (!writeFile(filePath, part.data))
 		return errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
-	setStatus(HTTP_201_CREATED);
 	setBody(filePath + "\n");
 }
 

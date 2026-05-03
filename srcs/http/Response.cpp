@@ -197,32 +197,38 @@ void Response::handleByMethod(Request& request) {
 		handleDelete(request);
 }
 
-void Response::handleSession(const Request& request) {
-	const Request::FormData& data = request.getFormData();
+void Response::handleSession(const Request& request)
+{
+	const Request::FormData &data = request.getFormData();
 
-	Request::FormData::const_iterator it	 = data.find("theme");
-	std::string						  cookie = request.getHeader("Cookie");
-	if (it == data.end()) {
-		if (cookie.empty()) {
-			std::string id	 = randomSessionId();
+	Request::FormData::const_iterator it = data.find("theme");
+	std::string cookie = request.getHeader("Cookie");
+	if (it == data.end())
+	{
+		if (cookie.empty())
+		{
+			std::string id = randomSessionId();
 			(*_sessions)[id] = "light";
 			setHeader("Set-Cookie", "session_id=" + id + "; Path=/; HttpOnly;");
 			setHeader("Set-Cookie", "theme=light; Path=/;");
+			return;
 		}
-		return;
 	}
 
-	std::string		  theme = it->second.empty() ? "light" : it->second.front();
 	std::stringstream ss(cookie);
-	std::string		  line, sessionId;
+	std::string line, sessionId;
 
-	while (std::getline(ss, line, ';')) {
+	while (std::getline(ss, line, ';'))
+	{
 		size_t pos = line.find("session_id=");
 		if (pos != std::string::npos)
-			sessionId = line.substr(pos + 11);
+		sessionId = line.substr(pos + 11);
 	}
-	if (it != data.end()) {
-		if (!sessionId.empty()) {
+	if (it != data.end())
+	{
+		std::string theme = it->second[0];
+		if (!sessionId.empty())
+		{
 			std::map<std::string, std::string>::iterator it;
 			for (it = _sessions->begin(); it != _sessions->end(); it++) {
 				if (it->first == sessionId) {
@@ -233,10 +239,10 @@ void Response::handleSession(const Request& request) {
 			}
 		}
 
-		std::string id	 = randomSessionId();
+		std::string id = randomSessionId();
 		(*_sessions)[id] = theme;
 		setHeader("Set-Cookie", "session_id=" + id + "; Path=/; HttpOnly;");
-		setHeader("Set-Cookie", "theme=" + theme + "; Path=/;");
+		setHeader("Set-Cookie", "theme=" +  theme + "; Path=/;");
 	}
 }
 
