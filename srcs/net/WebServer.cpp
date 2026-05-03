@@ -123,7 +123,7 @@ void WebServer::run() {
 			Client& client = it->second;
 			bool	keep   = true;
 
-			if (_events[i].events & EPOLLERR) {
+			if (_events[i].events & (EPOLLHUP | EPOLLERR)) {
 				removeClient(client);
 				logServerEvent(*this, GRY "Client disconnected (error)" RST);
 				continue;

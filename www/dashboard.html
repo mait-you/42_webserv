@@ -25,111 +25,168 @@
 </header>
 
 <main>
+<div class="dashboard">
 
-	<!-- multipart upload — pure HTML, no JS -->
-	<div class="card">
-		<div class="card-header">
-			<span class="badge">POST</span>
-			<h2>Upload — multipart/form-data</h2>
-		</div>
-		<div class="card-body">
-			<form method="POST" action="/uploads" enctype="multipart/form-data">
-				<div class="field">
-					<label>File</label>
-					<input type="file" name="file[]" multiple/>
-				</div>
-				<button type="submit" class="btn btn-primary">↑ Upload file</button>
-			</form>
-		</div>
-	</div>
+	<!-- ── MAIN COLUMN ── -->
+	<div class="main-col">
 
-	<div class="divider">or</div>
-
-	<!-- url-encoded upload — pure HTML, no JS -->
-	<div class="card">
-		<div class="card-header">
-			<span class="badge">POST</span>
-			<h2>Upload — application/x-www-form-urlencoded</h2>
-		</div>
-		<div class="card-body">
-			<form method="POST" action="/uploads">
-				<div class="field">
-					<label>Filename</label>
-					<input type="text" name="filename" placeholder="example.txt" />
-				</div>
-				<div class="field">
-					<label>Content</label>
-					<input type="text" name="content" placeholder="hello world" />
-				</div>
-				<button type="submit" class="btn btn-primary">↑ Send</button>
-			</form>
-		</div>
-	</div>
-
-	<!-- PURGE ALL — calls /cgi-bin/purge_uploads.py via POST form -->
-	<div class="card">
-		<div class="card-header">
-			<span class="badge del">POST</span>
-			<h2>Purge all uploads</h2>
-		</div>
-		<div class="card-body">
-			<p style="font-size:12px; color:var(--muted); margin-bottom:1rem;">
-				Removes every file inside <code style="color:var(--accent)">/uploads</code> except <code style="color:var(--accent)">.gitkeep</code>.
-			</p>
-			<form method="POST" action="/cgi-bin/purge_uploads.py">
-				<button type="submit" class="btn btn-danger">✕ Purge all</button>
-			</form>
-		</div>
-	</div>
-
-	<div class="divider">or delete one</div>
-
-	<!-- DELETE — needs JS: HTML forms cannot send the DELETE method -->
-	<div class="card">
-		<div class="card-header">
-			<span class="badge del">DELETE</span>
-			<h2>Delete resource</h2>
-		</div>
-		<div class="card-body">
-			<div class="field">
-				<label>Path</label>
-				<input type="text" id="del-path" placeholder="/uploads/example.txt" />
+		<!-- Upload -->
+		<div class="card">
+			<div class="card-header">
+				<span class="badge">POST</span>
+				<h2>Upload — multipart/form-data</h2>
 			</div>
-			<button class="btn btn-danger" onclick="sendDelete()">✕ Delete</button>
-			<div class="res-box" id="res-del">waiting…</div>
+			<div class="card-body">
+				<form method="POST" action="/uploads" enctype="multipart/form-data"
+				      style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+					<input type="file" name="file[]" multiple style="flex:1;min-width:160px;" />
+					<button type="submit" class="btn btn-primary">↑ Upload</button>
+				</form>
+			</div>
 		</div>
+
+		<!-- Files -->
+		<div class="card">
+			<div class="card-header">
+				<span class="badge ok">GET</span>
+				<h2>Uploaded files</h2>
+			</div>
+			<div class="card-body" style="padding:0;">
+				<div id="file-wrap">
+					<div class="empty-state">
+						<span class="empty-icon">📂</span>
+						Loading…
+					</div>
+				</div>
+				<div class="purge-row">
+					<span class="purge-note">Delete every file in /uploads</span>
+					<a href="/cgi-bin/purge_uploads.py" class="btn btn-danger"
+					   style="font-size:12px;padding:5px 13px;">✕ Purge all</a>
+				</div>
+			</div>
+		</div>
+
 	</div>
 
+	<!-- ── SIDEBAR ── -->
+	<aside class="sidebar">
+
+		<span class="sidebar-label">CGI scripts</span>
+		<a class="cgi-link" href="/cgi-bin/session.py" target="_blank">
+			session.py <span class="cgi-ext">.py</span>
+		</a>
+		<a class="cgi-link" href="/cgi-bin/form.pl" target="_blank">
+			form.pl <span class="cgi-ext">.pl</span>
+		</a>
+		<a class="cgi-link" href="/cgi-bin/uploads.py" target="_blank">
+			uploads.py <span class="cgi-ext">.py</span>
+		</a>
+
+		<span class="sidebar-label">Directories</span>
+		<a class="cgi-link" href="/uploads" target="_blank">
+			/uploads <span class="cgi-ext">dir</span>
+		</a>
+		<a class="cgi-link" href="/images" target="_blank">
+			/images <span class="cgi-ext">dir</span>
+		</a>
+
+	</aside>
+
+</div>
 </main>
 
 <script src="/js/cookies.js"></script>
 <script>
-	function sendDelete() {
-		const path = document.getElementById('del-path').value;
-		const box  = document.getElementById('res-del');
-		box.className   = 'res-box';
-		box.textContent = 'sending…';
-
-		fetch(path, { method: 'DELETE' })
-			.then(function(res) {
-				return res.text().then(function(body) {
-					if (res.ok) {
-						/* success → show message in the box */
-						box.className   = 'res-box ok';
-						box.textContent = res.status + ' ' + res.statusText + '\n' + body;
-					} else {
-						/* error → server returned an error page, render it as full page */
-						document.open();
-						document.write(body);
-						document.close();
-					}
+function loadFiles() {
+	fetch('/uploads')
+		.then(r => r.text())
+		.then(html => {
+			var files = [];
+			var re = /href=['"]([^'"]+)['"]/g;
+			var m;
+			while ((m = re.exec(html)) !== null) {
+				var href = m[1];
+				if (href === '../' || href === '/' || href.endsWith('/'))
+					continue;
+				var name = href.split('/').pop();
+				if (!name) continue;
+				files.push({
+					name: name,
+					path: '/uploads/' + name
 				});
-			})
-			.catch(function(err) {
-				box.className   = 'res-box err';
-				box.textContent = 'Error: ' + err;
-			});
+			}
+			console.log(files);
+			render(files);
+		})
+		.catch(err => console.error(err));
+}
+
+function render(files) {
+	var wrap = document.getElementById('file-wrap');
+	if (!files.length) {
+		wrap.innerHTML =
+			'<div class="empty-state">' +
+			'<span class="empty-icon">📭</span>' +
+			'No files yet.' +
+			'</div>';
+		return;
 	}
+	var rows = '';
+	for (var i = 0; i < files.length; i++) {
+		var f = files[i];
+		rows +=
+			'<tr>' +
+			'<td class="file-name"><a href="' + f.path + '" target="_blank">' + f.name + '</a></td>' +
+			'<td style="text-align:right;">' +
+			'<button class="del-btn" data-path="' + f.path + '" onclick="del(this)">✕ delete</button>' +
+			'</td>' +
+			'</tr>';
+	}
+	wrap.innerHTML =
+		'<table class="file-table">' +
+		'<thead><tr>' +
+		'<th>Name</th>' +
+		'<th style="text-align:right;">Action</th>' +
+		'</tr></thead>' +
+		'<tbody>' + rows + '</tbody>' +
+		'</table>';
+}
+
+function del(btn) {
+	var path = btn.getAttribute('data-path');
+	btn.disabled = true;
+	btn.textContent = '…';
+
+	fetch(path, { method: 'DELETE' })
+		.then(function(res) {
+			if (res.ok) {
+				var tr = btn.parentNode.parentNode;
+				tr.style.transition = 'opacity 0.18s';
+				tr.style.opacity = '0';
+				setTimeout(function() {
+					tr.remove();
+					var tbody = document.querySelector('.file-table tbody');
+					if (tbody && !tbody.querySelector('tr'))
+						render([]);
+				}, 180);
+			} else {
+				btn.disabled = false;
+				btn.textContent = '✕ delete';
+				res.text().then(function(body) {
+					document.open();
+					document.write(body);
+					document.close();
+				});
+			}
+		})
+		.catch(function(err) {
+			console.error('[del] error:', err);
+			btn.disabled = false;
+			btn.textContent = '✕ delete';
+		});
+}
+
+loadFiles();
 </script>
 </body>
 </html>

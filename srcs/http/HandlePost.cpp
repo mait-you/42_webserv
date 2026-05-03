@@ -3,7 +3,7 @@
 #include "../../includes/utils/Utils.hpp"
 
 void Response::multiPart(Request& request, const MultipartField& part,
-						 const std::string& uploadDir) {
+						 const std::string& uploadDir, bool &hasUpload) {
 	if (part.filename.empty()) {
 		setBody(part.name + ": " + part.data);
 		return;
@@ -12,6 +12,7 @@ void Response::multiPart(Request& request, const MultipartField& part,
 	if (!writeFile(filePath, part.data))
 		return errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 	setBody(filePath + "\n");
+	hasUpload = true;
 }
 
 void Response::handleMultipartFields(Request& request, const std::string& uploadDir) {
@@ -23,11 +24,9 @@ void Response::handleMultipartFields(Request& request, const std::string& upload
 	std::string bodyStr	  = "Form data received successfully.\n";
 
 	for (size_t i = 0; i < parts.size(); ++i) {
-		multiPart(request, parts[i], uploadDir);
-		if (_statusCode != HTTP_200_OK && _statusCode != HTTP_201_CREATED)
+		multiPart(request, parts[i], uploadDir, hasUpload);
+		if (_statusCode == HTTP_500_INTERNAL_SERVER_ERROR)
 			return;
-		if (_statusCode == HTTP_201_CREATED)
-			hasUpload = true;
 		bodyStr += getBody();
 	}
 

@@ -80,9 +80,17 @@ Socket Socket::accept() {
 		throwError("Socket::accept", "accept() failed");
 
 	Socket newClient(newFd);
-	if (fcntl(newClient.getFd(), F_SETFL, O_NONBLOCK) == -1)
+
+	int flFlags = fcntl(newClient.getFd(), F_GETFL, 0);
+	if (flFlags == -1)
+		throwError("Socket::accept::fcntl", "F_GETFL failed");
+	if (fcntl(newClient.getFd(), F_SETFL, flFlags | O_NONBLOCK) == -1)
 		throwError("Socket::accept::fcntl", "O_NONBLOCK failed");
-	if (fcntl(newClient.getFd(), F_SETFD, FD_CLOEXEC) == -1)
+
+	int fdFlags = fcntl(newClient.getFd(), F_GETFD, 0);
+	if (fdFlags == -1)
+		throwError("Socket::accept::fcntl", "F_GETFD failed");
+	if (fcntl(newClient.getFd(), F_SETFD, fdFlags | FD_CLOEXEC) == -1)
 		throwError("Socket::accept::fcntl", "FD_CLOEXEC failed");
 	newClient.setIp(ipv4Tostr(client_addr.sin_addr.s_addr));
 	newClient.setPort(portTostr(ntohs(client_addr.sin_port)));
