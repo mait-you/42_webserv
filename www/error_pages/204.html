@@ -3,7 +3,9 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>400 Bad Request</title>
+	<title>204 No Content</title>
+	<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<link rel="stylesheet" href="/css/style.css" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -20,9 +22,9 @@
 </header>
 <main style="max-width:540px; text-align:center; padding-top:5rem;">
 	<div class="error-protocol">HTTP/1.0</div>
-	<div class="error-code">400</div>
-	<div class="error-msg">Bad Request</div>
-	<p class="error-desc">The server could not understand the request due to invalid syntax.</p>
+	<div class="error-code error-code--ok">204</div>
+	<div class="error-msg">No Content</div>
+	<p class="error-desc">The server has fulfilled the request but does not need to return an entity-body.</p>
 	<div class="error-actions">
 		<a class="btn btn-primary" href="/index.html">← Home</a>
 	</div>

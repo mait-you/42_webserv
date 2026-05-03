@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>WebServ — Dashboard</title>
+	<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="stylesheet" href="/css/style.css" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<header>
+	<a class="logo" href="/index.html">web<span>serv</span></a>
+	<nav>
+		<a href="/dashboard.html" class="active">Dashboard</a>
+		<a href="/uploads" class="btn btn-ghost" style="padding:4px 12px;font-size:12px;">↗ /uploads</a>
+		<button class="theme-btn" onclick="toggleTheme()">
+			<span id="theme-icon">☀</span>
+			<span id="theme-label">Light</span>
+		</button>
+	</nav>
+</header>
+
+<main>
+
+	<!-- multipart upload — pure HTML, no JS -->
+	<div class="card">
+		<div class="card-header">
+			<span class="badge">POST</span>
+			<h2>Upload — multipart/form-data</h2>
+		</div>
+		<div class="card-body">
+			<form method="POST" action="/uploads" enctype="multipart/form-data">
+				<div class="field">
+					<label>File</label>
+					<input type="file" name="file" />
+				</div>
+				<button type="submit" class="btn btn-primary">↑ Upload file</button>
+			</form>
+		</div>
+	</div>
+
+	<div class="divider">or</div>
+
+	<!-- url-encoded upload — pure HTML, no JS -->
+	<div class="card">
+		<div class="card-header">
+			<span class="badge">POST</span>
+			<h2>Upload — application/x-www-form-urlencoded</h2>
+		</div>
+		<div class="card-body">
+			<form method="POST" action="/uploads">
+				<div class="field">
+					<label>Filename</label>
+					<input type="text" name="filename" placeholder="example.txt" />
+				</div>
+				<div class="field">
+					<label>Content</label>
+					<input type="text" name="content" placeholder="hello world" />
+				</div>
+				<button type="submit" class="btn btn-primary">↑ Send</button>
+			</form>
+		</div>
+	</div>
+
+	<!-- PURGE ALL — calls /cgi-bin/purge_uploads.py via POST form -->
+	<div class="card">
+		<div class="card-header">
+			<span class="badge del">POST</span>
+			<h2>Purge all uploads</h2>
+		</div>
+		<div class="card-body">
+			<p style="font-size:12px; color:var(--muted); margin-bottom:1rem;">
+				Removes every file inside <code style="color:var(--accent)">/uploads</code> except <code style="color:var(--accent)">.gitkeep</code>.
+			</p>
+			<form method="POST" action="/cgi-bin/purge_uploads.py">
+				<button type="submit" class="btn btn-danger">✕ Purge all</button>
+			</form>
+		</div>
+	</div>
+
+	<div class="divider">or delete one</div>
+
+	<!-- DELETE — needs JS: HTML forms cannot send the DELETE method -->
+	<div class="card">
+		<div class="card-header">
+			<span class="badge del">DELETE</span>
+			<h2>Delete resource</h2>
+		</div>
+		<div class="card-body">
+			<div class="field">
+				<label>Path</label>
+				<input type="text" id="del-path" placeholder="/uploads/example.txt" />
+			</div>
+			<button class="btn btn-danger" onclick="sendDelete()">✕ Delete</button>
+			<div class="res-box" id="res-del">waiting…</div>
+		</div>
+	</div>
+
+</main>
+
+<script src="/js/cookies.js"></script>
+<script>
+	function sendDelete() {
+		const path = document.getElementById('del-path').value;
+		const box  = document.getElementById('res-del');
+		box.className   = 'res-box';
+		box.textContent = 'sending…';
+
+		fetch(path, { method: 'DELETE' })
+			.then(function(res) {
+				return res.text().then(function(body) {
+					if (res.ok) {
+						/* success → show message in the box */
+						box.className   = 'res-box ok';
+						box.textContent = res.status + ' ' + res.statusText + '\n' + body;
+					} else {
+						/* error → server returned an error page, render it as full page */
+						document.open();
+						document.write(body);
+						document.close();
+					}
+				});
+			})
+			.catch(function(err) {
+				box.className   = 'res-box err';
+				box.textContent = 'Error: ' + err;
+			});
+	}
+</script>
+</body>
+</html>

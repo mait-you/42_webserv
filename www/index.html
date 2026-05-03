@@ -1,32 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webserv - Site 1</title>
-    <link rel="stylesheet" href="css/style.css">
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>WebServ</title>
+	<link rel="stylesheet" href="/css/style.css" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-    <h1>Welcome to Webserv!</h1>
-    <p>This is a C++98 HTTP server implementation.</p>
-    <nav>
-        <a href="/upload.html">upload</a>
-        <a href="/delete.html">delete</a>
-        <a href="/about.html">About</a>
-        <a href="/cgi-bin/session.py">Python CGI: Cookies and Session</a>
-        <a href="/cgi-bin/form.pl">Perl CGI: Form</a>
-        <a href="/cgi-bin/uploads.py">Python CGI: Uploads</a>
-    </nav>
 
-<div  class="mode">
-          <a href="/?theme=light">
-        <span class="icon">☀</span> Light
-      </a>
-      <a href="/?theme=dark">
-        <span class="icon">☾</span> Dark
-      </a>
-</div>
+<header>
+	<a class="logo" href="/index.html">web<span>serv</span></a>
+	<nav>
+		<a href="/dashboard.html">Dashboard</a>
+		<button class="theme-btn" onclick="toggleTheme()">
+			<span id="theme-icon">☀</span>
+			<span id="theme-label">Light</span>
+		</button>
+	</nav>
+</header>
 
-    <script src="js/script.js"></script>
+<main>
+	<div class="hero">
+		<h1>web<span>serv</span></h1>
+		<p>HTTP/1.0 server — upload, manage and delete files.</p>
+		<div class="hero-btns">
+			<a class="btn btn-primary" href="/dashboard.html">→ Dashboard</a>
+			<a class="btn btn-ghost"   href="/uploads">Browse uploads</a>
+		</div>
+	</div>
+
+	<div class="card">
+		<div class="card-header"><h2>Server info</h2></div>
+		<div class="card-body">
+			<div class="info-bar">
+				protocol: <span>HTTP/1.0</span>
+				&nbsp;|&nbsp;
+				methods: <span>GET &nbsp;POST &nbsp;DELETE</span>
+				&nbsp;|&nbsp;
+				theme cookie: <span id="ctheme">—</span>
+			</div>
+		</div>
+	</div>
+</main>
+
+<script src="/js/cookies.js"></script>
 </body>
 </html>

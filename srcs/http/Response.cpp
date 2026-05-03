@@ -210,11 +210,14 @@ void Response::handleSession(const Request& request) {
 			(*_sessions)[id] = "light";
 			setHeader("Set-Cookie", "session_id=" + id + "; Path=/; HttpOnly;");
 			setHeader("Set-Cookie", "theme=light; Path=/;");
-			return;
 		}
+		return;
 	}
 
-	std::string		  theme = it->second.empty() ? "light" : it->second[0];
+	std::cerr << "it->second: " << &it->second << std::endl;
+	std ::cerr << "it->second.size(): [" << it->second.size() << "]" << std::endl;
+
+	std::string		  theme = it->second.empty() ? "light" : it->second.front();
 	std::stringstream ss(cookie);
 	std::string		  line, sessionId;
 

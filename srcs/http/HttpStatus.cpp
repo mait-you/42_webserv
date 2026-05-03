@@ -27,8 +27,6 @@ std::string HttpStatus::getStatusMessage() const {
 			return "OK";
 		case HTTP_201_CREATED:
 			return "Created";
-		case HTTP_202_ACCEPTED:
-			return "Accepted";
 		case HTTP_204_NO_CONTENT:
 			return "No Content";
 		case HTTP_301_MOVED_PERMANENTLY:
@@ -39,8 +37,6 @@ std::string HttpStatus::getStatusMessage() const {
 			return "Not Modified";
 		case HTTP_400_BAD_REQUEST:
 			return "Bad Request";
-		case HTTP_401_UNAUTHORIZED:
-			return "Unauthorized";
 		case HTTP_403_FORBIDDEN:
 			return "Forbidden";
 		case HTTP_404_NOT_FOUND:
@@ -51,10 +47,6 @@ std::string HttpStatus::getStatusMessage() const {
 			return "Internal Server Error";
 		case HTTP_501_NOT_IMPLEMENTED:
 			return "Not Implemented";
-		case HTTP_502_BAD_GATEWAY:
-			return "Bad Gateway";
-		case HTTP_503_SERVICE_UNAVAILABLE:
-			return "Service Unavailable";
 		default:
 			return "Unknown";
 	}
@@ -85,7 +77,7 @@ void HttpStatus::setVersion(HttpVersion httpVersion) {
 bool HttpStatus::isError() const {
 	if (_httpVersion == HTTP_0_9)
 		return true;
-	return _statusCode >= HTTP_400_BAD_REQUEST && _statusCode <= HTTP_503_SERVICE_UNAVAILABLE;
+	return _statusCode >= HTTP_400_BAD_REQUEST && _statusCode <= HTTP_501_NOT_IMPLEMENTED;
 }
 
 bool HttpStatus::isSuccess() const {
