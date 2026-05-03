@@ -123,7 +123,7 @@ void Request::parseMultipart(const std::string& boundary) {
 		if (pos == std::string::npos)
 			return setError(HTTP_400_BAD_REQUEST);
 
-		std::string part = _body.substr(offset, pos - offset);
+		std::string part = _body.substr(offset, pos - offset - 2);
 		offset			 = pos + len;
 
 		parsePart(part);

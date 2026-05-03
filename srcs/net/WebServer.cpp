@@ -107,46 +107,45 @@ void WebServer::run() {
 				continue;
 			throwError("epoll_wait", "failed to wait for events");
 		}
-		
-		
+
 		for (int i = 0; i < n; ++i) {
 			int fd = _events[i].data.fd;
-			
+
 			if (_serverSockets.count(fd)) {
 				acceptClient(_serverSockets[fd]);
 				logServerEvent(*this, GRN "Client connected" RST);
 				continue;
 			}
-			
+
 			Client::It it = _clients.find(fd);
 			if (it == _clients.end())
-			continue;
+				continue;
 			Client& client = it->second;
 			bool	keep   = true;
-			
+
 			if (_events[i].events & EPOLLERR) {
 				removeClient(client);
 				logServerEvent(*this, GRY "Client disconnected (error)" RST);
 				continue;
 			}
-			
+
 			if (_events[i].events & EPOLLIN) {
 				keep = handleRequest(client);
 				if (keep && client.getRequest().isComplete()) {
 					EPOLL_EVENT(ev);
-					ev.events  = EPOLLIN | EPOLLOUT;
+					ev.events  = EPOLLOUT;
 					ev.data.fd = fd;
 					epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
 					logServerEvent(*this, CYN "Request received" RST);
 				}
 			}
-			
+
 			if (keep && (_events[i].events & EPOLLOUT)) {
 				keep = handleResponse(client);
 				if (client.getResponse().isComplete())
-				logServerEvent(*this, YEL "Response sent" RST);
+					logServerEvent(*this, YEL "Response sent" RST);
 			}
-			
+
 			if (!keep) {
 				removeClient(client);
 				logServerEvent(*this, GRY "Client disconnected" RST);
