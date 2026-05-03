@@ -33,8 +33,10 @@ body {
 	color:       var(--text);
 	font-family: var(--font);
 	font-size:   14px;
-	min-height:  100vh;
 	transition:  background 0.2s, color 0.2s;
+	min-height:     100vh;
+    display:        flex;
+    flex-direction: column;
 }
 
 /* ── header ── */
@@ -88,6 +90,7 @@ nav a:hover, nav a.active { color: var(--text); }
 
 /* ── main layout ── */
 main {
+	flex: 1;
 	max-width: 820px;
 	margin:    0 auto;
 	padding:   2.5rem 1.5rem 4rem;
@@ -120,6 +123,27 @@ main {
 }
 
 .card-body { padding: 1.25rem; }
+
+/* ── badges ── */
+.badge {
+	font-size:      11px;
+	padding:        2px 8px;
+	border-radius:  4px;
+	font-weight:    700;
+	letter-spacing: 0.05em;
+	background:     var(--accent);
+	color:          #fff;
+}
+.badge.del { background: var(--danger); }
+
+/* ── markdown ── */
+#readme-body.markdown-body {
+    background:  transparent;
+    color:       var(--text);
+    font-family: inherit;
+    font-size:   0.95rem;
+    line-height: 1.7;
+}
 
 /* ── badges ── */
 .badge {
@@ -233,6 +257,11 @@ input[type="file"]        { padding: 6px 10px; cursor: pointer; }
 }
 .info-bar span { color: var(--accent); }
 
+.info-bar a {
+    text-decoration: none;
+    color:           inherit;
+}
+
 /* ── hero (index only) ── */
 .hero {
 	text-align: center;
@@ -286,4 +315,12 @@ input[type="file"]        { padding: 6px 10px; cursor: pointer; }
 	display:         flex;
 	gap:             12px;
 	justify-content: center;
+}
+
+footer {
+    text-align:  center;
+    padding:     1.5rem;
+    color:       var(--muted);
+    font-size:   0.8rem;
+    border-top:  1px solid var(--border);
 }

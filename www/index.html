@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>WebServ</title>
-	<link rel="stylesheet" href="/css/style.css" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebServ</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 </head>
 <body>
 
@@ -26,25 +28,23 @@
 		<h1>web<span>serv</span></h1>
 		<p>HTTP/1.0 server — upload, manage and delete files.</p>
 		<div class="hero-btns">
-			<a class="btn btn-primary" href="/dashboard.html">→ Dashboard</a>
-			<a class="btn btn-ghost"   href="/uploads">Browse uploads</a>
+			<a class="btn btn-primary" href="/dashboard.html">Dashboard →</a>
 		</div>
 	</div>
 
-	<div class="card">
-		<div class="card-header"><h2>Server info</h2></div>
-		<div class="card-body">
-			<div class="info-bar">
-				protocol: <span>HTTP/1.0</span>
-				&nbsp;|&nbsp;
-				methods: <span>GET &nbsp;POST &nbsp;DELETE</span>
-				&nbsp;|&nbsp;
-				theme cookie: <span id="ctheme">—</span>
-			</div>
-		</div>
+	<div class="card-body markdown-body" id="readme-body">
+		Loading...
 	</div>
 </main>
 
+<footer>
+    <div class="info-bar">
+        made by: <a href="https://profile.intra.42.fr/users/mait-you" target="_blank"><span>mait-you</span></a>
+        and <a href="https://profile.intra.42.fr/users/mofouzi" target="_blank"><span>mofouzi</span></a>
+    </div>
+</footer>
+
 <script src="/js/cookies.js"></script>
+<script src="/js/readme.js"></script>
 </body>
 </html>

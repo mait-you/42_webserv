@@ -1,45 +1,42 @@
-/* cookies.js — cookie helpers + theme management only */
+/* cookies.js — theme from SERVER only */
 
 function getCookie(name) {
-	const cookies = document.cookie ? document.cookie.split('; ') : [];
+    const cookies = document.cookie ? document.cookie.split('; ') : [];
 
-	for (const cookie of cookies) {
-		const separatorIndex = cookie.indexOf('=');
-		const key = separatorIndex === -1 ? cookie : cookie.slice(0, separatorIndex);
+    for (var i = 0; i < cookies.length; i++) {
+        var separatorIndex = cookies[i].indexOf('=');
+        var key = separatorIndex === -1 ? cookies[i] : cookies[i].slice(0, separatorIndex);
 
-		if (key === name) {
-			return decodeURIComponent(cookie.slice(separatorIndex + 1));
-		}
-	}
-
-	return '';
-}
-
-function setCookie(name, value, maxAge) {
-	document.cookie = name + '=' + encodeURIComponent(value) +
-		'; path=/; max-age=' + maxAge;
+        if (key === name) {
+            return decodeURIComponent(cookies[i].slice(separatorIndex + 1));
+        }
+    }
+    return '';
 }
 
 function applyThemeFromCookie() {
-	const theme    = getCookie('theme');
-	const applied  = theme === 'dark' ? 'dark' : 'light';
+    var theme   = getCookie('theme');
+    var applied = theme === 'dark' ? 'dark' : 'light';
 
-	document.documentElement.dataset.theme = applied;
+    document.documentElement.dataset.theme = applied;
 
-	const icon  = document.getElementById('theme-icon');
-	const label = document.getElementById('theme-label');
-	const bar   = document.getElementById('ctheme');
+    var icon  = document.getElementById('theme-icon');
+    var label = document.getElementById('theme-label');
 
-	if (icon)  icon.textContent  = applied === 'light' ? '☾' : '☀';
-	if (label) label.textContent = applied === 'light' ? 'Dark' : 'Light';
-	if (bar)   bar.textContent   = applied;
+    if (icon)  icon.textContent  = applied === 'light' ? '☾' : '☀';
+    if (label) label.textContent = applied === 'light' ? 'Dark' : 'Light';
+    if (bar)   bar.textContent   = applied;
 }
 
 function toggleTheme() {
-	const cur  = getCookie('theme');
-	const next = cur === 'dark' ? 'light' : 'dark';
-	setCookie('theme', next, 31536000);
-	applyThemeFromCookie();
+    var current = getCookie('theme');
+    var next    = current === 'dark' ? 'light' : 'dark';
+
+    /* Send to server — server sets the cookie */
+    fetch('/?theme=' + next, { method: 'GET' })
+        .then(function() {
+            applyThemeFromCookie(); /* now read cookie server gave us */
+        });
 }
 
 document.addEventListener('DOMContentLoaded', applyThemeFromCookie);

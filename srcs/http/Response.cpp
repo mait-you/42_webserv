@@ -212,9 +212,6 @@ void Response::handleSession(const Request& request) {
 		return;
 	}
 
-	std::cerr << "it->second: " << &it->second << std::endl;
-	std ::cerr << "it->second.size(): [" << it->second.size() << "]" << std::endl;
-
 	std::string		  theme = it->second.empty() ? "light" : it->second.front();
 	std::stringstream ss(cookie);
 	std::string		  line, sessionId;
