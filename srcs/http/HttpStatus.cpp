@@ -73,15 +73,3 @@ void HttpStatus::setStatus(CodeStatus CodeStatus) {
 void HttpStatus::setVersion(HttpVersion httpVersion) {
 	_httpVersion = httpVersion;
 }
-
-bool HttpStatus::isError() const {
-	if (_httpVersion == HTTP_0_9)
-		return true;
-	return _statusCode >= HTTP_400_BAD_REQUEST && _statusCode <= HTTP_501_NOT_IMPLEMENTED;
-}
-
-bool HttpStatus::isSuccess() const {
-	if (_httpVersion == HTTP_0_9)
-		return true;
-	return _statusCode >= HTTP_200_OK && _statusCode <= HTTP_204_NO_CONTENT;
-}

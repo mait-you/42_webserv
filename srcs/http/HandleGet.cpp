@@ -39,8 +39,7 @@ void Response::handleFile(const Request& request, const std::string& fullPath) {
 
 void Response::handleDir(const Request& request, const std::string& fullPath) {
 	const LocationConfig* locConf = request.getLocationConf();
-	// const std::string&	  uri	  = request.getUri();
-	const std::string&	  uri	  = request.getresolveUri(); // ! i add this
+	const std::string&	  uri	  = request.getresolveUri(); 
 
 	if (uri.empty() || uri[uri.size() - 1] != '/') {
 		setStatus(HTTP_301_MOVED_PERMANENTLY);
@@ -85,7 +84,7 @@ void Response::handleGet(const Request& request) {
 
 	struct stat buffer;
 	if (stat(fullPath.c_str(), &buffer) != 0) {
-		errorPage(request, HTTP_201_CREATED);
+		errorPage(request, HTTP_404_NOT_FOUND);
 		return;
 	}
 

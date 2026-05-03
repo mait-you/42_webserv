@@ -2,16 +2,9 @@
 
 #include "../../includes/utils/Utils.hpp"
 
-// it call only for Map
 Client::Client()
 		: _lastActivityTime(0), _socket(), _recvBuffer(), _sendBuffer(), _bytesSent(0), _request(),
 		  _response() {}
-
-// Main constructor
-Client::Client(const Socket& socket, const Socket& serverSock,
-			   std::map<std::string, std::string>* session)
-		: _lastActivityTime(time(NULL)), _socket(socket), _recvBuffer(), _sendBuffer(),
-		  _bytesSent(0), _request(&serverSock, socket.getIp()), _response(session) {}
 
 Client::Client(const Client& other)
 		: _lastActivityTime(other._lastActivityTime), _socket(other._socket),
@@ -30,6 +23,12 @@ Client& Client::operator=(const Client& other) {
 	}
 	return *this;
 }
+
+// Main constructor
+Client::Client(const Socket& socket, const Socket& serverSock,
+			   std::map<std::string, std::string>* session)
+		: _lastActivityTime(time(NULL)), _socket(socket), _recvBuffer(), _sendBuffer(),
+		  _bytesSent(0), _request(&serverSock, socket.getIp()), _response(session) {}
 
 Client::~Client() {};
 
@@ -72,21 +71,21 @@ bool Client::sendData() {
 	if (_bytesSent >= _sendBuffer.size()) {
 		_sendBuffer.clear();
 		_bytesSent = 0;
-		return false;  // fully sent → close
+		return false;
 	}
-	return true;  // partial send → keep sending
+	return true;
 }
 
 bool Client::buildResponse() {
 	_response = _request;
 	if (_response.hasCgiRunning()) {
 		if (!_response.pollCgi(_request))
-			return false;  // CGI not done yet
+			return false;
 		_sendBuffer = _response.buildSendBuffer();
-		return true;  // CGI done, buffer ready
+		return true;
 	}
 	_sendBuffer = _response.build(_request);
-	return !_response.hasCgiRunning();	// false only if CGI just started
+	return !_response.hasCgiRunning();
 }
 
 Socket& Client::getSocket() {

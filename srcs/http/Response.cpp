@@ -76,15 +76,17 @@ void Response::applyCgiHeaders(const std::string& rawHeaders, CodeStatus& outSta
 		if (colon == std::string::npos)
 			continue;
 		std::string key = line.substr(0, colon);
-		// RFC 3875 §6.3 — Whitespace is allowed in val
 		std::string val = trimStr(line.substr(colon + 1));
-		// RFC 3875 §6.1 — ignore script value
 		if (key == "Content-Length")
 			continue;
-		// RFC 3875 §6.3.3 — Status is CGI-only; not forwarded as HTTP header
 		if (key == "Status") {
-			if (val.size() >= 3)
-				outStatus = static_cast<CodeStatus>(std::atoi(val.c_str()));
+				std::stringstream ss(val);
+				int				  tmp = 0;
+				if (!(ss >> tmp)) {
+					outStatus = HTTP_000_NO_CODE_STATUS;
+					return;
+				outStatus = static_cast<CodeStatus>(tmp);
+			}
 			continue;
 		}
 		if (key == "Location")
@@ -107,12 +109,10 @@ void Response::processCgiOutput(const Request& request) {
 	file.close();
 	unlink(_runningCgi.resPath.c_str());
 	std::string raw = oss.str();
-	// RFC 3875 §6.1 A script MUST always provide a non-empty response
 	if (raw.empty())
 		return errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 
 	std::size_t pos = raw.find("\r\n\r\n");
-	// RFC 3875 §6 — header block separated from body is required; no separator = malformed
 	if (pos == std::string::npos)
 		return errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 
@@ -120,22 +120,21 @@ void Response::processCgiOutput(const Request& request) {
 	std::string location;
 	bool		hasContentType = false;
 	applyCgiHeaders(raw.substr(0, pos), cgiStatus, location, hasContentType);
+	if (cgiStatus == HTTP_000_NO_CODE_STATUS)
+		return errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 	std::string body = raw.substr(pos + 4);
-	// §6.2.2 — Local redirect
+	// Local redirect
 	if (!location.empty() && location[0] == '/') {
 		if (!body.empty() || _headers.size() > 1)
 			return setStatus(HTTP_500_INTERNAL_SERVER_ERROR);
-		setStatus(HTTP_302_FOUND);
-		return;
+		return setStatus(HTTP_302_FOUND);
 	}
 
-	// §6.2.3 — Client redirect, no body
-	if (!location.empty() && body.empty()) {
-		setStatus(HTTP_302_FOUND);
-		return;
-	}
+	// Client redirect, no body
+	if (!location.empty() && body.empty())
+		return setStatus(HTTP_302_FOUND);
 
-	// §6.2.4 — Client redirect with body
+	// Client redirect with body
 	if (!location.empty() && !body.empty() && hasContentType) {
 		if (cgiStatus != HTTP_301_MOVED_PERMANENTLY && cgiStatus != HTTP_302_FOUND
 			&& cgiStatus != HTTP_304_NOT_MODIFIED)
@@ -145,7 +144,7 @@ void Response::processCgiOutput(const Request& request) {
 		return;
 	}
 
-	// §6.2.1 — Normal document response
+	// Normal document response
 	if (!hasContentType)
 		return errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 	setStatus(cgiStatus);
@@ -157,7 +156,6 @@ bool Response::pollCgi(const Request& request) {
 	pid_t result = waitpid(_runningCgi.pid, &wstatus, WNOHANG);
 
 	if (result == 0) {
-		// RFC 3875 §3.4 — server may terminate the script at any time
 		if (std::time(0) - _runningCgi.startTime <= CLIENT_IDLE_TIMEOUT)
 			return false;
 		kill(_runningCgi.pid, SIGKILL);

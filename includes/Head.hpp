@@ -36,6 +36,16 @@
 #define RED "\e[91m"
 #define MGT "\e[95m"
 
+typedef epoll_event t_ev;
+
 #define CLIENT_IDLE_TIMEOUT 5
+
+#define MAX_URI_LENGTH 8192
+
+#define MAX_EVENTS 1024
+
+#define EPOLL_EVENT(name)                                                                          \
+	t_ev name;                                                                                     \
+	std::memset(&name, 0, sizeof name);
 
 #endif

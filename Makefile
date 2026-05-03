@@ -31,7 +31,6 @@ SRCS = \
 	$(SRC_DIR)/config/ServerConfig.cpp      \
 	$(SRC_DIR)/http/Request.cpp             \
 	$(SRC_DIR)/http/ResponseHelpers.cpp     \
-	$(SRC_DIR)/http/ResponseHandlers.cpp    \
 	$(SRC_DIR)/http/HandlePost.cpp          \
 	$(SRC_DIR)/http/HandleGet.cpp           \
 	$(SRC_DIR)/http/HandleDelete.cpp        \
@@ -71,4 +70,3 @@ re: fclean all
 
 .PHONY: all clean fclean re
 .SILENT:
-

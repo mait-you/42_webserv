@@ -63,6 +63,7 @@ class Response : public HttpStatus {
 	void handleGet(const Request& request);
 	void handleDelete(const Request& request);
 	void handlePost(Request& request);
+	
 	void multiPart(Request& request, const MultipartField& part, const std::string& uploadDir);
 	void handleSession(const Request& request);
 	void handleMultipartFields(Request& request, const std::string& uploadDir);

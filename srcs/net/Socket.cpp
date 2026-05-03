@@ -116,10 +116,6 @@ const std::string& Socket::getPort() const {
 	return _port;
 }
 
-bool Socket::isValid() const {
-	return _fd != -1;
-}
-
 const ServerConfig* Socket::getConf() const {
 	return _serverConfig;
 }

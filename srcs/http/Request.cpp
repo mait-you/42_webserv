@@ -6,11 +6,6 @@ Request::Request()
 		: HttpStatus(), _srvConf(NULL), _locConf(NULL), _contentLength(0),
 		  _parseState(PARSE_REQUEST_LINE), _hasCgi(false) {}
 
-Request::Request(const Socket* servSocket, const std::string& clientIp)
-		: HttpStatus(), _srvConf(servSocket->getConf()), _locConf(NULL),
-		  _serverPort(servSocket->getPort()), _serverIp(servSocket->getIp()), _clientIp(clientIp),
-		  _contentLength(0), _parseState(PARSE_REQUEST_LINE), _hasCgi(false) {}
-
 Request::Request(const Request& other)
 		: HttpStatus(other), _srvConf(other._srvConf), _locConf(other._locConf),
 		  _method(other._method), _uri(other._uri), _version(other._version),
@@ -41,6 +36,12 @@ Request& Request::operator=(const Request& other) {
 	}
 	return *this;
 }
+
+// Main constructor
+Request::Request(const Socket* servSocket, const std::string& clientIp)
+		: HttpStatus(), _srvConf(servSocket->getConf()), _locConf(NULL),
+		  _serverPort(servSocket->getPort()), _serverIp(servSocket->getIp()), _clientIp(clientIp),
+		  _contentLength(0), _parseState(PARSE_REQUEST_LINE), _hasCgi(false) {}
 
 Request::~Request() {}
 

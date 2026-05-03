@@ -35,14 +35,20 @@ static void logRequest(const Request& req, bool hasRes) {
 
 	std::cout << p << GRY "├─ " WHT "method:  " RST << (m.empty() ? GRY "(none)" RST : m) << "\n"
 			  << p << GRY "├─ " WHT "uri:     " RST << (u.empty() ? GRY "(none)" RST : u) << "\n"
-			  << p << GRY "│  ├─ " WHT "resolved: " RST
+			  << p << GRY "│  ├─ " WHT "resolved:      " RST
 			  << (req.getresolveUri().empty() ? GRY "(none)" RST : req.getresolveUri()) << "\n"
-			  << p << GRY "│  └─ " WHT "query:     " RST
+			  << p << GRY "│  ├─ " WHT "query:         " RST
 			  << (req.getQuery().empty() ? GRY "(none)" RST : req.getQuery()) << "\n"
-			  << p << GRY "│  └─ " WHT "full:     " RST
+			  << p << GRY "│  ├─ " WHT "full:          " RST
 			  << (req.getresolveFullUri().empty() ? GRY "(none)" RST : req.getresolveFullUri())
 			  << "\n"
-			  << p << GRY "├─ " WHT "version: " RST << (v.empty() ? GRY "(none)" RST : v) << "\n";
+			  << p << GRY "│  └─ " WHT "location path: " RST
+			  << (req.getLocationConf() && !req.getLocationConf()->path.empty()
+					  ? req.getLocationConf()->path
+					  : std::string(GRY "(none)" RST))
+			  << "\n"
+			  << p << GRY "├─ " WHT "version:       " RST << (v.empty() ? GRY "(none)" RST : v)
+			  << "\n";
 
 	const Request::HeaderMap& hdrs = req.getHeaders();
 	std::cout << p << GRY "├─ " WHT "headers: " GRY "[" RST << hdrs.size() << GRY "]\n" RST;

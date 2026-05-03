@@ -1,8 +1,8 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
-#include "../config/Config.hpp"
 #include "../Head.hpp"
+#include "../config/Config.hpp"
 #include "../http/Request.hpp"
 
 struct CgiInfo {
@@ -15,26 +15,27 @@ struct CgiInfo {
 
 class Cgi {
   private:
-	Request					_req;
-	ServerConfig			_srv;
-	const LocationConfig*	_loc;
-	std::string				_scriptPath;
-	std::string				_resPath;
-	std::string				_bodyPath;
+	Request				  _req;
+	ServerConfig		  _srv;
+	const LocationConfig* _loc;
+	std::string			  _scriptPath;
+	std::string			  _resPath;
+	std::string			  _bodyPath;
 
   public:
-	Cgi();
 	Cgi(const Request& req, const ServerConfig& srv, const LocationConfig* loc,
 		const std::string& path);
-	Cgi(const Cgi& other);
-	Cgi& operator=(const Cgi& other);
 	~Cgi();
 	CgiInfo start();
 
   private:
+	Cgi();
+	Cgi(const Cgi&);
+	Cgi& operator=(const Cgi&);
+
 	std::vector<std::string> createEnv() const;
-	const std::string findCgiPath() const;
-	int createFiles();
+	const std::string		 findCgiPath() const;
+	int						 createFiles();
 };
 
 #endif

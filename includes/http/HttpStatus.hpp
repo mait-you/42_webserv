@@ -19,10 +19,10 @@ class HttpStatus {
 		HTTP_304_NOT_MODIFIED	   = 304,
 
 		// 4xx Client Error
-		HTTP_400_BAD_REQUEST			  = 400,
-		HTTP_403_FORBIDDEN				  = 403,
-		HTTP_404_NOT_FOUND				  = 404,
-		HTTP_405_METHOD_NOT_ALLOWED		  = 405,
+		HTTP_400_BAD_REQUEST		= 400,
+		HTTP_403_FORBIDDEN			= 403,
+		HTTP_404_NOT_FOUND			= 404,
+		HTTP_405_METHOD_NOT_ALLOWED = 405,
 
 		// 5xx Server Error
 		HTTP_500_INTERNAL_SERVER_ERROR = 500,
@@ -40,7 +40,7 @@ class HttpStatus {
 	HttpStatus(CodeStatus statusCode);
 	HttpStatus(const HttpStatus& other);
 	HttpStatus& operator=(const HttpStatus& other);
-	virtual ~HttpStatus();
+	~HttpStatus();
 
 	void setStatus(CodeStatus CodeStatus);
 	void setVersion(HttpVersion httpVersion);
@@ -49,8 +49,6 @@ class HttpStatus {
 	std::string getStatusMessage() const;
 	std::string getHttpVersion() const;
 
-	bool isError() const;
-	bool isSuccess() const;
 };
 
 #endif

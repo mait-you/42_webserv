@@ -6,8 +6,6 @@
 #include "../http/HttpStatus.hpp"
 #include "../net/Socket.hpp"
 
-#define MAX_URI_LENGTH 8192
-
 struct MultipartField {
 	std::string name;
 	std::string filename;

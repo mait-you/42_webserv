@@ -1,5 +1,6 @@
 #include "../../includes/http/Response.hpp"
 #include "../../includes/utils/Utils.hpp"
+#include "../../includes/http/MimeTypes.hpp"
 
 void Response::errorPage(const Request& request, CodeStatus code) {
 	if (_httpVersion == HTTP_0_9)
@@ -71,4 +72,18 @@ std::string Response::getList(const std::string& fullPath, const std::string& ur
 	res += "</pre></body></html>";
 	closedir(dir);
 	return res;
+}
+
+int Response::handleErrorFile(const std::string& fullPath) {
+	if (access(fullPath.c_str(), F_OK) == -1)
+		return 0;
+	std::ifstream file(fullPath.c_str());
+	if (!file)
+		return 0;
+	std::stringstream ss;
+	ss << file.rdbuf();
+	std::string extension = getExtension(fullPath);
+	setHeader("Content-type", Mime::getType(extension));
+	setBody(ss.str());
+	return 1;
 }
