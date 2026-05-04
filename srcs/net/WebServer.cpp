@@ -98,8 +98,6 @@ void WebServer::checkIdleClients() {
 	}
 }
 void WebServer::run() {
-	logServerStart(*this);
-
 	while (running) {
 		int n = epoll_wait(_epollFd, _events, MAX_EVENTS, 1000);
 		if (n == -1) {
@@ -133,7 +131,7 @@ void WebServer::run() {
 				keep = handleRequest(client);
 				if (keep && client.getRequest().isComplete()) {
 					EPOLL_EVENT(ev);
-					ev.events  = EPOLLOUT;
+					ev.events  = EPOLLIN | EPOLLOUT;
 					ev.data.fd = fd;
 					epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev);
 					logServerEvent(*this, CYN "Request received" RST);

@@ -257,7 +257,7 @@ void Request::parseRequestLine(const std::string& line) {
 	parseUrlEncoded(_query);
 
 	if (!matchLocation())
-		return setError(HTTP_400_BAD_REQUEST);
+		return setError(HTTP_404_NOT_FOUND);
 	_resolveFullUri = resolveFullPath();
 
 	detectCgi();

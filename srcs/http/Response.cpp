@@ -189,6 +189,10 @@ void Response::handleRedirect(const Request& request) {
 
 void Response::handleByMethod(Request& request) {
 	const std::string& m = request.getMethod();
+
+	if (access(request.getResolveFullPath().c_str(), F_OK) == -1)
+		return errorPage(request, HTTP_404_NOT_FOUND);
+
 	if (m == "GET")
 		handleGet(request);
 	else if (m == "POST")

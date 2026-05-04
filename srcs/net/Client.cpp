@@ -43,10 +43,8 @@ bool Client::isIdle() const {
 bool Client::recvData() {
 	char	buf[RECV_BUFFER_SIZE] = {0};
 	ssize_t n					  = recv(_socket.getFd(), buf, sizeof buf, 0);
-	if (n == 0)
+	if (n <= 0)
 		return false;
-	if (n < 0)
-		return true;
 	_recvBuffer.append(buf, n);
 	resetActivityTime();
 	return true;
@@ -62,10 +60,8 @@ bool Client::sendData() {
 
 	ssize_t n =
 		send(_socket.getFd(), _sendBuffer.c_str() + _bytesSent, _sendBuffer.size() - _bytesSent, 0);
-	if (n == 0)
+	if (n <= 0)
 		return false;
-	if (n < 0)
-		return true;
 	resetActivityTime();
 	_bytesSent += static_cast<std::size_t>(n);
 	if (_bytesSent >= _sendBuffer.size()) {

@@ -34,7 +34,7 @@ print "</div>\n";
 
 print "<hr style='margin-top: 30px; border: 0; border-top: 1px solid #eee;'>\n";
 print "<h3>Test POST Request</h3>\n";
-print "<form method='POST' action='/cgi-bin/test.pl'>\n";
+print "<form method='POST' action='/cgi-bin/form.pl'>\n";
 print "  <input type='text' name='data' placeholder='Enter some data...' style='padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>\n";
 print "  <input type='submit' value='Submit POST' style='padding: 8px 15px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;'>\n";
 print "</form>\n";

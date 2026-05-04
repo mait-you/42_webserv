@@ -42,7 +42,7 @@ typedef epoll_event t_ev;
 
 #define MAX_URI_LENGTH 8192
 
-#define MAX_EVENTS 1024
+#define MAX_EVENTS 4096
 
 #define EPOLL_EVENT(name)                                                                          \
 	t_ev name;                                                                                     \

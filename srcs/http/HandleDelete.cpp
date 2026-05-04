@@ -59,5 +59,4 @@ void Response::handleDelete(const Request& request) {
 		errorPage(request, HTTP_500_INTERNAL_SERVER_ERROR);
 	else
 		setStatus(HTTP_204_NO_CONTENT);
-	setBody("");
 }

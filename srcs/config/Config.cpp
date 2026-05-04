@@ -80,6 +80,10 @@ void Config::parse(const std::string& filename) {
 			if (server.locations.empty()) {
 				LocationConfig location;
 				location.path = "/";
+				location.root = server.root;
+				location.index = server.index;
+				location.client_max_body_size = server.client_max_body_size;
+				location.error_pages = server.error_pages;
 				server.locations.push_back(location);
 			}
 			for (size_t s = 0; s < _servers.size(); s++) {
